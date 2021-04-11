@@ -111,4 +111,8 @@ private:
 
 	UPROPERTY()
 	const class AFGBuildableFrackingExtractor* mDefaultExtractor;
+
+	friend class AEfficiencyCheckerLogic;
+	friend class AFGBuildableFrackingActivator;
+	friend class FPowerCheckerModule;
 };
