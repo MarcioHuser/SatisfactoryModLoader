@@ -1,11 +1,9 @@
 #include "AlpakitSettings.h"
 
-#include "Json.h"
-
 UAlpakitSettings* UAlpakitSettings::Get() {
-	return GetMutableDefault<UAlpakitSettings>();
+    return GetMutableDefault<UAlpakitSettings>();
 }
 
 void UAlpakitSettings::SaveSettings() {
-	SaveConfig();
+    SaveConfig();
 }
