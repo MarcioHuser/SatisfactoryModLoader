@@ -49,9 +49,6 @@ public class SML : ModuleRules
             PrivateDependencyModuleNames.Add("MainFrame");
         }
         
-        var factoryGamePchPath = new DirectoryReference(Path.Combine(Target.ProjectFile.Directory.ToString(), "Source", "FactoryGame", "Public", "FactoryGame.h"));
-        PrivatePCHHeaderFile = factoryGamePchPath.MakeRelativeTo(new DirectoryReference(ModuleDirectory));
-        
         var thirdPartyFolder = Path.Combine(ModuleDirectory, "../../ThirdParty");
         PublicIncludePaths.Add(Path.Combine(thirdPartyFolder, "include"));
         
@@ -78,7 +75,7 @@ public class SML : ModuleRules
         }
         Log.TraceInformation("Environment: Branch = {0} BuildId = {1}", currentBranch, buildId);
         if (currentBranch != null && buildId != null) {
-            var buildMetadataString = currentBranch == "master" ? buildId : string.Format("{0}+{1}", currentBranch, buildId);
+            var buildMetadataString = currentBranch == "master" ? buildId : string.Format("{0}.{1}", currentBranch, buildId);
             PrivateDefinitions.Add(string.Format("SML_BUILD_METADATA=\"{0}\"", buildMetadataString));
         }
     }
