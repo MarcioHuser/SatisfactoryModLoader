@@ -193,8 +193,8 @@ public:
 	virtual void TearDown() override;
 
 	// Custom CSS Notifies. These will only be called if the cell has bShouldNotifyStaticActorChanges == true. This is an empty function on the base GridCell
-	virtual void OnStaticActorPutIntoCell( const FNewReplicatedActorInfo& ActorInfo ) override;
-	virtual void OnStaticActorRemovedFromCell( const FNewReplicatedActorInfo& ActorInfo ) override;
+	virtual void OnStaticActorPutIntoCell( const FNewReplicatedActorInfo& ActorInfo ) /*override*/;
+	virtual void OnStaticActorRemovedFromCell( const FNewReplicatedActorInfo& ActorInfo ) /*override*/;
 
 	// --------------------------------------------------------
 	struct FSpatializationZone
@@ -243,7 +243,7 @@ public:
 		}
 
 		UNetReplicationGraphConnection* RepGraphConnection;
-		float MaxRatePCT = 0.65f; // Maximum % of the total budget
+		float MaxRatePCT = 0.35f; // Maximum % of the total budget
 		float MinRatePCT = 0.15f; // Minimum % of the total budget
 		float DefaultRatePCT = 0.3f;
 		float CurrentRatePCT = 0.3f;

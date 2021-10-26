@@ -79,6 +79,9 @@ public:
 	UFUNCTION( BlueprintNativeEvent, Category = "Equipment" )
 	bool CanDoDefaultPrimaryFire();
 
+	UFUNCTION( BlueprintCallable, Category= "Equipment" )
+	virtual void DisableEquipment();
+    
 	/**
 	 * Is this equipment equipped.
 	 * @return - true if equiped; otherwise false.
@@ -262,7 +265,7 @@ public:
 
 	/** Camera shake to play when sprinting */
 	UPROPERTY( EditDefaultsOnly, Category = "Equipment" )
-	TSubclassOf< class UCameraShake > mSprintHeadBobShake;
+	TSubclassOf< class UMatineeCameraShake > mSprintHeadBobShake;
 
 	//@todo Are these used by Joel or legacy?
 	/** Sound played when equipping */
