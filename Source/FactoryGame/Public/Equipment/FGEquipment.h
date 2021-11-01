@@ -356,6 +356,4 @@ private:
 	/** Aim offset to override with */
 	UPROPERTY( EditDefaultsOnly, Category = "Equipment|Animation" )
 	class UAimOffsetBlendSpace* mAttachmentIdleAO;
-
-	friend class AEfficiencyCheckerLogic;
 };
