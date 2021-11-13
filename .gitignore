@@ -82,3 +82,13 @@ Plugins/*
 !Plugins/SML/
 !Plugins/SMLEditor/
 !Plugins/ExampleMod/
+
+# Custom stubs. Never to be commited
+/Content/WwiseAudio/*
+/Content/FactoryGame/*
+
+/SDL2.dll
+/umodel.cfg
+/umodel - satisfactory.lnk
+Crypto.json
+/UmodelExport/*
