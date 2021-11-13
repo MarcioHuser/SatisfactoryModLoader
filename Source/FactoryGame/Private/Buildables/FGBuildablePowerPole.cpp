@@ -2,8 +2,8 @@
 
 #include "Buildables/FGBuildablePowerPole.h"
 #include "Hologram/FGBuildableHologram.h"
-#include "Components/SceneComponent.h"
 #include "FGColoredInstanceMeshProxy.h"
+#include "Components/SceneComponent.h"
 
 AFGBuildablePowerPole::AFGBuildablePowerPole() : Super() {
 	this->mConnectionsWidgetComponent = nullptr;

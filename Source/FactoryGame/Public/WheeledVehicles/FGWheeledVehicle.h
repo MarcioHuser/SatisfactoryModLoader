@@ -187,6 +187,7 @@ public:
 
 	// Begin IFGActorRepresentationInterface
 	virtual FVector GetRealActorLocation() override;
+	virtual FRotator GetRealActorRotation() override;
 	virtual FLinearColor GetActorRepresentationColor() override;
 	virtual EFogOfWarRevealType GetActorFogOfWarRevealType() override;
 	virtual float GetActorFogOfWarRevealRadius() override;
@@ -281,7 +282,7 @@ public:
 
 	/**Returns the simulation component */
 	UFUNCTION( BlueprintPure, Category = "LinkedList" )
-	class AFGDrivingTargetList* GetTargetList();
+	class AFGDrivingTargetList* GetTargetList( bool createIfNeeded = false );
 
 	/** Fills the linked list with target nodes with data from an array */
 	//UFUNCTION( BlueprintCallable, Category = "Path" )
@@ -345,11 +346,7 @@ public:
 
 	void SyncWithSimulation();
 
-	void StartDockingProcess();
-
-	void EndDockingProcess();
-
-	bool ShouldStayAtDock() const;
+	bool ShouldStayAtDock();
 
 	float GetTotalFuelEnergy() const;
 
@@ -789,7 +786,7 @@ public:
 	void CacheSpeedInKMH();
 	bool ShouldStopVehicle() const;
 	void SetIsFollowingPath( bool isFollowingPath );
-	bool IsAtStation() const { return mIsAtStation; }
+	bool IsAtStation() const { return mCurrentStation != nullptr; }
 	int GetSpeedLimit() const { return mSpeedLimit; }
 	void StopAllMovement();
 	float GetLocalTime() const;
@@ -881,12 +878,6 @@ public:
 
 	UFUNCTION()
 	void OnRep_SimulationMovement();
-
-	//UFUNCTION()
-	//void OnRep_TemporarySimulationMovement();
-
-	UFUNCTION()
-	void OnRep_CurrentTarget();
 	
 	UFUNCTION()
 	void OnRep_RecordingStatus();
@@ -915,7 +906,6 @@ public:
 	AFGTargetPoint* SpawnNewTargetPoint( const FVector& location, const FRotator& rotation, AFGDrivingTargetList* targetList, int targetSpeed, AFGTargetPoint* afterTarget = nullptr );
 
 	void OnTargetWasForceClaimed( class AFGTargetPoint* target, class AFGWheeledVehicle* claimant );
-	void OnDockingTargetWasClaimed( class AFGTargetPoint* target );
 
 	class UFGVehicleCollisionBoxComponent* FindCollisionBox() const;
 
@@ -926,6 +916,8 @@ public:
 	bool IsLeaveSimulationFriendly( const FTransform& transform ) const;
 
 	void GiveWayTo( const AFGWheeledVehicle* other );
+
+	bool WasFuelAdded() const { return mWasFuelAdded; }
 
 private:
 	float CalculateAutomatedFuelToConsume( float deltaTime );
@@ -996,13 +988,11 @@ private:
 	UPROPERTY( Replicated )
 	bool mIsPossessed = false;
 
-	UPROPERTY( Replicated, SaveGame )
-	bool mIsAtStation = false;
-
-	class AFGBuildableDockingStation* mNextStation = nullptr;
+	UPROPERTY( Replicated )
+	class AFGBuildableDockingStation* mCurrentStation = nullptr;
 
 	/** Current node */
-	UPROPERTY( SaveGame, ReplicatedUsing = OnRep_CurrentTarget )
+	UPROPERTY( SaveGame, Replicated )
 	class AFGTargetPoint* mCurrentTarget;
 
 	UPROPERTY( SaveGame, ReplicatedUsing = OnRep_RecordingStatus )
@@ -1020,18 +1010,11 @@ private:
 	float mThrottleSampleCount = 0.0f;
 	float mThrottleSampleSum = 0.0f;
 
-	/** Number of target points before we reach next station, 5 means 4+ **/
-	int mTargetsToStation = -1;
-
+	/** Was fuel transferred from station to vehicle during the current docking */
+	UPROPERTY( SaveGame )
 	bool mWasFuelAdded = false;
-	float mLastNecessaryRefuelTime = 0.0f;
-	float mTimeEnteringStation = 0.0f;
 
-	/**
-	 * The time a vehicle will wait at a station until concluding that the station will not provide any fuel
-	 */
-	UPROPERTY( EditDefaultsOnly, Category = "SelfDriving" )
-	float mTimeToWaitForFuel = 5.0f;
+	float mTimeStationWasEntered = 0.0f;
 
 	/**
 	 * The minimum time from when the vehicle enters a station until it leaves that station

@@ -2,10 +2,9 @@
 
 #include "Hologram/FGJumpPadLauncherHologram.h"
 #include "Components/StaticMeshComponent.h"
-#include "AkAudio/Classes/AkComponent.h"
 #include "Components/SplineComponent.h"
-#include "Components/SceneComponent.h"
 #include "FGInstancedSplineMeshComponent.h"
+#include "Components/SceneComponent.h"
 
 AFGJumpPadLauncherHologram::AFGJumpPadLauncherHologram() : Super() {
 	this->mBuildStep = EJumpPadHologramBuildStep::JPHBS_PlacementAndRotation;

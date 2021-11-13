@@ -3,7 +3,6 @@
 #include "Buildables/FGBuildableWidgetSign.h"
 #include "Components/WidgetComponent.h"
 #include "Components/SceneComponent.h"
-#include "FGColoredInstanceMeshProxy.h"
 
 AFGBuildableWidgetSign::AFGBuildableWidgetSign() : Super() {
 	this->mWidgetComponent = CreateDefaultSubobject<UWidgetComponent>(TEXT("WidgetDisplayRoot"));
@@ -23,6 +22,8 @@ AFGBuildableWidgetSign::AFGBuildableWidgetSign() : Super() {
 	this->mAuxilaryColor.G = 0.0;
 	this->mAuxilaryColor.B = 0.0;
 	this->mAuxilaryColor.A = 0.0;
+	this->mEmissive = 0.0;
+	this->mGlossiness = 0.0;
 	this->mDataVersion = 0;
 	this->mAllowColoring = false;
 	this->mWidgetComponent->SetupAttachment(RootComponent);

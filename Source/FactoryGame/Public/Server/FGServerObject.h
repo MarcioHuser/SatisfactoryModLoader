@@ -10,6 +10,12 @@
 #include "FGServerObject.generated.h"
 
 
+struct FServerQueryAddressInfo
+{
+	TSharedPtr< class FInternetAddr > Address;
+	class FClientQuerySocket* QuerySocket = nullptr;
+};
+
 /**
 * Holds information about dedicated servers that we know about
 * Typically, a server gets to be known about by connecting to it
@@ -55,7 +61,7 @@ public:
 
 	uint16 GetBeaconPort() const
 	{
-		return mNetStats.ServerBeaconPort;
+		return ServerBeaconPort;
 	}
 
 	const FServerGameState& GetGameState() const
@@ -105,18 +111,23 @@ public:
 	void ChangeAdminPassword();
 
 	UFUNCTION( BlueprintCallable )
+	void FetchGameState();
+	
+	UFUNCTION( BlueprintCallable )
 	void ChangeClientPassword();
 
 	UFUNCTION( BlueprintCallable )
 	void ChangeServerName( const FString& NewServerName );
 
+	void CustomSerialize(FStructuredArchive::FRecord Record, EServerManagerVersion Version);
 private:
 	void SetAuthenticationToken( const FServerAuthenticationToken& Token );
 	// @todo: Naming is confusing
 	void SetServerName( const FString& ServerName );
 	void NotifyComplexStateChange();
 	void ProcessServerStatePollResponse( const struct FServerStatePollResponse& Beat );
-	void CheckServerHealth();
+	void PollState();
+	class UFGServerManager& GetOuterServerManager() const;
 	
 protected:
 	virtual void BeginDestroy() override;
@@ -137,6 +148,8 @@ protected:
 	/// The actual address of this server, after DNS lookup.
 	UPROPERTY( BlueprintReadOnly, SaveGame )
 	FString Address;
+	
+	TArray< FServerQueryAddressInfo > SolvedAddresses;
 	
 	UPROPERTY( BlueprintReadOnly, SaveGame )
 	FServerAuthenticationToken AuthenticationToken;
@@ -167,6 +180,12 @@ protected:
 
 	UPROPERTY( BlueprintReadOnly, Transient )
 	FString mServerConsole;
+
+	UPROPERTY( BlueprintReadOnly, Transient )
+	int32 ServerNetCL = 0;
+
+	/// The beacon port of this server
+	uint32 ServerBeaconPort = 0;
 	
 	UPROPERTY( Transient )
 	class AFGServerBeaconClient* ServerConnection = nullptr;

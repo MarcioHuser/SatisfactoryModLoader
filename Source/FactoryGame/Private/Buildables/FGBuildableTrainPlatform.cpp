@@ -2,13 +2,14 @@
 
 #include "Buildables/FGBuildableTrainPlatform.h"
 #include "FGTrainPlatformConnection.h"
-#include "FGPowerInfoComponent.h"
 #include "Components/SceneComponent.h"
 
 AFGBuildableTrainPlatform::AFGBuildableTrainPlatform() : Super() {
 	this->mRailroadTrack = nullptr;
 	this->mPlatformConnection0 = CreateDefaultSubobject<UFGTrainPlatformConnection>(TEXT("PlatformConnection0"));
+	this->mPlatformConnections.Add(mPlatformConnection0);
 	this->mPlatformConnection1 = CreateDefaultSubobject<UFGTrainPlatformConnection>(TEXT("PlatformConnection1"));
+	this->mPlatformConnections.Add(mPlatformConnection1);
 	this->mDockedRailroadVehicle = nullptr;
 	this->mStationDockingMaster = nullptr;
 	this->mIsOrientationReversed = false;

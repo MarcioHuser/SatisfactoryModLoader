@@ -27,6 +27,7 @@ public:
 
 	UFUNCTION( exec, CheatBoard, Category = "Resources" )
 	virtual void NoCost( bool enabled );
+
 	UFUNCTION( exec, CheatBoard )
 	virtual bool NoCost_Get();
 
@@ -35,6 +36,12 @@ public:
 
 	UFUNCTION( exec, CheatBoard)
 	virtual bool NoPower_Get();
+
+	UFUNCTION( exec, CheatBoard, Category = "Resources" )
+	virtual void NoFuel( bool enabled );
+
+	UFUNCTION( exec, CheatBoard )
+	virtual bool NoFuel_Get();
 
 	UFUNCTION( exec, CheatBoard, Category = "GUI" )
 	virtual void NoMessages( bool enabled );
@@ -68,6 +75,13 @@ public:
 
 	UFUNCTION( exec, CheatBoard, Category = "Player/Camera" )
 	virtual void PlayerFly( bool flyModeEnabled );
+	
+	UFUNCTION( exec, CheatBoard, Category = "Cheat Manager" )
+	virtual void PlayerAllFly( bool flyModeEnabled);
+
+	UFUNCTION( exec, CheatBoard, Category = "Cheat Manager" )
+	virtual bool PlayerAllFly_Get();
+
 	UFUNCTION( exec, CheatBoard, Category = "Player/Camera" )
 	virtual bool PlayerFly_Get();
 

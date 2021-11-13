@@ -3,9 +3,8 @@
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Hologram/FGConveyorBeltHologram.h"
 #include "Components/SplineComponent.h"
-#include "FGFactoryConnectionComponent.h"
-#include "Components/SceneComponent.h"
 #include "FGInstancedSplineMeshComponent.h"
+#include "Components/SceneComponent.h"
 
 AFGBuildableConveyorBelt::AFGBuildableConveyorBelt() : Super() {
 	this->mMesh = nullptr;

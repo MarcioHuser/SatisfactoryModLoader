@@ -193,10 +193,21 @@ protected:
 	void HandleClearanceSnapping( FVector& newLocation, FRotator& newRotation, const FHitResult& hitResult );
 
 	/**
+	 * Snaps the hologram to the target clearance box.
+	 */
+	void SnapToClearanceBox( const UFGClearanceComponent* targetSnapClearanceComponent, FVector& newLocation, FRotator& newRotation );
+
+	/**
 	 * Function used to determine if a buildable is identical to ourselves in terms of position, rotation, etc.
 	 * Used to avoid overlapping buildables.
 	 */
 	virtual bool IsHologramIdenticalToBuildable( class AFGBuildable* buildable, const FVector& hologramLocationOffset ) const;
+
+	/**
+	 * Function to allow any pre-initialization on the actor before the configuration occurs. This is to allow for
+	 * final checks and to set properties as once were configuring its all const from there
+	 */
+	virtual void PreConfigureActor( class AFGBuildable* inBuildable );
 
 	/**
 	* Configure function: Configuring the actor created from the hologram when executed.
@@ -287,10 +298,10 @@ protected:
 	virtual const FFGAttachmentPoint* SelectCandidateForAttachment( const TArray< const FFGAttachmentPoint* >& Candidates, class AFGBuildable* pBuildable, const FFGAttachmentPoint& BuildablePoint, const FHitResult& HitResult );
 	
 	/**
-	 * Function called in order to attach to another point using one of our own.
+	 * Function called in order to create a transform for attaching an attachment point of our own to another one.
 	 * The attachment points are in local space.
 	 */
-	virtual void AttachToBuildablePoint( class AFGBuildable* pBuildable, const FFGAttachmentPoint& BuildablePoint, const FFGAttachmentPoint& LocalPoint );
+	virtual void CreateAttachmentPointTransform( FTransform& out_transformResult, const FHitResult& HitResult, class AFGBuildable* pBuildable, const FFGAttachmentPoint& BuildablePoint, const FFGAttachmentPoint& LocalPoint );
 
 	void DelayApplyPrimitiveData();
 	void ApplyMeshPrimitiveData( const FFactoryCustomizationData& customizationData );
@@ -305,6 +316,10 @@ protected:
 	//If set to true, the building will be allowed to snap to 45 degree intervals on fonudations instead of only 90 as the default.
 	UPROPERTY( EditDefaultsOnly, Category = "Hologram" )
 	bool mUseGradualFoundationRotations = false;
+
+	/** What kind of grid snapping size to use. */
+	UPROPERTY( EditDefaultsOnly, Category = "Hologram" )
+	float mGridSnapSize;
 
 	/** If the frame mesh should be used to highlight connections in hologram. */
 	uint32 mUseConveyorConnectionFrameMesh : 1;
@@ -346,7 +361,7 @@ protected:
 	class AFGBuildable* mSnappedBuilding;
 
 	UPROPERTY( Transient )
-	const class UFGClearanceComponent* mSnappedClearanceBox;
+	class UFGClearanceComponent* mSnappedClearanceBox;
 
 	bool mDidSnapDuetoClearance;
 
@@ -363,10 +378,6 @@ protected:
 
 	/** Our own attachment point we've used for snapping. */
 	const FFGAttachmentPoint* mLocalSnappedAttachmentPoint;
-
-	/** Whether or not the hologram should align its rotation when snapping with attachment points so that the points face eachother. */
-	UPROPERTY( EditDefaultsOnly, Category = "Hologram" )
-	bool mAlignRotationWithAttachmentPointDirection;
 
 	/** Whether or not we have to snap to an attachment point. */
 	UPROPERTY( EditDefaultsOnly, Category = "Hologram" )

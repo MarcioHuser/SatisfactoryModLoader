@@ -2,9 +2,9 @@
 
 #include "Buildables/FGBuildableRailroadTrack.h"
 #include "FGRailroadTrackConnectionComponent.h"
-#include "Hologram/FGRailroadTrackHologram.h"
 #include "Components/SplineComponent.h"
 #include "Components/SceneComponent.h"
+#include "Hologram/FGRailroadTrackHologram.h"
 #include "FGInstancedSplineMeshComponent.h"
 
 FRailroadTrackPosition::FRailroadTrackPosition(){ }

@@ -2,7 +2,6 @@
 
 #include "WheeledVehicles/FGWheeledVehicle.h"
 #include "Hologram/FGWheeledVehicleHologram.h"
-#include "FGHealthComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 
 void AFGWheeledVehicle::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
@@ -79,11 +78,11 @@ AFGWheeledVehicle::AFGWheeledVehicle() : Super() {
 	this->mIsFollowingPath = false;
 	this->mIsAutopilotEnabled = false;
 	this->mIsPossessed = false;
-	this->mIsAtStation = false;
+	this->mCurrentStation = nullptr;
 	this->mCurrentTarget = nullptr;
 	this->mRecordingStatus = ERecordingStatus::RS_NoRecording;
 	this->mSimulatedVehicle = nullptr;
-	this->mTimeToWaitForFuel = 5.0;
+	this->mWasFuelAdded = false;
 	this->mMinimumTimeAtStation = 10.0;
 	this->mIsGhosting = false;
 	this->mHasAutomatedFuelConsumption = false;
@@ -114,6 +113,7 @@ void AFGWheeledVehicle::OnTransferComplete_Implementation(){ }
 void AFGWheeledVehicle::PreSaveGame_Implementation(int32 saveVersion, int32 gameVersion){ }
 void AFGWheeledVehicle::PostLoadGame_Implementation(int32 saveVersion, int32 gameVersion){ }
 FVector AFGWheeledVehicle::GetRealActorLocation(){ return FVector(); }
+FRotator AFGWheeledVehicle::GetRealActorRotation(){ return FRotator(); }
 FLinearColor AFGWheeledVehicle::GetActorRepresentationColor(){ return FLinearColor(); }
 EFogOfWarRevealType AFGWheeledVehicle::GetActorFogOfWarRevealType(){ return EFogOfWarRevealType(); }
 float AFGWheeledVehicle::GetActorFogOfWarRevealRadius(){ return float(); }
@@ -132,7 +132,7 @@ void AFGWheeledVehicle::HandleDestroyFoliage(){ }
 bool AFGWheeledVehicle::FilterFuelClasses(TSubclassOf< UObject > object, int32 idx) const{ return bool(); }
 bool AFGWheeledVehicle::ConsumesFuel(){ return bool(); }
 float AFGWheeledVehicle::GetFuelBurnRatio(){ return float(); }
-AFGDrivingTargetList* AFGWheeledVehicle::GetTargetList(){ return nullptr; }
+AFGDrivingTargetList* AFGWheeledVehicle::GetTargetList(bool createIfNeeded){ return nullptr; }
 bool AFGWheeledVehicle::GetPathVisibility(){ return bool(); }
 void AFGWheeledVehicle::Multicast_PlayFoliageDestroyedEffect_Implementation( UParticleSystem* destroyEffect,  UAkAudioEvent* destroyAudioEvent, FVector location){ }
 void AFGWheeledVehicle::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult){ }
@@ -142,9 +142,7 @@ void AFGWheeledVehicle::MeasureVelocities(float deltaTime){ }
 FText AFGWheeledVehicle::GetDefaultMapName(TSubclassOf< AFGWheeledVehicle > vehicleType){ return FText(); }
 AFGDrivingTargetList* AFGWheeledVehicle::GetActiveTargetList() const{ return nullptr; }
 void AFGWheeledVehicle::SyncWithSimulation(){ }
-void AFGWheeledVehicle::StartDockingProcess(){ }
-void AFGWheeledVehicle::EndDockingProcess(){ }
-bool AFGWheeledVehicle::ShouldStayAtDock() const{ return bool(); }
+bool AFGWheeledVehicle::ShouldStayAtDock(){ return bool(); }
 float AFGWheeledVehicle::GetTotalFuelEnergy() const{ return float(); }
 float AFGWheeledVehicle::CalculateFuelNeed() const{ return float(); }
 float AFGWheeledVehicle::GetMaxFuelEnergy() const{ return float(); }
@@ -209,7 +207,6 @@ void AFGWheeledVehicle::Server_LoadPath_Implementation( AFGDrivingTargetList* ta
 void AFGWheeledVehicle::FindSavedPaths(const FString& textFilter, bool filterOnVehicleType, TArray< AFGSavedWheeledVehiclePath* >& result) const{ }
 void AFGWheeledVehicle::OnRep_IsFollowingPath(){ }
 void AFGWheeledVehicle::OnRep_SimulationMovement(){ }
-void AFGWheeledVehicle::OnRep_CurrentTarget(){ }
 void AFGWheeledVehicle::OnRep_RecordingStatus(){ }
 void AFGWheeledVehicle::OnRep_IsGhosting(){ }
 void AFGWheeledVehicle::OnIsSimulatedChanged(){ }
@@ -220,7 +217,6 @@ void AFGWheeledVehicle::OnSimulationTargetReached(AFGTargetPoint* newTarget){ }
 void AFGWheeledVehicle::PickFirstTargetAfterStation(){ }
 AFGTargetPoint* AFGWheeledVehicle::SpawnNewTargetPoint(const FVector& location, const FRotator& rotation, AFGDrivingTargetList* targetList, int targetSpeed, AFGTargetPoint* afterTarget){ return nullptr; }
 void AFGWheeledVehicle::OnTargetWasForceClaimed( AFGTargetPoint* target,  AFGWheeledVehicle* claimant){ }
-void AFGWheeledVehicle::OnDockingTargetWasClaimed( AFGTargetPoint* target){ }
 UFGVehicleCollisionBoxComponent* AFGWheeledVehicle::FindCollisionBox() const{ return nullptr; }
 void AFGWheeledVehicle::StartGhosting(){ }
 void AFGWheeledVehicle::TryLeaveSimulatedMode(){ }

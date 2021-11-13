@@ -53,25 +53,25 @@ public:
 
 	UPROPERTY( BlueprintAssignable, Category = "Server Management" )
 	FOnServerAboutToBeRemoved OnServerAboutToBeRemoved;
+
+	UFUNCTION( BlueprintCallable, BlueprintPure )
+	static int32 GetClientNetCL();
 	
 	void SaveState();
+
+	void ProcessPollResponses( FClientQuerySocket* Socket );
+
+	FClientQuerySocket* GetQuerySocket( const FName& Protocol );
 
 protected:
 	UPROPERTY( BlueprintReadOnly )
 	TArray<class UFGServerObject*> mServers;
 
 private:
-	TUniquePtr< FClientQuerySocket > mServerQuerySocket;
-	TUniquePtr< FRunnableThread > mServerQueryThread;
+	TArray< TUniquePtr< FClientQuerySocket > > mServerQuerySockets;
+	TArray< TUniquePtr< FRunnableThread > > mServerQueryThreads;
 	
 	bool mRunningFromConsole = false;
-
-	enum class EServerManagerVersion : uint8
-	{
-		SVM_InitialVersion,
-		SVM_CurrentVersion = SVM_InitialVersion,
-		SVM_EndVersions
-	};
 
 	void CustomSerialize(FArchive& Ar, EServerManagerVersion Version);
 };

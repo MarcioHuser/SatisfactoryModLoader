@@ -11,6 +11,8 @@ void UFGCheatManager::NoCost(bool enabled){ }
 bool UFGCheatManager::NoCost_Get(){ return bool(); }
 void UFGCheatManager::NoPower(bool enabled){ }
 bool UFGCheatManager::NoPower_Get(){ return bool(); }
+void UFGCheatManager::NoFuel(bool enabled){ }
+bool UFGCheatManager::NoFuel_Get(){ return bool(); }
 void UFGCheatManager::NoMessages(bool enabled){ }
 bool UFGCheatManager::NoMessages_Get(){ return bool(); }
 void UFGCheatManager::TurboBuildMode(bool enabled){ }
@@ -22,6 +24,8 @@ void UFGCheatManager::GiveItemsSingle(TSubclassOf<  UFGItemDescriptor > resource
 void UFGCheatManager::GiveResourceSinkCoupons(int32 NumCoupons){ }
 void UFGCheatManager::DrawSphere(int32 radius){ }
 void UFGCheatManager::PlayerFly(bool flyModeEnabled){ }
+void UFGCheatManager::PlayerAllFly(bool flyModeEnabled){ }
+bool UFGCheatManager::PlayerAllFly_Get(){ return bool(); }
 bool UFGCheatManager::PlayerFly_Get(){ return bool(); }
 void UFGCheatManager::PlayerNoClipModeOnFly(bool ghostMode){ }
 bool UFGCheatManager::PlayerNoClipModeOnFly_Get(){ return bool(); }
