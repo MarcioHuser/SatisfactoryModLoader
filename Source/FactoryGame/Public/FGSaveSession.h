@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "UObject/Object.h"
 #include "FGSaveSystem.h"
 #include "FGObjectReference.h"
@@ -75,6 +76,15 @@ public:
 	/** Returns saved visibility of the session */
 	UFUNCTION( BlueprintPure, Category = "FactoryGame|Save Session" )
 	static FORCEINLINE TEnumAsByte<ESessionVisibility> GetSaveSessionVisibility( UPARAM( ref ) FSaveHeader& header ) { return header.SessionVisibility; }
+
+	/** Returns Metadata from save header */
+	UFUNCTION( BlueprintPure, Category = "FactoryGame|Save Session" )
+	static FORCEINLINE FString GetLoadedHeaderMetadata( UPARAM( ref ) FSaveHeader& header ) { return header.ModMetadata; }
+
+	/** Returns whether or not this save has ever been saved with mods */
+	UFUNCTION( BlueprintPure, Category = "FactoryGame|Save Session" )
+	static FORCEINLINE bool GetIsModded( UPARAM( ref ) FSaveHeader& header ) { return header.IsModdedSave; }
+
 
 	/** Returns the name of this session */
 	UE_DEPRECATED( 4.20, "Use GetSaveSessionName instead" )
@@ -167,6 +177,15 @@ public:
 
 	/** Returns true if we have called SaveGame this frame */
 	FORCEINLINE bool HasTriggedSaveThisFrame() const { return mPendingSaveWorldHandle.IsValid(); }
+
+	/** Set the ModMetadata. This does not append. If you wish to append, use the getter and manually append whatever data you desire to the existing */
+	UFUNCTION( BlueprintCallable, Category="Factory Game|SaveSession" )
+	void SetModMetadata( FString newMetadata ) { mModMetadata = newMetadata; }
+
+	/** Set the ModMetadata. This does not append. If you wish to append, use the getter and manually append whatever data you desire to the existing */
+	UFUNCTION( BlueprintPure, Category = "Factory Game|SaveSession" )
+	FORCEINLINE FString GetModMetadata() { return mModMetadata; }
+
 protected:
 	/** Make sure we can get a world easily */
 	class UWorld* GetWorld() const override;
@@ -223,7 +242,7 @@ protected:
 	/** Called when a save actor placed in the level is destroyed */
 	UFUNCTION()
 	void OnActorDestroyed( AActor* destroyedActor );
-public: // MODDING EDIT protected -> public
+protected:
 	/** Actors in the world that's destroyed */
 	TArray< FObjectReferenceDisc > mDestroyedActors;
 
@@ -264,6 +283,12 @@ public: // MODDING EDIT protected -> public
 	
 	/** Callback to end of frame to be removed after save */
 	FDelegateHandle mPendingSaveWorldHandle;
+
+	/** Cached ModMetadata - This is cached when loading a save from the loaded SaveHeader. Use the getter/setter to modify this property. 
+	*	This is the value that will be written to metadata next save.
+	*/
+	FString mModMetadata;
+
 private:
 	// We want the game state to be able to trigger save games properly without exposing the nitty gritty details to the interface
 	friend class AFGGameMode;

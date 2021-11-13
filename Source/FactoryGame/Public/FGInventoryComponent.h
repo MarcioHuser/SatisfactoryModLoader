@@ -2,8 +2,8 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "SharedInventoryStatePtr.h"
-#include "FactoryGame.h" // MODDING EDIT
 #include "FGSaveInterface.h"
 #include "Resources/FGItemDescriptor.h"
 #include "ItemAmount.h"
@@ -33,7 +33,8 @@ public:
 	friend FArchive& operator<<( FArchive& ar, FInventoryItem& item );
 
 	/** @return true if this is a valid item; otherwise false. */
-	FORCEINLINE bool IsValid() const { return ::IsValid( ItemClass ); }
+	FORCEINLINE bool IsValid() const { return ItemClass != nullptr; }
+	//FORCEINLINE bool IsValid() const { return ::IsValid( ItemClass ); }
 
 	/** @return true if this item has a state; otherwise false. */
 	FORCEINLINE bool HasState() const { return ItemState.IsValid(); }
@@ -188,7 +189,10 @@ public:
 	 * @return true if the index is a valid index.
 	 */
 	UFUNCTION( BlueprintPure, Category = "Inventory" )
-	bool IsValidIndex( int32 idx ) const;
+	FORCEINLINE bool IsValidIndex( int32 idx ) const
+	{
+		return idx >= 0 && idx < mInventoryStacks.Num();
+	}
 
 	/**
 	 * @return first empty index, -1 if none is found
@@ -285,15 +289,39 @@ public:
 
 	/** Check if the entire inventory is empty. */
 	UFUNCTION( BlueprintPure, Category = "Inventory" )
-	bool IsEmpty() const;
+	FORCEINLINE bool IsEmpty() const
+	{
+		for( const FInventoryStack& stack : mInventoryStacks )
+		{
+			if( stack.HasItems() )
+			{
+				return false;
+			}
+		}
+		return true;
+	}
 
 	/** Check if the given index is empty. */
 	UFUNCTION( BlueprintPure, Category = "Inventory" )
-	bool IsIndexEmpty( int32 idx ) const;
-
+	FORCEINLINE bool IsIndexEmpty( int32 idx ) const
+	{
+		fgcheckf( mInventoryStacks.Num() > 0 , TEXT( "Inventory need to be initialized before use %s" ), SHOWVAR( mInventoryStacks.Num() ) );
+		
+		if( !IsValidIndex( idx ) )
+		{
+			UE_LOG( LogGame, Warning, TEXT( "RemoveFromIndex failed cause invalid index (%i) in component '%s'" ), idx, *GetName() );
+			return false;
+		}
+		
+		return !mInventoryStacks[ idx ].HasItems();
+	}
+	
 	/** Opposite of IsIndexEmpty */
 	UFUNCTION( BlueprintPure, Category = "Inventory" )
-	bool IsSomethingOnIndex( int32 idx ) const;
+	FORCEINLINE bool IsSomethingOnIndex( int32 idx ) const
+	{
+		return !IsIndexEmpty( idx );
+	}
 
 	/** Clears the inventory, ALL items will be forever gone! */
 	UFUNCTION( BlueprintCallable, Category = "Inventory" )
@@ -346,7 +374,7 @@ public:
 
 	/** The total size of the inventory, when accessing inventory linearly using indices. */
 	UFUNCTION( BlueprintPure, Category = "Inventory" )
-	int32 GetSizeLinear() const { return mInventoryStacks.Num(); }
+	FORCEINLINE int32 GetSizeLinear() const { return mInventoryStacks.Num(); }
 
 	/** Returns index of the stack that has percentually the most items */
 	UFUNCTION( BlueprintPure, Category = "Inventory" )
@@ -483,7 +511,7 @@ protected:
 	/** Tracks whether or not its necessary to replicate arbitrary slot sizes to clients */
 	bool mDoRepArbitrarySlotSizes;
 
-public: //MODDING EDIT private -> public
+private:
 	/** All items in the inventory */
 	UPROPERTY( SaveGame, ReplicatedUsing = OnRep_InventoryStacks )
 	TArray< FInventoryStack > mInventoryStacks;
@@ -492,17 +520,14 @@ public: //MODDING EDIT private -> public
 	TArray< FInventoryStack > mClientLastFrameStacks;
 
 	/** In some rare cases we don't want to use the StackSize to limit the slot, so this way we can have larger or smaller slots */
-	// MODDING EDIT BlueprintReadOnly
-	UPROPERTY( SaveGame, Replicated, BlueprintReadOnly )
+	UPROPERTY( SaveGame, Replicated )
 	TArray< int32 > mArbitrarySlotSizes;
 
 	/** This are the allowed inventory items, this we we can "filter" in BluePrint as well. */
-	// MODDING EDIT BlueprintReadOnly
-	UPROPERTY( SaveGame, Replicated , BlueprintReadOnly)
+	UPROPERTY( SaveGame, Replicated )
 	TArray< TSubclassOf < UFGItemDescriptor > > mAllowedItemDescriptors;
 
 	/** Can stuff in this inventory be rearranged, that is moved from one slot to the other? */
-	// MODDING EDIT BlueprintReadOnly
-	UPROPERTY( SaveGame, Replicated , BlueprintReadOnly)
+	UPROPERTY( SaveGame, Replicated )
 	bool mCanBeRearrange;
 };

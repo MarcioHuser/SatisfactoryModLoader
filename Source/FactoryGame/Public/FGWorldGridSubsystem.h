@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 
 #include "FGSaveInterface.h"
@@ -37,7 +38,7 @@ struct FACTORYGAME_API FFGWorldGridCell
 	GENERATED_BODY()
 
 	FFGWorldGridCell();
-	FFGWorldGridCell( const FFGWorldGridCellData& Data, const FVector& WorldLocation, int32 CellIndex );
+	FFGWorldGridCell( const FFGWorldGridCellData& Data, const FVector& WorldLocation, int32 CellIndex, float DefaultElevation );
 
 	float GetElevation() const;
 
@@ -49,6 +50,9 @@ struct FACTORYGAME_API FFGWorldGridCell
 
 	/** Index of this cell in the world grid array. */
 	int32 mCellIndex;
+
+	/** Default elevation of this grid cell. */
+	float mDefaultElevation;
 
 	/** Function bound to mTraceDelegate */
 	void OnTraceCompleted( const FTraceHandle& Handle, FTraceDatum& Data );
@@ -65,14 +69,14 @@ class FACTORYGAME_API UFGWorldGridDataAsset : public UDataAsset
 public:
 	void AssignWorldCells( TArray<FFGWorldGridCellData>&& Cells, const FVector2D& GridMin, const FVector2D& GridMax, int32 Divisions );
 
-	const TArray<FFGWorldGridCellData>& GetWorldGridCells() const { return mWorldCells; }
+	FORCEINLINE  const TArray<FFGWorldGridCellData>& GetWorldGridCells() const { return mWorldCells; }
 	
-	int32 GetNumWorldGridDivisions() const { return mGridDivisions; }
+	FORCEINLINE int32 GetNumWorldGridDivisions() const { return mGridDivisions; }
 
-	const FVector2D& GetGridMin() const { return mWorldGridMin; }
-	const FVector2D& GetGridMax() const { return mWorldGridMax; }
+	FORCEINLINE  const FVector2D& GetGridMin() const { return mWorldGridMin; }
+	FORCEINLINE  const FVector2D& GetGridMax() const { return mWorldGridMax; }
 	
-	FVector2D GetGridSize() const { return mWorldGridMax - mWorldGridMin; }
+	FORCEINLINE  FVector2D GetGridSize() const { return mWorldGridMax - mWorldGridMin; }
 
 	UFUNCTION( BlueprintCallable, Category = "World Grid", meta = ( CallInEditor = "true" ) )
     void DebugDraw();
@@ -110,16 +114,32 @@ public:
 
 	void UpdateCellContainingBuildable( class AFGBuildable* pBuildable );
 
-	UFUNCTION( BlueprintPure, Category = "WorldGrid")
-	FVector2D GetWorldGridCoordinatesForLocation( const FVector& WorldLocation ) const;
+	FORCEINLINE FIntPoint GetWorldGridCoordinatesForLocation( const FVector& WorldLocation ) const;
+
+	FORCEINLINE FFGWorldGridCell* GetCellByIndex( int32 Index );
+	FORCEINLINE const FFGWorldGridCell* GetCellByIndex( int32 Index ) const;
+
+	FORCEINLINE FFGWorldGridCell* GetCellFromGridCoordinates( const FIntPoint& Coords );
+	FORCEINLINE const FFGWorldGridCell* GetCellFromGridCoordinates( const FIntPoint& Coords ) const;
 	
 	FFGWorldGridCell* GetCellContainingWorldLocation( const FVector& WorldLocation );
-	int32 GetCellIndexFromWorldLocation( const FVector& WorldLocation ) const;
+	FFGWorldGridCell* GetClosestCellToWorldLocation( const FVector& WorldLocation );
 
+	FORCEINLINE int32 GetCellIndexFromGridCoordinates( const FIntPoint& Coords ) const;
+	FORCEINLINE int32 GetCellIndexFromWorldLocation( const FVector& WorldLocation ) const;
+
+	FORCEINLINE FVector GetCellWorldLocationFromGridCoords( const FIntPoint& Coords ) const;
+	FORCEINLINE void GetCellWorldLocationFromGridCoords( const FIntPoint& Coords, FVector& OutVector ) const;
+	
+	float GetCellElevationFromWorldLocation( const FVector& WorldLocation ) const;
+	float GetCellElevationFromGridCoordinates( const FIntPoint& Coords ) const;
+	
 	TArray<const FFGWorldGridCell*> GetCellNeighbours( const FFGWorldGridCell* Cell ) const;
-	TArray<const FFGWorldGridCell*> GetCellNeighboursFromindex( int32 Index ) const;
+	TArray<const FFGWorldGridCell*> GetCellNeighboursFromIndex( int32 Index ) const;
 
-	FVector2D GetCellSize() const;
+	TArray<int32> GetCellNeighbourIndicesFromIndex( int32 Index ) const;
+
+	 FVector2D GetCellSize() const;
 
 	// Begin AActor interface
 	virtual void BeginPlay() override;

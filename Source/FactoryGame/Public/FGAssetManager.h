@@ -2,13 +2,14 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Engine/AssetManager.h"
 #include "IncludeInBuild.h"
 #include "FGAssetManager.generated.h"
 
 /** Help us discard packages that shouldn't be cooked and add assets that's should always be cooked */
 UCLASS()
-class UFGAssetManager : public UAssetManager
+class FACTORYGAME_API UFGAssetManager : public UAssetManager
 {
 	GENERATED_BODY()
 public:

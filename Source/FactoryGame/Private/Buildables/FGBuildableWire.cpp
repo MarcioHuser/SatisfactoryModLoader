@@ -2,22 +2,27 @@
 
 #include "Buildables/FGBuildableWire.h"
 #include "Hologram/FGWireHologram.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/SceneComponent.h"
 
 AFGBuildableWire::AFGBuildableWire() : Super() {
-	this->mMaxLength = 5000;
-	this->mLengthPerCost = 100;
-	this->mWireMesh = CreateDefaultSubobject<UHierarchicalInstancedStaticMeshComponent>(TEXT("MainMesh")); this->mWireMesh->SetupAttachment(this->RootComponent);
+	this->mMaxLength = 5000.0;
+	this->mLengthPerCost = 100.0;
+	this->mCircuitType = nullptr;
+	this->mWireMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MainMesh"));
+	this->mConnections[0] = nullptr;
+	this->mConnections[1] = nullptr;
+	this->mLocations[0].X = 0.0;;
+	this->mLocations[0].Y = 0.0;;
+	this->mLocations[0].Z = 0.0;;
+	this->mLocations[1].X = 0.0;;
+	this->mLocations[1].Y = 0.0;;
+	this->mLocations[1].Z = 0.0;;
 	this->mHologramClass = AFGWireHologram::StaticClass();
-	this->MaxRenderDistance = -1;
-	this->mFactoryTickFunction.TickGroup = TG_PrePhysics; this->mFactoryTickFunction.EndTickGroup = TG_PrePhysics; this->mFactoryTickFunction.bTickEvenWhenPaused = false; this->mFactoryTickFunction.bCanEverTick = false; this->mFactoryTickFunction.bStartWithTickEnabled = true; this->mFactoryTickFunction.bAllowTickOnDedicatedServer = true; this->mFactoryTickFunction.TickInterval = 0;
-	this->mPrimaryColor.R = -1; this->mPrimaryColor.G = -1; this->mPrimaryColor.B = -1; this->mPrimaryColor.A = 1;
-	this->mSecondaryColor.R = -1; this->mSecondaryColor.G = -1; this->mSecondaryColor.B = -1; this->mSecondaryColor.A = 1;
+	this->mDismantleEffectClassName = FSoftClassPath("None");
 	this->mBuildEffectClassName = FSoftClassPath("/Game/FactoryGame/Buildable/Factory/-Shared/BP_MaterialEffect_WireBuild.BP_MaterialEffect_WireBuild_C");
-	this->mHighlightParticleClassName = FSoftClassPath("/Game/FactoryGame/Buildable/-Shared/Particle/NewBuildingPing.NewBuildingPing_C");
-	this->SetReplicates(true);
-	this->NetDormancy = DORM_DormantAll;
-	this->NetCullDistanceSquared = 5624999936;
+	this->NetDormancy = ENetDormancy::DORM_DormantAll;
+	this->mWireMesh->SetupAttachment(RootComponent);
 }
 void AFGBuildableWire::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const{ }
 void AFGBuildableWire::Serialize(FArchive& ar){ Super::Serialize(ar); }
@@ -28,7 +33,7 @@ UFGCircuitConnectionComponent* AFGBuildableWire::GetOppositeConnection(const  UF
 void AFGBuildableWire::Disconnect(){ }
 void AFGBuildableWire::DisplayDebug( UCanvas* canvas, const  FDebugDisplayInfo& debugDisplay, float& YL, float& YPos){ }
 void AFGBuildableWire::UpdateWireMesh(){ }
-void AFGBuildableWire::Connect( UFGCircuitConnectionComponent* first,  UFGCircuitConnectionComponent* second){ }
+bool AFGBuildableWire::Connect( UFGCircuitConnectionComponent* first,  UFGCircuitConnectionComponent* second){ return bool(); }
 bool AFGBuildableWire::IsConnected() const{ return bool(); }
 void AFGBuildableWire::OnRep_Locations(){ }
 FName AFGBuildableWire::mWireMeshTag = FName();

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Replication/FGReplicationDetailActor_GeneratorFuel.h"
 #include "FGReplicationDetailActor_GeneratorNuclear.generated.h"
 
@@ -22,6 +23,8 @@ public:
 	FORCEINLINE UFGInventoryComponent* GetWasteInventory() const { return mWasteInventory; }
 
 protected:
-	UPROPERTY( Replicated )
+	using AFGReplicationDetailActor_BuildableFactory::OnRep_Inventory;
+
+	UPROPERTY( ReplicatedUsing = OnRep_Inventory )
 	class UFGInventoryComponent* mWasteInventory;
 };

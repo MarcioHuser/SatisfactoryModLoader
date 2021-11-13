@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Equipment/FGBuildGun.h"
 #include "FGInventoryComponent.h"
 #include "FGBuildGunDismantle.generated.h"
@@ -49,6 +50,15 @@ public:
 	/** Toggle between whether the multi select should be in effect as actors are being highlighted */
 	UFUNCTION( BlueprintCallable, Category = "BuildGunState|Dismantle" )
 	void SetMultiDismantleState( bool isActive ) { mIsMultiSelectActive = isActive; Internal_OnMultiDismantleStateChanged( isActive ); }
+
+	/** Toggle between whether the multi select should be building specific */
+	UFUNCTION( BlueprintCallable, Category = "BuildGunState|Dismantle" )
+	void SetMultiDismantleToSingleType( bool isSingleType )
+	{
+		mUseSingleTypeMultiDismantle = isSingleType;
+		Internal_OnSingleTypeMultiDismantleChanged( isSingleType );
+	}
+
 
 	/** Gets the selected actor; null if none selected. */
 	UFUNCTION( BlueprintPure, Category = "BuildGunState|Dismantle" )
@@ -104,8 +114,16 @@ public:
 	UPROPERTY( BlueprintAssignable, Category = "BuildGunState|Dismantle" )
 	FOnMultiDismantleStateChanged OnMultiDismantleStateChanged;
 
+	/** Material used on stencil proxies, needed to overwrite decal material domain shaders.
+	 * otherwise the depth is incorrect in the stencil buffer. */
+	UPROPERTY( EditDefaultsOnly )
+	UMaterialInterface* mHoverProxyMaterial;
+	
 protected:
 	void Internal_OnMultiDismantleStateChanged(bool newValue);
+	void Internal_OnSingleTypeMultiDismantleChanged( bool newValue );
+
+	void UpdateHighlightedActors();
 
 private:
 	/** Client selects actor, then tells the server what to dismantle. This function does that! */
@@ -139,9 +157,28 @@ private:
 	/** Validates the list of pending dismantle actors and removes any stale pointers */
 	void ClearStaleDismantleActors();
 
+	/** Adds instances to the proxy component( s ) */
+	void CreateStencilProxy( AActor* selected );
+
+	void DestroySingleStencilProxy( AActor* actor );
+	
+	void DestroyStencilProxies(bool destroyComponents = true);
+
+	/** Reset stencil value on every mesh component that has a render state. */
+	void ResetStencilValues( AActor* actor );
 private:
 	/** State bool for whether multi-select is in effect */
 	bool mIsMultiSelectActive;
+
+	/** State bool for whether multi-select should only select a single buildable type */
+	bool mUseSingleTypeMultiDismantle;
+
+	/** Whether or not we should remove from multi select instead of adding to it. */
+	bool mShouldRemoveFromMultiSelect;
+
+	/** The decided upon type to use for multi dismantle ( Will be the first or most common selected buildable ) */
+	UPROPERTY()
+	TSubclassOf< AActor > mMultiDismantleSpecifiedType;
 
 	/** If true then this state won't broadcast when peek refunds have been updated. Used so that there won't be more than one broadcast per tick. */
 	bool mDisablePeekDismantleRefundsBroadcast;
@@ -153,6 +190,10 @@ private:
 	/** The actor to dismantle (simulated locally on client). */
 	UPROPERTY(Transient)
 	TArray<class AActor*> mPendingDismantleActors;
+
+	/** Stencil meshes to mark dismantle with */
+	UPROPERTY(Transient)
+	TMap< UStaticMesh*, UInstancedStaticMeshComponent*> mPendingDismantleStencilMeshes;
 	
 	/** Cached dismantle refunds on server that is replicated */
 	UPROPERTY(Transient, ReplicatedUsing = OnRep_PeekDismantleRefund )

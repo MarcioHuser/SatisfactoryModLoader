@@ -2,12 +2,13 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "AkComponent.h"
 #include "FGSoundSplineComponent.generated.h"
 
 //@todo-cleanup Is this still in use? Move to Ak maybe?
 UCLASS(meta=(BlueprintSpawnableComponent))
-class UFGSoundSplineComponent : public UAkComponent
+class FACTORYGAME_API UFGSoundSplineComponent : public UAkComponent
 {
 	GENERATED_BODY()
 public:
@@ -27,10 +28,10 @@ public:
 	FORCEINLINE float GetEmitterInterval( float newEmitterInterval ) const { return mEmitterInterval; }
 
 	// Begin UAkComponent interface
-	virtual void UpdateGameObjectPosition(); // override; // MODDING EDIT: original is not virtual
+	virtual void UpdateGameObjectPosition(); // MODDING EDIT Wwise... override;
 	// End UAkComponent interface
 protected:
-	/** Distance beween each emitter on our parent spline, this might be scaled slightly so that we get a point on both start and end */
+	/** Distance between each emitter on our parent spline, this might be scaled slightly so that we get a point on both start and end */
 	UPROPERTY( EditAnywhere, Category="Audio",Meta=(UIMin=100,UIMax=1000,ClampMin=50))
 	float mEmitterInterval;
 };

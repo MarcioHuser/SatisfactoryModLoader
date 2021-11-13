@@ -2,9 +2,11 @@
 #include "PluginDescriptor.h"
 #include "SatisfactoryModLoader.h"
 #include "Interfaces/IPluginManager.h"
-#include "Module/WorldModuleManager.h"
 #include "Util/ImageLoadingUtil.h"
 #include "Json.h"
+
+//We only want to enforce plugin dependency versions outside of the editor
+#define ENFORCE_PLUGIN_DEPENDENCY_VERSIONS !WITH_EDITOR
 
 void FSMLPluginDescriptorMetadata::SetupDefaults(const FPluginDescriptor& PluginDescriptor) {
     this->Version = FVersion(PluginDescriptor.Version, 0, 0);
@@ -95,7 +97,7 @@ TArray<FModInfo> UModLoadingLibrary::GetLoadedMods() {
     
     const TArray<TSharedRef<IPlugin>> EnabledPlugins = IPluginManager::Get().GetEnabledPlugins();
     for (const TSharedRef<IPlugin>& Plugin : EnabledPlugins) {
-        if (Plugin->GetType() == EPluginType::Mod) {
+        if (IsPluginAMod(Plugin.Get())) {
             PopulatePluginModInfo(Plugin.Get(), OutModInfoList.AddDefaulted_GetRef());
         }
     }
@@ -109,7 +111,7 @@ bool UModLoadingLibrary::GetLoadedModInfo(const FString& Name, FModInfo& OutModI
     }
     const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(Name);
 
-    if (Plugin.IsValid() && Plugin->IsEnabled() && Plugin->GetType() == EPluginType::Mod) {
+    if (Plugin.IsValid() && Plugin->IsEnabled() && IsPluginAMod(*Plugin)) {
         PopulatePluginModInfo(*Plugin.Get(), OutModInfo);
         return true;
     }
@@ -117,16 +119,13 @@ bool UModLoadingLibrary::GetLoadedModInfo(const FString& Name, FModInfo& OutModI
 }
 
 void UModLoadingLibrary::Initialize(FSubsystemCollectionBase& Collection) {
-    //Add some callbacks to handle plugins being mounted later in the lifecycle gracefully
+	//Add some callbacks to handle plugins being mounted later in the lifecycle gracefully
     IPluginManager::Get().OnNewPluginCreated().AddUObject(this, &UModLoadingLibrary::OnNewPluginCreated);
     IPluginManager::Get().OnNewPluginMounted().AddUObject(this, &UModLoadingLibrary::OnNewPluginCreated);
 
     //Initialize metadata and check dependencies for plugins that have already been loaded
     ReloadPluginMetadata();
     VerifyPluginDependencies();
-
-    //TODO Feels really out of place here, but making a separate subsystem just for registering world loading hooks is odd
-    AWorldModuleManager::RegisterModuleManager();
 }
 
 FSMLPluginDescriptorMetadata UModLoadingLibrary::FindMetadataOrFallback(IPlugin& Plugin) {
@@ -143,6 +142,20 @@ FSMLPluginDescriptorMetadata UModLoadingLibrary::FindMetadataOrFallback(IPlugin&
     return DefaultMetadata;
 }
 
+bool UModLoadingLibrary::IsPluginAMod(IPlugin& Plugin) {
+	//Mod plugins are always considered mods
+	if (Plugin.GetType() == EPluginType::Mod) {
+		return true;
+	}
+	//Project plugins are considered mods too when we're built with editor
+#if WITH_EDITOR
+	if (Plugin.GetType() == EPluginType::Project) {
+		return true;
+	}
+#endif
+	return false;
+}
+
 FModInfo UModLoadingLibrary::CreateFactoryGameModInfo() {
     const int64 ChangelistNum = FEngineVersion::Current().GetChangelist();
     FModInfo ResultModInfo{};
@@ -156,11 +169,12 @@ FModInfo UModLoadingLibrary::CreateFactoryGameModInfo() {
 }
 
 void UModLoadingLibrary::VerifyPluginDependencies() {
+#if ENFORCE_PLUGIN_DEPENDENCY_VERSIONS
     TArray<FString> MismatchedDependencies;
 
     const TArray<TSharedRef<IPlugin>> EnabledPlugins = IPluginManager::Get().GetEnabledPlugins();
     for (const TSharedRef<IPlugin>& Plugin : EnabledPlugins) {
-        if (Plugin->GetType() == EPluginType::Mod) {
+        if (IsPluginAMod(Plugin.Get())) {
             VerifyPluginDependencies(Plugin.Get(), MismatchedDependencies);
         }
     }
@@ -169,16 +183,19 @@ void UModLoadingLibrary::VerifyPluginDependencies() {
         const FString ErrorList = FString::Join(MismatchedDependencies, TEXT("\n"));
         UE_LOG(LogSatisfactoryModLoader, Fatal, TEXT("Found mismatched dependencies versions in the environment. Loading cannot continue: \n%s"), *ErrorList);
     }
+#endif
 }
 
 void UModLoadingLibrary::VerifySinglePluginDependencies(IPlugin& Plugin) {
-    TArray<FString> MismatchedDependencies;
-    VerifyPluginDependencies(Plugin, MismatchedDependencies);
+#if ENFORCE_PLUGIN_DEPENDENCY_VERSIONS
+	TArray<FString> MismatchedDependencies;
+	VerifyPluginDependencies(Plugin, MismatchedDependencies);
 
-    if (MismatchedDependencies.Num()) {
-        const FString ErrorList = FString::Join(MismatchedDependencies, TEXT("\n"));
-        UE_LOG(LogSatisfactoryModLoader, Fatal, TEXT("Found mismatched dependencies versions in the environment. Loading cannot continue: \n%s"), *ErrorList);
-    }
+	if (MismatchedDependencies.Num()) {
+		const FString ErrorList = FString::Join(MismatchedDependencies, TEXT("\n"));
+		UE_LOG(LogSatisfactoryModLoader, Fatal, TEXT("Found mismatched dependencies versions in the environment. Loading cannot continue: \n%s"), *ErrorList);
+	}
+#endif
 }
 
 void UModLoadingLibrary::VerifyPluginDependencies(IPlugin& Plugin, TArray<FString>& MismatchedDependencies) {
@@ -233,7 +250,7 @@ void UModLoadingLibrary::PopulatePluginModInfo(IPlugin& Plugin, FModInfo& OutMod
 }
 
 void UModLoadingLibrary::OnNewPluginCreated(IPlugin& Plugin) {
-    if (Plugin.IsEnabled() && Plugin.GetType() == EPluginType::Mod) {
+    if (Plugin.IsEnabled() && IsPluginAMod(Plugin)) {
         //Only perform metadata loading and dependencies verification if plugin hasn't been checked before
         if (!PluginMetadata.Contains(Plugin.GetName())) {
             LoadMetadataForPlugin(Plugin);
@@ -245,7 +262,7 @@ void UModLoadingLibrary::OnNewPluginCreated(IPlugin& Plugin) {
 void UModLoadingLibrary::ReloadPluginMetadata() {
     const TArray<TSharedRef<IPlugin>> EnabledPlugins = IPluginManager::Get().GetEnabledPlugins();
     for (const TSharedRef<IPlugin>& Plugin : EnabledPlugins) {
-        if (Plugin->GetType() == EPluginType::Mod) {
+        if (IsPluginAMod(Plugin.Get())) {
             LoadMetadataForPlugin(Plugin.Get());
         }
     }
@@ -271,7 +288,7 @@ TSharedPtr<FJsonObject> ParsePluginDescriptorFile(IPlugin& Plugin) {
 }
 
 void UModLoadingLibrary::LoadMetadataForPlugin(IPlugin& Plugin) {
-    if (Plugin.IsEnabled() && Plugin.GetType() == EPluginType::Mod && !PluginMetadata.Contains(Plugin.GetName())) {
+    if (Plugin.IsEnabled() && IsPluginAMod(Plugin) && !PluginMetadata.Contains(Plugin.GetName())) {
         
         const FPluginDescriptor& PluginDescriptor = Plugin.GetDescriptor();    
         FSMLPluginDescriptorMetadata PluginDescriptorMetadata{};
@@ -323,7 +340,7 @@ UTexture2D* UModIconStorage::LoadModIcon(const FString& PluginName) {
     const TSharedPtr<IPlugin> Plugin = IPluginManager::Get().FindPlugin(PluginName);
 
     //Make sure plugin is valid, enabled and it's actually a mod
-    if (!Plugin.IsValid() || !Plugin->IsEnabled() || Plugin->GetType() != EPluginType::Mod) {
+    if (!Plugin.IsValid() || !Plugin->IsEnabled() || !UModLoadingLibrary::IsPluginAMod(*Plugin)) {
         return NULL;
     }
 

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 #include "FGSubsystem.h"
 #include "FGSaveInterface.h"
@@ -229,14 +230,11 @@ public:
 	UFUNCTION( BlueprintCallable, Category = "Research" )
 	void SetActivated( bool inActivate ) { mIsActivated = inActivate; }
 protected:
-	// MODDING EDIT: expose access to internal state to content registry
-	friend class AModContentRegistry;
-    
 	UFUNCTION()
 	void OnRep_OngoingResearch();
 
-	UFUNCTION( Reliable, Client )
-	void Client_NewResearchStarted( TSubclassOf< class UFGSchematic > research );
+	UFUNCTION( Reliable, NetMulticast )
+	void Multicast_ResearchCompleted( TSubclassOf< class UFGSchematic > research );
 
 	/** Populates list with all available research trees in the game */
 	void PopulateResearchTreeList();
@@ -283,9 +281,6 @@ private:
 	UFUNCTION()
 	void OnResearchTimerComplete( TSubclassOf<class UFGSchematic> schematic );
 
-public: // MODDING EDIT Accessor
-	FORCEINLINE void OnResearchTimerCompleteAccessor(TSubclassOf<class UFGSchematic> schematic) { OnResearchTimerComplete(schematic); };
-private:
 	bool PayForResearch( UFGInventoryComponent* playerInventory, TSubclassOf<class UFGSchematic> schematic ) const;
 
 	/** Claim pending rewards. One alternate recipe or give back one hard drive */

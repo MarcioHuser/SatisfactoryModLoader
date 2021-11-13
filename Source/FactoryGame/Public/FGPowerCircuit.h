@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 #include "FGCircuit.h"
 #include "FGNetSerialization.h"
@@ -332,6 +333,9 @@ private:
 	float mTimeSinceLastWarning;
 
 	friend class UFGPowerCircuitGroup;
+	
+	friend class APowerCheckerLogic;
+	friend class FPowerCheckerModule;
 };
 
 UCLASS()
@@ -372,6 +376,8 @@ private:
 	TArray< UFGPowerCircuit* > mCircuits;
 
 	TSet< TWeakObjectPtr< class AFGBuildablePriorityPowerSwitch > > mPrioritySwitches;
+
+	friend class APowerCheckerLogic;
 };
 
 void FPowerCircuitStats::MakeGraphPoint( FPowerGraphPoint& out_newGraphPoint ) const

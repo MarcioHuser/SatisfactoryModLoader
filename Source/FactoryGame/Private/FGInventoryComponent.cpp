@@ -22,6 +22,7 @@ void UFGInventoryComponent::PreReplication(IRepChangedPropertyTracker& ChangedPr
 void UFGInventoryComponent::PreNetReceive(){ }
 UFGInventoryComponent::UFGInventoryComponent() : Super() {
 	this->mDefaultInventorySize = 1;
+	this->mAdjustedSizeDiff = 0;
 	this->mCanBeRearrange = true;
 }
 void UFGInventoryComponent::Serialize(FArchive& ar){ Super::Serialize(ar); }
@@ -41,7 +42,6 @@ void UFGInventoryComponent::Server_SortInventory_Implementation(){ }
 bool UFGInventoryComponent::Server_SortInventory_Validate(){ return bool(); }
 bool UFGInventoryComponent::HasAuthority() const{ return bool(); }
 bool UFGInventoryComponent::IsItemAllowed(TSubclassOf< UFGItemDescriptor > item, const int32 idx) const{ return bool(); }
-bool UFGInventoryComponent::IsValidIndex(int32 idx) const{ return bool(); }
 int32 UFGInventoryComponent::FindEmptyIndex() const{ return int32(); }
 int32 UFGInventoryComponent::GetFirstIndexWithItem(int32 StartIndex) const{ return int32(); }
 int32 UFGInventoryComponent::AddStack(const FInventoryStack& stack, bool allowPartialAdd){ return int32(); }
@@ -51,9 +51,6 @@ bool UFGInventoryComponent::GetStackFromIndex(int32 idx, FInventoryStack& out_st
 void UFGInventoryComponent::Remove(TSubclassOf< UFGItemDescriptor > itemClass, int32 num){ }
 void UFGInventoryComponent::RemoveFromIndex(int32 idx, int32 num){ }
 void UFGInventoryComponent::RemoveAllFromIndex(int32 idx){ }
-bool UFGInventoryComponent::IsEmpty() const{ return bool(); }
-bool UFGInventoryComponent::IsIndexEmpty(int32 idx) const{ return bool(); }
-bool UFGInventoryComponent::IsSomethingOnIndex(int32 idx) const{ return bool(); }
 void UFGInventoryComponent::Empty(){ }
 bool UFGInventoryComponent::HasItems(TSubclassOf< UFGItemDescriptor > itemClass, int32 num) const{ return bool(); }
 int32 UFGInventoryComponent::GetNumItems(TSubclassOf< UFGItemDescriptor > itemClass) const{ return int32(); }

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "FGConnectionComponent.h"
 #include "FGInventoryComponent.h"
 #include "FGFactoryConnectionComponent.generated.h"
@@ -113,7 +114,10 @@ public:
 	 * @return - true if connected; otherwise false. Always false if attached to hologram, snap only or bad index configuration.
 	 */
 	UFUNCTION( BlueprintCallable, Category = "FactoryGame|Factory|FactoryConnection" )
-	bool IsConnected() const;
+	FORCEINLINE bool IsConnected() const
+	{
+		return mHasConnectedComponent;
+	}
 
 	/** Return the inventory associated with this connection. */
 	UFUNCTION( BlueprintPure, Category = "FactoryGame|Factory|FactoryConnection" )
@@ -129,9 +133,10 @@ public:
 	/** Return the connector used for this connection. */
 	UFUNCTION( BlueprintPure, Category = "FactoryGame|Factory|FactoryConnection" )
 	FORCEINLINE EFactoryConnectionConnector GetConnector() const { return mConnector; }
-
+	
 	/** Check if the given connection can snap to this. */
 	bool CanSnapTo( UFGFactoryConnectionComponent* otherConnection ) const;
+	
 	/** Check if the given connection can connect to this. */
 	bool CanConnectTo( UFGFactoryConnectionComponent* otherConnection ) const;
 

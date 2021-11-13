@@ -3,8 +3,15 @@
 #include "FGFactoryConnectionComponent.h"
 
 UFGFactoryConnectionComponent::UFGFactoryConnectionComponent() : Super() {
-	this->mConnectorClearance = 100;
+	this->mConnector = EFactoryConnectionConnector::FCC_CONVEYOR;
+	this->mDirection = EFactoryConnectionDirection::FCD_INPUT;
+	this->mConnectorClearance = 100.0;
+	this->mConnectedComponent = nullptr;
+	this->mHasConnectedComponent = false;
+	this->mConnectionInventory = nullptr;
 	this->mInventoryAccessIndex = -1;
+	this->mOuterBuildable = nullptr;
+	this->mForwardPeekAndGrabToBuildable = false;
 	this->bNetAddressable = true;
 	this->SetIsReplicatedByDefault(true);
 }
@@ -17,7 +24,6 @@ void UFGFactoryConnectionComponent::SetInventory( UFGInventoryComponent* invento
 void UFGFactoryConnectionComponent::SetInventoryAccessIndex(int32 index){ }
 void UFGFactoryConnectionComponent::SetConnection( UFGFactoryConnectionComponent* toComponent){ }
 void UFGFactoryConnectionComponent::ClearConnection(){ }
-bool UFGFactoryConnectionComponent::IsConnected() const{ return bool(); }
 EFactoryConnectionDirection UFGFactoryConnectionComponent::GetCompatibleSnapDirection() const{ return EFactoryConnectionDirection(); }
 bool UFGFactoryConnectionComponent::CanSnapTo(UFGFactoryConnectionComponent* otherConnection) const{ return bool(); }
 bool UFGFactoryConnectionComponent::CanConnectTo(UFGFactoryConnectionComponent* otherConnection) const{ return bool(); }

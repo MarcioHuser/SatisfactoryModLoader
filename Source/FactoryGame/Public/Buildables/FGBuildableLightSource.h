@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 
 #include "FGBackgroundThread.h"
@@ -21,11 +22,13 @@ struct FACTORYGAME_API FLightSourceControlData
 	int32 ColorSlotIndex = 0;
 	/** Intensity of the light */
 	UPROPERTY( SaveGame, EditAnywhere, BlueprintReadWrite, Category = "Light" )
-	float Intensity = 10.f;
+	float Intensity = 1.f;
 	/** Should it only light up during the night? or always! */
 	UPROPERTY( SaveGame, EditAnywhere, BlueprintReadWrite, Category = "Light" )
 	bool IsTimeOfDayAware = false;
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FBuildableLightSourceStateChanged, bool, isEnabled );
 
 /**
  * Base class for buildable light sources in the game.
@@ -71,8 +74,13 @@ public:
 	UFUNCTION( BlueprintPure, Category = "FactoryGame|Buildable|Light" )
     bool HasPower() const { return mHasPower; }
 
+	UFUNCTION( BlueprintPure, Category = "FactoryGame|Buildable|Light" )
+	float GetDefaultPowerConsumption() const { return mPowerConsumption; }
+
 	/** Called when light color slots have been updated */
 	void OnLightColorSlotsUpdated( const TArray< FLinearColor >& colors );
+
+	virtual float GetEmissivePower() override;
 
 protected:
 	/** Called when the time of day changes. */
@@ -108,6 +116,13 @@ private:
 	
 	// Update current light color by fetching the color that corresponds to the current light control data slot index
 	void UpdateCurrentLightColor();
+
+	// Update the power consumption of the light.
+	void UpdatePowerConsumption();
+
+public:
+	UPROPERTY( BlueprintAssignable )
+	FBuildableLightSourceStateChanged OnBuildableLightSourceStateChanged;
 	
 private:
 	/** Is the light on or off. */

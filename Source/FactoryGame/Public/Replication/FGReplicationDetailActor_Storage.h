@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Replication/FGReplicationDetailActor_BuildableFactory.h"
 #include "FGReplicationDetailActor_Storage.generated.h"
 
@@ -21,7 +22,10 @@ public:
 	virtual bool HasCompletedInitialReplication() const override;
 	
 	FORCEINLINE UFGInventoryComponent* GetStorageInventory() const { return mStorageInventory; }
+
 protected:
-	UPROPERTY( Replicated )
+	using AFGReplicationDetailActor_BuildableFactory::OnRep_Inventory;
+
+	UPROPERTY( ReplicatedUsing = OnRep_Inventory )
 	class UFGInventoryComponent* mStorageInventory;
 };

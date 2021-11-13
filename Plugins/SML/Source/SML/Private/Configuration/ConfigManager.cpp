@@ -125,11 +125,22 @@ void UConfigManager::OnTimerManagerAvailable(FTimerManager* TimerManager) {
     TimerManager->SetTimer(OutTimerHandle, FTimerDelegate::CreateUObject(this, &UConfigManager::FlushPendingSaves), 10.0f, true);
 }
 
+void UConfigManager::OnConfigMarkedDirty(FTimerManager* TimerManager) {
+    //Setup a timer which will force all changes into filesystem every in .2 seconds 
+    
+    // I dont like this .. Creating a UObject here ..
+    // We want a Timer to Stop too frequent writing from incoming changes
+    // some way to get world context from MarkConfigurationDirty would be needed to reliably use Timers for this
+    TimerManager->SetTimer(SaveToDiskTimerHandle, FTimerDelegate::CreateUObject(this, &UConfigManager::FlushPendingSaves), .2f, false);
+}
+
 void UConfigManager::MarkConfigurationDirty(const FConfigId& ConfigId) {
     if (Configurations.Contains(ConfigId)) {
         PendingSaveConfigurations.AddUnique(ConfigId);
         //Make sure cached structs are synchronized with real configuration state
         ReinitializeCachedStructs(ConfigId);
+        // TODO: Replace me with something better
+        FEngineUtil::DispatchWhenTimerManagerIsReady(TBaseDelegate<void, FTimerManager*>::CreateUObject(this, &UConfigManager::OnConfigMarkedDirty));
     }
 }
 
@@ -226,7 +237,7 @@ bool IsCompatibleConfigurationClassChange(UClass* OldConfigurationClass, UClass*
 
 void UConfigManager::RegisterModConfiguration(TSubclassOf<UModConfiguration> Configuration) {
     checkf(Configuration, TEXT("Attempt to register NULL configuration"));
-    UE_LOG(LogSatisfactoryModLoader, Error, TEXT("Registering configuration %s"), *Configuration->GetPathName());
+    UE_LOG(LogSatisfactoryModLoader, Log, TEXT("Registering configuration %s"), *Configuration->GetPathName());
 
     UModConfiguration* ClassDefaultObject = Configuration.GetDefaultObject();
     const FConfigId ConfigId = ClassDefaultObject->ConfigId;

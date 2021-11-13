@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 
 #include "FGVehicle.h"
@@ -48,7 +49,7 @@ struct FDroneDockingStateInfo
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
+	UPROPERTY( SaveGame )
 	EDroneDockingState State;
 
 	UPROPERTY()
@@ -338,7 +339,7 @@ public:
 	// End IFGDismantleInferface
 
 	// Begin AFGVehicle interface
-	virtual void OnSimulationChanged() override;
+	virtual void OnIsSimulatedChanged() override;
 	// End AFGVehicle interface
 
 	//Begin IFGSignificanceInterface
@@ -349,6 +350,10 @@ public:
 	// Begin IFGSaveInterface
 	virtual void PostLoadGame_Implementation( int32 saveVersion, int32 gameVersion ) override;
 	// End IFGSaveInterface
+ 
+	// Begin IFGActorRepresentationInterface
+	virtual FText GetActorRepresentationText() override;
+	// End IFGActorRepresentationInterface
 
 	void NotifyPairedStationUpdated( class AFGBuildableDroneStation* NewPairedStation );
 	
@@ -445,7 +450,7 @@ public:
 
 	bool GrabRequiredBatteriesForTrip( class AFGBuildableDroneStation* FromStation, class AFGBuildableDroneStation* ToStation, bool AllowTravelWithoutCost );
 	
-	void TravelToStation( class AFGBuildableDroneStation* station, bool ShouldTransferItems );
+	bool TravelToStation( class AFGBuildableDroneStation* station, bool ShouldTransferItems );
 
 	void BeginNewTrip( class AFGBuildableDroneStation* Station );
 	void EndCurrentTrip( bool Completed );
@@ -592,7 +597,7 @@ private:
 	UPROPERTY( SaveGame, ReplicatedUsing=OnRep_FlyingMode )
 	EDroneFlyingMode mCurrentFlyingMode;
 
-	UPROPERTY( ReplicatedUsing=OnRep_DockingState )
+	UPROPERTY( SaveGame, ReplicatedUsing=OnRep_DockingState )
 	FDroneDockingStateInfo mCurrentDockingState;
 
 	UPROPERTY( SaveGame )

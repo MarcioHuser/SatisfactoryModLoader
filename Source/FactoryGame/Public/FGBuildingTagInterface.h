@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "FGBuildingTagInterface.generated.h"
 
 /**
@@ -9,7 +10,7 @@
 * have a UCLASS to be able to access
 */
 UINTERFACE( Blueprintable )
-class UFGBuildingTagInterface : public UInterface
+class FACTORYGAME_API UFGBuildingTagInterface : public UInterface
 {
 	GENERATED_UINTERFACE_BODY()
 };
@@ -17,7 +18,7 @@ class UFGBuildingTagInterface : public UInterface
 /**
 * @brief Interface for buildings that may or may not have a tag
 */
-class IFGBuildingTagInterface
+class FACTORYGAME_API IFGBuildingTagInterface
 {
 	GENERATED_IINTERFACE_BODY()
 

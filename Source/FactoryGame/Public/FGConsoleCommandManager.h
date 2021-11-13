@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "FGConsoleCommandManager.generated.h"
@@ -40,9 +41,6 @@ public:
 	/** Dumps all ak components with no position (0,0,0) or owner to the log. */
 	UFUNCTION( exec )
 	void TrackAkComponentsWithNoPositionOrOwner();
-	/** Dumps all FGFactoryMaterialInstanceManager stats for debugging */
-	UFUNCTION( exec )
-	void DumpFactoryMaterialInstanceManagerStats();
 
 	/** Useful for testing the crash reporter. */
 	UFUNCTION( exec )
@@ -61,10 +59,10 @@ public:
 	void FixupBuiltByRecipeInOldSave( bool reapplyRecipeIfBetterMatchFound = false );
 
 	/** Dump some stats about the factory to the log such as number of buildings and kilometers of railway built. */
-	UFUNCTION( exec, CheatBoard, category = "Log" )
+	UFUNCTION( exec )
 	void DumpFactoryStatsToLog();
 
-	/** Copy the player coordinates to cliboard */
+	/** Copy the player coordinates to clipboard */
 	UFUNCTION( exec )
 	void CopyPlayerCoordinates();
 
@@ -72,6 +70,6 @@ public:
 	UFUNCTION( exec )
 	void DumpPlayerCoordinates( const FString& label = TEXT(""), bool copyToClipboard = false );
 
-	UFUNCTION( exec, CheatBoard, category = "Log" )
+	UFUNCTION( exec )
 	void DumpDynamicOptionsSettings();
 };

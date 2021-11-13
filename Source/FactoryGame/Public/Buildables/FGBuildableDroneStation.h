@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 
 #include "Buildables/FGBuildableFactory.h"
@@ -11,6 +12,7 @@
 #include "FGDroneStationInfo.h"
 
 #include "Replication/FGReplicationDetailActor_DroneStation.h"
+#include "FGActorRepresentationInterface.h"
 #include "FGBuildableDroneStation.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN( LogDroneStation, Log, All );
@@ -37,16 +39,36 @@ enum class EItemTransferTickResult : uint8
  * 
  */
 UCLASS()
-class FACTORYGAME_API AFGBuildableDroneStation : public AFGBuildableFactory
+class FACTORYGAME_API AFGBuildableDroneStation : public AFGBuildableFactory, public IFGActorRepresentationInterface
 {
 	GENERATED_BODY()
 
 public:
 	AFGBuildableDroneStation();
 
+	// Begin IFGActorRepresentationInterface
+	virtual bool AddAsRepresentation() override;
+	virtual bool UpdateRepresentation() override;
+	virtual bool RemoveAsRepresentation() override;
+	virtual bool IsActorStatic() override;
+	virtual FVector GetRealActorLocation() override;
+	virtual FRotator GetRealActorRotation() override;
+	virtual class UTexture2D* GetActorRepresentationTexture() override;
+	virtual FText GetActorRepresentationText() override;
+	virtual void SetActorRepresentationText( const FText& newText ) override;
+	virtual FLinearColor GetActorRepresentationColor() override;
+	virtual void SetActorRepresentationColor( FLinearColor newColor ) override;
+	virtual ERepresentationType GetActorRepresentationType() override;
+	virtual bool GetActorShouldShowInCompass() override;
+	virtual bool GetActorShouldShowOnMap() override;
+	virtual EFogOfWarRevealType GetActorFogOfWarRevealType() override;
+	virtual float GetActorFogOfWarRevealRadius() override;
+	virtual ECompassViewDistance GetActorCompassViewDistance() override;
+	virtual void SetActorCompassViewDistance( ECompassViewDistance compassViewDistance ) override;
+	// End IFGActorRepresentationInterface
+
 	// Begin AActor interface
 	virtual void GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
-	virtual void PreReplication( IRepChangedPropertyTracker& ChangedPropertyTracker ) override;
 	virtual void BeginPlay() override;
 	virtual void EndPlay( const EEndPlayReason::Type EndPlayReason ) override;
 	// End AActor interface
@@ -58,8 +80,8 @@ public:
 	// End Factory_ interface
 
 	//~ Begin IFGDismantleInterface
-	virtual void GetDismantleRefund_Implementation( TArray< FInventoryStack >& out_refund ) const override;
 	virtual void Dismantle_Implementation() override;
+	virtual void GetChildDismantleActors_Implementation( TArray< AActor* >& out_ChildDismantleActors ) const override;
 	//~ End IFGDismantleInferface
 	
 	// Begin IFGReplicationDetailActorOwnerInterface
@@ -158,6 +180,10 @@ public:
 	UFUNCTION( BlueprintNativeEvent, Category = "Drone Station" )
 	void EndTakeoffSequence( class AFGDroneVehicle* Drone );
 
+	/** Fetches the color to use for this actors representation */
+	UFUNCTION( BlueprintImplementableEvent, Category = "Representation" )
+	FLinearColor GetDefaultRepresentationColor();
+
 protected:	
 	virtual void OnRep_ReplicationDetailActor() override;
 
@@ -174,6 +200,9 @@ private:
 
 	UFUNCTION()
     void OnRep_StationHasDronesInQueue();
+
+	UFUNCTION()
+	void OnRep_DroneStationInfo();
 
 	void SetItemTransferringStage( EItemTransferringStage NewStage );
 	
@@ -228,7 +257,7 @@ private:
 	EItemTransferringStage mItemTransferringStage;
 
 	/** Current progress on transfer from/to docking station ( in seconds ) */
-	UPROPERTY( Replicated )
+	UPROPERTY()
 	float mTransferProgress;
 
 	/** How long time it takes to transfer one stack of item from/to docking station ( in seconds ) */
@@ -311,6 +340,12 @@ private:
 	/** All connections that can pull to data to our storage, (References hold by Components array, no need for UPROPERTY) */
 	TArray<class UFGFactoryConnectionComponent*> mStorageInputConnections;
 	
-	UPROPERTY( SaveGame, Replicated )
+	UPROPERTY( SaveGame, ReplicatedUsing = OnRep_DroneStationInfo )
 	AFGDroneStationInfo* mInfo;
+
+	UPROPERTY( EditDefaultsOnly, Category = "Representation" )
+	class UTexture2D* mActorRepresentationTexture;
+
+	UPROPERTY( Replicated )
+	FText mMapText;
 };

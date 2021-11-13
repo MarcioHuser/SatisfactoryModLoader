@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Replication/FGStaticReplicatedActor.h"
 #include "FGSaveInterface.h"
 #include "Resources/FGResourceDescriptor.h"
@@ -25,7 +26,7 @@ enum class EResourceNodeType : uint8
 * The resource we are trying to pick can't be on a conveyor belt.
 */
 UCLASS()
-class UFGUseState_NonConveyorResource : public UFGUseState
+class FACTORYGAME_API UFGUseState_NonConveyorResource : public UFGUseState
 {
 	GENERATED_BODY()
 
@@ -198,7 +199,7 @@ public:
 private:
 	/** The actor that contains the mesh for this node */
 	UPROPERTY( EditInstanceOnly, Category = "Resources" )
-	TWeakObjectPtr< class AActor > mMeshActor;
+	TSoftObjectPtr< class AActor > mMeshActor;
 
 	/** Should this be handled by significance manager */
 	UPROPERTY( EditDefaultsOnly, Category = "Significance" )

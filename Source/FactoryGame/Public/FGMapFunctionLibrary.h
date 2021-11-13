@@ -2,12 +2,13 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "FGMapFunctionLibrary.generated.h"
 
 
 UCLASS()
-class UFGMapFunctionLibrary : public UBlueprintFunctionLibrary
+class FACTORYGAME_API UFGMapFunctionLibrary : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 public:

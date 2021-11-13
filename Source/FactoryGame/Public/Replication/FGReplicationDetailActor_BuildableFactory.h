@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Replication/FGReplicationDetailActor.h"
 #include "FGReplicationDetailActor_BuildableFactory.generated.h"
 
@@ -20,7 +21,15 @@ public:
 
 	FORCEINLINE class UFGInventoryComponent* GetInventoryPotential() const { return mInventoryPotential; };
 
+	/** Delegate that will fire (on clients) when mInventoryPotential has replicated */
+	DECLARE_DELEGATE( FOnInventoryPotentialChanged )
+	FOnInventoryPotentialChanged OnHasCompletedInitialReplicationDelegate;
+
 protected:
-	UPROPERTY( Replicated )
+	UFUNCTION()
+	void OnRep_Inventory();
+
+protected:
+	UPROPERTY( ReplicatedUsing = OnRep_Inventory )
 	class UFGInventoryComponent* mInventoryPotential;
 };

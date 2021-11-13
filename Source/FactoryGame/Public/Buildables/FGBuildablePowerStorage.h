@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Buildables/FGBuildableFactory.h"
 #include "Replication/FGReplicationDetailActor_PowerStorage.h"
 #include "FGBuildablePowerStorage.generated.h"
@@ -40,7 +41,7 @@ public:
 	virtual bool Factory_HasPower() const override;
 	virtual bool CanProduce_Implementation() const override;
 	virtual EProductionStatus GetProductionIndicatorStatus() const override;
-	virtual void Factory_StartProducing() override;	
+	virtual void Factory_StartProducing() override;
 	virtual void Factory_StopProducing() override;
 	virtual void Factory_TickProducing( float deltaTime ) override;
 	//~ End AFGBuildableFactory interface

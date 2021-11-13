@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Components/SceneComponent.h"
 #include "FGSaveInterface.h"
 #include "Misc/DefaultValueHelper.h"
@@ -154,6 +155,10 @@ protected:
 	/** The maximum length the legs can be. */
 	UPROPERTY( EditDefaultsOnly, Category = "Legs" )
 	float mMaxLegLengthOverride;
+
+	/** Minimum trace length that the buildable should make before spawning legs, -1 means always spawn*/
+	UPROPERTY( EditDefaultsOnly, Category = "Legs" )
+	float mMinimumLegLength;
 
 private:
 	/** The created leg components for this building */

@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "UObject/Object.h"
 #include "FGOnlineSessionSettings.h"
 #include "FGSaveSystem.generated.h"
@@ -37,11 +38,19 @@ enum class ESaveState : uint8
 	SS_Newer		UMETA( DisplayName="Newer" )
 };
 
+UENUM( BlueprintType )
+enum class ESaveLocationInfo : uint8
+{
+	SLI_Default		UMETA( DisplayName = "Default/User Dir" ),
+	SLI_Common		UMETA( DisplayName = "Common Dir" ),
+	SLI_Server		UMETA( DisplayName = "Server Dir" )
+};
+
 typedef FString SessionNameType;
 
 /** The header with information about a save game */
 USTRUCT( BlueprintType )
-struct FSaveHeader
+struct FACTORYGAME_API FSaveHeader
 {
 	GENERATED_BODY()
 
@@ -72,6 +81,12 @@ struct FSaveHeader
 		// @2021-01-22 UE4.25 Engine Upgrade. FEditorObjectVersion Changes occurred (notably with FText serialization)
 		UE425EngineUpdate,
 
+		// @2021-03-24 Added Modding properties and support
+		AddedModdingParams,
+
+		// @2021-04-15 UE4.26 Engine Upgrade. FEditorObjectVersion Changes occurred
+		UE426EngineUpdate,
+
 		// -----<new versions can be added above this line>-----
 		VersionPlusOne,
 		LatestVersion = VersionPlusOne - 1 // Last version to use
@@ -79,7 +94,7 @@ struct FSaveHeader
 
 	FSaveHeader();
 
-	FSaveHeader( int32 saveVersion, int32 buildVersion, FString mapName, FString mapOptions, FString sessionName, int32 playDurationSeconds, FDateTime saveDateTime, ESessionVisibility sessionVisibility, int32 editorObjectVersion ) :
+	FSaveHeader( int32 saveVersion, int32 buildVersion, FString mapName, FString mapOptions, FString sessionName, int32 playDurationSeconds, FDateTime saveDateTime, ESessionVisibility sessionVisibility, int32 editorObjectVersion, FString metaData, bool isModdedSave ) :
 		SaveVersion( saveVersion ),
 		BuildVersion( buildVersion ),
 		MapName( mapName ),
@@ -88,7 +103,9 @@ struct FSaveHeader
 		PlayDurationSeconds( playDurationSeconds ),
 		SaveDateTime( saveDateTime ),
 		SessionVisibility( sessionVisibility ),
-		EditorObjectVersion( editorObjectVersion )
+		EditorObjectVersion( editorObjectVersion ),
+		ModMetadata( metaData ),
+		IsModdedSave( isModdedSave )
 	{
 	}
 
@@ -100,6 +117,9 @@ struct FSaveHeader
 
 	/** Name of the save game, not store to disc */
 	FString SaveName;
+
+	/** Descriptor for the save game location on the disc at the time of read (not saved to disc) */
+	ESaveLocationInfo SaveLocationInfo;
 
 	/** The map this save is valid on  */
 	FString MapName;
@@ -121,6 +141,12 @@ struct FSaveHeader
 
 	/** Save the FEditorObjectVersion that this save file was written with */
 	int32 EditorObjectVersion;
+
+	/** Generic MetaData - Requested by Mods */
+	FString ModMetadata;
+
+	/** Was this save ever saved with mods enabled? */
+	bool IsModdedSave;
 
 	// @todosave: Add LastPlayDate as uint64 (Timestamp)
 	// @todosave: Add if it's a autosave
@@ -164,7 +190,7 @@ enum class ESaveSortDirection : uint8
  * For when a artist/LD has changed the name of a map
  */
 USTRUCT()
-struct FMapRedirector
+struct FACTORYGAME_API FMapRedirector
 {
 	GENERATED_BODY()
 
@@ -181,7 +207,7 @@ DECLARE_DELEGATE_ThreeParams( FOnEnumerateSaveGamesComplete, bool, const TArray<
 DECLARE_DELEGATE_TwoParams( FOnDeleteSaveGameComplete, bool, void* );
 
 USTRUCT( BlueprintType )
-struct FSessionSaveStruct
+struct FACTORYGAME_API FSessionSaveStruct
 {
 	GENERATED_BODY()
 
@@ -212,8 +238,8 @@ struct FSessionSaveStruct
  * if the UI should use this interface directly, or if it should go through the admin interface when you are making a
  * BlueprintCallable function in this class.
  */
-UCLASS(Config=Engine)
-class UFGSaveSystem : public UObject
+UCLASS( Config = Engine )
+class FACTORYGAME_API UFGSaveSystem : public UObject
 {
 	GENERATED_BODY()
 public:
@@ -248,6 +274,11 @@ public:
 	 * @param out_saveGames a list with the available save games
 	 */
 	void EnumerateSaveGames( FOnEnumerateSaveGamesComplete onCompleteDelegate, void* userData );
+
+	/**
+	 * Synchronous value-returning version of the above
+	 **/ 
+	TArray<FSaveHeader> EnumerateSaveGames();
 
 	/**
 	 * Groups a save list by their corresponding session

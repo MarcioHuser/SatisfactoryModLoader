@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "FGSubsystem.h"
 #include "FGSaveInterface.h"
 #include "FGTimeSubsystem.generated.h"
@@ -122,6 +123,10 @@ public:
 	/** Sets multiplier for speed of time */
 	UFUNCTION( BlueprintCallable, Category = "Time" )
 	void SetTimeSpeedMultiplier( float multiplier );
+
+	/** What time to set as new reset time*/
+	UFUNCTION( BlueprintImplementableEvent, BlueprintCallable, Category = "Time" )
+    void SetTimeSpeedMultiplierResetTime( int32 resetTime );
 
 #if WITH_EDITOR
 	/** Accessor so we can hook ourself up on editor preview thingies */

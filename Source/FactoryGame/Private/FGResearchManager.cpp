@@ -3,8 +3,9 @@
 #include "FGResearchManager.h"
 
 AFGResearchManager::AFGResearchManager() : Super() {
-	this->bAlwaysRelevant = true;
-	this->SetReplicates(true);
+	this->mCanConductMultipleResearch = false;
+	this->mIsActivated = false;
+	this->mMAMClass = nullptr;
 }
 void AFGResearchManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
 void AFGResearchManager::PreInitializeComponents(){ Super::PreInitializeComponents(); }
@@ -31,7 +32,7 @@ void AFGResearchManager::GetPendingRewards(TSubclassOf<class UFGSchematic> schem
 void AFGResearchManager::UpdateUnlockedResearchTrees(){ }
 void AFGResearchManager::UnlockResearchTree(TSubclassOf<class UFGResearchTree> researchTree){ }
 void AFGResearchManager::OnRep_OngoingResearch(){ }
-void AFGResearchManager::Client_NewResearchStarted_Implementation(TSubclassOf<  UFGSchematic > research){ }
+void AFGResearchManager::Multicast_ResearchCompleted_Implementation(TSubclassOf<  UFGSchematic > research){ }
 void AFGResearchManager::PopulateResearchTreeList(){ }
 void AFGResearchManager::StartResearch(TSubclassOf<class UFGSchematic> schematic, TSubclassOf<  UFGResearchTree> initiatingResearchTree){ }
 void AFGResearchManager::GeneratePendingReward(FResearchData& researchData){ }

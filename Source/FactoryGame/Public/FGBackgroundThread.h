@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 
 #include "Components/InstancedStaticMeshComponent.h"
@@ -9,6 +10,8 @@
 #include "HAL/Runnable.h"
 #include "Containers/Queue.h"
 #include "Engine/DeveloperSettings.h"
+#include "Engine/SCS_Node.h"
+
 #include "FGBackgroundThread.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogPoolSystem, Error, All);
@@ -219,7 +222,7 @@ struct FACTORYGAME_API FPoolInstanceBase
 	
 	FORCEINLINE USceneComponent* GetActorComponent()
 	{
-		if ( Component.IsValid() )
+		if ( Component.IsValid( false, true ) )
 		{
 			return Component.Get();
 		}
@@ -297,16 +300,8 @@ struct FACTORYGAME_API FPoolItem
 	 * ( relevant ) 0 - 1 ( irrelevant ) */
 	float Relevance;
 
-	/* Set when assigned to an actor.*/
-	float MaxRelevance;
-
 	/* Radius of the relevance. */
 	float mRadius;
-
-	// TODO implement.
-	/* Used for certain handles that need high priority compared with others.
-	 * Use full for long change lights for example. */
-	float mPriorityLevel;
 	
 	/* Pointer to the handle given to this instance, this way we can safely 
 	* remove the instance from the list when the actor is destroyed*/
@@ -386,7 +381,6 @@ struct FACTORYGAME_API FPoolItem
 	{
 		Transform = t;
 		Relevance = 0;
-		mPriorityLevel = 1;
 		Handle = nullptr;
 		Instance = nullptr;
 		mRadius = 0.f;
@@ -399,7 +393,6 @@ struct FACTORYGAME_API FPoolItem
 		Transform = t;
 		Handle = h;
 		Relevance = 0;
-		mPriorityLevel = 1;
 		Instance = nullptr;
 		mRadius = 0.f;
 		
@@ -508,8 +501,6 @@ class FACTORYGAME_API FFGBackgroundThread :	public FRunnable
 	friend struct FPoolMeshComponent;
 	friend struct FPoolLightComponent;
 
-	
-
 public:	
 #if WITH_EDITOR
 	/* For PIE functionality. */
@@ -520,6 +511,7 @@ public:
 #endif
 	
 private:
+	// TODO consider a weak ptr?
 	/** Cached pointer to the world, made when initialized. */
 	UWorld* mWorldContext;
 	
@@ -545,9 +537,13 @@ private:
 	TQueue< TPair< FPoolHandle*, bool >, EQueueMode::Mpsc > mInstanceStatusToUpdate;
 
 	TQueue< TPair< FPoolHandle*, EPoolInstanceFlags >, EQueueMode::Mpsc > mInstanceFlagsToUpdate;
+
+	// Smart pointer to task graph event.
+	TArray< FGraphEventRef > mStartedGraphTasks;
 	
 	//////////////////////////////////
 	// Buckets
+	// TODO deprecate buckets dont seem to be needed, the system seems fast enough.
 	TArray< FPoolItem* > Bucket_Near;
 	TArray< FPoolItem* > Bucket_Medium;
 	TArray< FPoolItem* > Bucket_Dormant;
@@ -555,9 +551,8 @@ private:
 	float mLastUpdateTime;
 	float mLastUpdateTime_Medium;
 
-	/* Cached version pulled from the pool system config. *
-	* NOTE Should never change after initial initialization. */
-	TArray<struct FFGPoolType> mPoolTypes;
+	/* Cached version pulled from the pool system config. */
+	TArray< struct FFGPoolType > mPoolTypes;
 
 	/*	Array of all pool instances in the world the system can pick from
 	*	A more ordered version of this is in the buckets. */
@@ -578,8 +573,6 @@ private:
 	int32 mCachedLightCount;
 	int32 mCachedLightShaftCount;
 	float mCachedLightRelevancyMultiplier;
-	
-
 	
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~//
 	// Begin FRunnable interface.
@@ -612,13 +605,25 @@ private:
 	/** Shutdown thread, World context only needed for PIE */
 	static void Shutdown( UWorld* WorldContext = nullptr );
 
-private:	
+private:
+	/* Resolve handles removed since last background thread update. */
 	void ResolveHandles_internal();
+	
+	/* Resolves new added actors to the world and their handles.*/
 	void ResolveRegisterActor_internal();
+
+	/* Updates handles states for example when a building loses power or day/night switch */
 	void ResolveHandleStates_internal();
+	
 	void ResolveUpdates_internal();
+	
 	void ResolveEnvironmentAwareness_internal();
 
+	void CleanupTasks();
+	
+	FORCEINLINE bool IsThreadHealthy() const { return StopTaskCounter.GetValue() == 0; } 
+
+	// DEPRECATED
 	void UpdateBuckets( const FVector playerLocation );
 	
 	void UpdateRelevance( const FVector playerLocation, const FVector playerViewDirection, TArray<FPoolItem*> &Items );
@@ -636,7 +641,10 @@ private:
 	void DumpDebug();
 
 	/* Helper to fetch the correct world context. */
-	UWorld* GetWorldContext() const { return mWorldContext; }
+	UWorld* GetWorldContext() const
+	{
+		return mWorldContext;
+	}
 
 	// Scalability
 	int32 CurrentLevel;
@@ -644,8 +652,9 @@ private:
 
 	FThreadSafeCounter mShouldUpdateScalability;
 
+	void RefreshScalabilityVariables();
+	void ApplyScalability();
 	
-	void UpdateScalabilityValues();
 public:
 	void MarkScalabilityDirty() { mShouldUpdateScalability.Set( 1 ); }
 	FORCEINLINE int32 GetCurrentScalabilityLevel() const { return CurrentLevel; }
@@ -696,7 +705,7 @@ public:
 	}
 
 	/* static settings per implementation. */
-	UFUNCTION( BlueprintNativeEvent )
+	UFUNCTION( BlueprintNativeEvent, BlueprintCallable, Category = "Pool|Lights" )
 	FPoolLightSettings GetLightSettings() const;
 	virtual FPoolLightSettings GetLightSettings_Implementation() const
 	{
@@ -748,28 +757,10 @@ public:
 	static void SetFlag( AFGBuildable* Buildable, UPARAM( meta = (Bitmask, BitmaskEnum = EPoolInstanceFlags) ) int32 Flags );
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 public:
-	UPROPERTY(VisibleAnywhere)
+	UPROPERTY( VisibleAnywhere )
 	TArray<UActorComponent*> Components;
-};
-
-UCLASS( Blueprintable )
-class FACTORYGAME_API AFGDecorationTemplate : public AActor
-{
-	GENERATED_BODY()
-
-	AFGDecorationTemplate();
-	
-public:
-
-#if WITH_EDITORONLY_DATA
-	
-	UPROPERTY(EditAnywhere, meta = ( AllowPrivateAccess = "true") )
-	UChildActorComponent* mChildActorComponent;
-	
-#endif
-	
-	static TArray<class UFGPoolableProxyComponentBase*> GetPoolAbleComponentsFromSubclass(const UClass* InActorClass);
 };
 
 UENUM()
@@ -798,8 +789,6 @@ struct FACTORYGAME_API FFGPoolType
 {
 	GENERATED_BODY()
 	
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
-	/** General **/
 	/* Type */
 	UPROPERTY( EditDefaultsOnly )
 	EPoolType Type;
@@ -808,7 +797,7 @@ struct FACTORYGAME_API FFGPoolType
 	UPROPERTY( EditDefaultsOnly )
 	TSubclassOf< UFGPoolableProxyComponentBase > mProxyComponent;
 	
-	/* Max count of instances in the world. */
+	/* Max Default count of instances in the world. */
 	UPROPERTY( EditDefaultsOnly, meta = ( EditCondition = "!bInstanced" ) )
 	int32 Count;
 	
@@ -826,50 +815,39 @@ struct FACTORYGAME_API FFGPoolType
 	UPROPERTY( EditDefaultsOnly, Category = "Mesh" /*, meta = ( EditCondition = "Type == EPT_StaticMesh || Type == EPT_InstanceMesh") */)
 	UStaticMesh* mVisual_Mesh;
 
+	/* DEPRECATED */
 	UPROPERTY( EditDefaultsOnly )
 	bool bVisual_Instanced;
 
-	/* Should orientation be a factor when determining view significance */
+	/*~~~~~~ Count scalability ~~~~~~*/
+	/* The string used for count scalability checks. */
 	UPROPERTY( EditDefaultsOnly )
-	bool bVisual_CameraFacing;
+	FString mCVarCountScalabilityString;
+	IConsoleVariable* mCachedCountScalabilityConsoleVariable;
 
-	/* When its camera facing from which distance should it always render. */
+	UPROPERTY( EditDefaultsOnly, meta = (DisplayName = "Count Default Value"))
+	int32 mCachedCountScalabilityValue;
+	bool mIsCountScalabilityDirty;
+
+	/*~~~~~~ Relevancy scalability ~~~~~~*/
+	/* The string used for relevancy scalability checks. */
 	UPROPERTY( EditDefaultsOnly )
-	float MinAlwaysDrawDistance;
+	FString mCVarRelevancyScalabilityString;	
+	IConsoleVariable* mCachedRelevancyScalabilityConsoleVariable;
 	
-	UPROPERTY( EditDefaultsOnly, Category = "Range" )
-	FName mCollisionName;
+	UPROPERTY( EditDefaultsOnly, meta = (DisplayName = "Relevancy Scale Default Value"))
+	float mCachedRelevancyScaleScalabilityValue;
+	bool mIsRelevancyScalabilityDirty;
 
+	/*~~~~~~ Quality scalability ~~~~~~*/
+	/* The string used for quality scalability checks. */
+	UPROPERTY( EditDefaultsOnly )
+	FString mCvarQualityScalabilityString;	
+	IConsoleVariable* mCachedQualityScaleConsoleVariable;
 	
-	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	/** Start lights */
-	/* Light class to spawn. */
-	UPROPERTY( EditDefaultsOnly, Category = "Light" )
-	TSubclassOf< ULightComponent > mLightClass;
-	
-	/* Default range of the light when not tracing	*/
-	UPROPERTY( EditDefaultsOnly, Category = "Lights" )
-	float mLight_DefaultLightRange;
-
-	/* Maximum light distance */
-	UPROPERTY( EditDefaultsOnly, Category = "Lights" )
-	float mLight_MaxLightDistance;
-		
-	/* Fall off range of the light, a low percentage is recommended so light adjustment will feel correct.*/
-	UPROPERTY( EditDefaultsOnly, Category = "Light|Appearance" )
-	float mLight_Falloff;
-	
-	// TODO Implement
-	UPROPERTY( EditDefaultsOnly, Category = "Light|Performance" )
-	float mLight_FadePercentage;
-	
-	// TODO Implement
-	UPROPERTY( EditDefaultsOnly, Category = "Light|Performance|Shadows" )
-	int32 mLight_MaxActiveShadowedLights_Low;
-
-	// TODO Implement
-	UPROPERTY( EditDefaultsOnly, Category = "Light|Performance|Shadows" )
-	int32 mLight_MaxActiveShadowedLights_Ultra;
+	UPROPERTY( EditDefaultsOnly, meta = (DisplayName = "Quality Default Value"))
+	int32 mCachedQualityScalabilityValue;
+	bool mIsQualityScalabilityDirty;
 };
 
 UCLASS( config = Game, defaultconfig, meta = ( DisplayName = "Pool settings" ) )

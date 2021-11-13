@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "Buildables/FGBuildableResourceExtractorBase.h"
 #include "Resources/FGResourceNodeFrackingCore.h"
 #include "FGBuildableFrackingActivator.generated.h"
@@ -110,4 +111,8 @@ private:
 
 	UPROPERTY()
 	const class AFGBuildableFrackingExtractor* mDefaultExtractor;
+
+	friend class AEfficiencyCheckerLogic;
+	friend class AFGBuildableFrackingActivator;
+	friend class FPowerCheckerModule;
 };
