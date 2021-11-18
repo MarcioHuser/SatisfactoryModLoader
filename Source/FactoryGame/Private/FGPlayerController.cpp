@@ -4,6 +4,7 @@
 
 AFGPlayerController::AFGPlayerController() : Super() {
 	this->mCanAffectAudioVolumes = true;
+	this->mConsoleCommandManager = nullptr;
 	this->mInputComponentChords = nullptr;
 	this->mAttentionPingActorClass = nullptr;
 	this->mMapAreaCheckInterval = 0.25;
@@ -63,6 +64,8 @@ void AFGPlayerController::RemovePlayerColorPresetAtIndex(int32 index){ }
 void AFGPlayerController::Server_RemovePlayerColorPresetAtIndex_Implementation(int32 index){ }
 void AFGPlayerController::AddPlayerColorPreset(FText presetName, FLinearColor color){ }
 void AFGPlayerController::Server_AddPlayerColorPreset_Implementation(const FText& presetName, FLinearColor color){ }
+void AFGPlayerController::SetDefaultSwatchForBuildableGroup(TSubclassOf<  UFGSwatchGroup > swatchGroup, TSubclassOf<  UFGFactoryCustomizationDescriptor_Swatch > newSwatch){ }
+void AFGPlayerController::Server_SetDefaultSwatchForBuildableGroup_Implementation(TSubclassOf<  UFGSwatchGroup > swatchGroup, TSubclassOf<  UFGFactoryCustomizationDescriptor_Swatch > newSwatch){ }
 void AFGPlayerController::SetHotbarIndex(int32 newIndex){ }
 int32 AFGPlayerController::GetCurrentHotbarIndex(){ return int32(); }
 int32 AFGPlayerController::GetNumHotbars(){ return int32(); }

@@ -17,12 +17,6 @@ UFGCharacterMovementComponent::UFGCharacterMovementComponent() : Super() {
 	this->mCachedHoverPack = nullptr;
 	this->mCachedSurfedRailroadTrack = nullptr;
 	this->mOnLadder = nullptr;
-	this->mPipeData.mTravelingPipeHyper = nullptr;
-	this->mPipeData.mMinPipeSpeed = 300.0;
-	this->mPipeData.mPipeGravityStrength = 1500.0;
-	this->mPipeData.mPipeFriction = 0.05;
-	this->mPipeData.mPipeConstantAcceleration = 110.0;
-	this->mPipeData.mPipeCurveDamping = 0.4;
 	this->mSlideCurve = nullptr;
 	this->mSlopeCurve = nullptr;
 	this->mMaxSlideAngle = 1.65;
@@ -103,6 +97,7 @@ AFGParachute* UFGCharacterMovementComponent::GetCachedParachute(){ return nullpt
 AFGJumpingStilts* UFGCharacterMovementComponent::GetCachedJumpingStilts(){ return nullptr; }
 AFGHoverPack* UFGCharacterMovementComponent::GetCachedHoverPack(){ return nullptr; }
 void UFGCharacterMovementComponent::TickSlide(float delta){ }
+void UFGCharacterMovementComponent::ZeroOutFallVelocity(){ }
 void FSavedMove_FGMovement::Clear(){ }
 uint8 FSavedMove_FGMovement::GetCompressedFlags() const{ return uint8(); }
 bool FSavedMove_FGMovement::CanCombineWith(const FSavedMovePtr& newMove, ACharacter* character, float maxDelta) const{ return bool(); }
