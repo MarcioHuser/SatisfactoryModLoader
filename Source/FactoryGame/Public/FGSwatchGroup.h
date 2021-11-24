@@ -24,7 +24,8 @@ public:
 		mGroupName( LOCTEXT( "UFGSwatchGroup", "This should never be seen!") )
 	{
 	}
-	
+
+	UFUNCTION( BlueprintPure, Category="SwatchGroup")
 	static FText GetGroupName( TSubclassOf< UFGSwatchGroup > inClass );
 
 protected:
@@ -39,10 +40,10 @@ struct FACTORYGAME_API FSwatchGroupData
 	GENERATED_BODY()
 	
 public:
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category="SwatchGroup" )
+	UPROPERTY( SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="SwatchGroup" )
 	TSubclassOf< UFGSwatchGroup > SwatchGroup;
 	
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category="SwatchGroup" )
+	UPROPERTY( SaveGame, EditDefaultsOnly, BlueprintReadOnly, Category="SwatchGroup" )
 	TSubclassOf< UFGFactoryCustomizationDescriptor_Swatch> Swatch;
 	
 };
@@ -78,6 +79,28 @@ public:
 	UFGSwatchGroup_ConcreteFoundation()
 	{
 		mGroupName = LOCTEXT("UFGSwatchGroup_ConcreteFoundation", "Concrete Foundation" );
+	}
+};
+
+UCLASS()
+class FACTORYGAME_API UFGSwatchGroup_CoatedConcreteFoundation : public UFGSwatchGroup
+{
+	GENERATED_BODY()
+public:
+	UFGSwatchGroup_CoatedConcreteFoundation()
+	{
+		mGroupName = LOCTEXT( "UFGSwatchGroup_CoatedConcreteFoundation", "Coated Concrete Foundation" );
+	}
+};
+
+UCLASS()
+class FACTORYGAME_API UFGSwatchGroup_ConcreteWall : public UFGSwatchGroup
+{
+	GENERATED_BODY()
+public:
+	UFGSwatchGroup_ConcreteWall()
+	{ 
+		mGroupName = LOCTEXT( "UFGSwatchGroup_ConcreteWall", "Concrete Wall" );
 	}
 };
 

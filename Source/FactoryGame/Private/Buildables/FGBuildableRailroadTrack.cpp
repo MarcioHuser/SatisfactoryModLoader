@@ -3,7 +3,6 @@
 #include "Buildables/FGBuildableRailroadTrack.h"
 #include "Components/SceneComponent.h"
 #include "Components/SplineComponent.h"
-#include "FGInstancedSplineMeshComponent.h"
 #include "FGRailroadTrackConnectionComponent.h"
 #include "Hologram/FGRailroadTrackHologram.h"
 
@@ -31,22 +30,28 @@ AFGBuildableRailroadTrack::AFGBuildableRailroadTrack() : Super() {
 	this->mMesh = nullptr;
 	this->mMeshLength = 0.0;
 	this->mSplineComponent = CreateDefaultSubobject<USplineComponent>(TEXT("SplineComponent"));
-	this->mInstancedSplineComponent = CreateDefaultSubobject<UFGInstancedSplineMeshComponent>(TEXT("InstancedSplineComponent"));
 	this->mConnections.Add(CreateDefaultSubobject<UFGRailroadTrackConnectionComponent>(TEXT("TrackConnection0")));
 	this->mConnections.Add(CreateDefaultSubobject<UFGRailroadTrackConnectionComponent>(TEXT("TrackConnection1")));
 	this->mIsOwnedByPlatform = false;
+	this->mSignalBlockID = 0;
+	this->mBlockVisualizationMesh = nullptr;
 	this->mHologramClass = AFGRailroadTrackHologram::StaticClass();
 	this->mSplineComponent->SetupAttachment(RootComponent);
-	this->mInstancedSplineComponent->SetupAttachment(RootComponent);
 	this->mConnections[0]->SetupAttachment(RootComponent);
 	this->mConnections[1]->SetupAttachment(RootComponent);
 }
-void AFGBuildableRailroadTrack::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGBuildableRailroadTrack::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGBuildableRailroadTrack, mSplineData);
+	DOREPLIFETIME(AFGBuildableRailroadTrack, mSignalBlockID);
+}
 void AFGBuildableRailroadTrack::BeginPlay(){ }
 void AFGBuildableRailroadTrack::Destroyed(){ }
 void AFGBuildableRailroadTrack::Dismantle_Implementation(){ }
 bool AFGBuildableRailroadTrack::CanDismantle_Implementation() const{ return bool(); }
 int32 AFGBuildableRailroadTrack::GetDismantleRefundReturnsMultiplier() const{ return int32(); }
+void AFGBuildableRailroadTrack::ShowBlockVisualization(){ }
+void AFGBuildableRailroadTrack::StopBlockVisualization(){ }
 FRailroadTrackPosition AFGBuildableRailroadTrack::FindTrackPositionClosestToWorldLocation(const FVector& worldLocation){ return FRailroadTrackPosition(); }
 void AFGBuildableRailroadTrack::GetWorldLocationAndDirectionAtPosition(const  FRailroadTrackPosition& position, FVector& out_location, FVector& out_direction) const{ }
 UFGPowerConnectionComponent* AFGBuildableRailroadTrack::GetThirdRail() const{ return nullptr; }
@@ -58,3 +63,4 @@ TArray< AFGBuildableRailroadTrack* > AFGBuildableRailroadTrack::GetOverlappingTr
 void AFGBuildableRailroadTrack::AddOverlappingTrack(AFGBuildableRailroadTrack* track){ }
 void AFGBuildableRailroadTrack::SetTrackGraphID(int32 trackGraphID){ }
 void AFGBuildableRailroadTrack::SetSignalBlock(TWeakPtr< FFGRailroadSignalBlock > block){ }
+void AFGBuildableRailroadTrack::OnRep_SignalBlockID(){ }
