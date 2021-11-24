@@ -7,13 +7,24 @@ void UFGSplinePathMovementComponent::DrawDebugVehicle(int visualDebugLevel, int 
 #endif 
 UFGSplinePathMovementComponent::UFGSplinePathMovementComponent() : Super() {
 	this->mTargetList = nullptr;
+	this->mTarget = nullptr;
+	this->mPreviousTarget = nullptr;
 	this->mEndOfPath = false;
+	this->mTemporaryPath = nullptr;
 	this->mTransitionTarget = nullptr;
 	this->mServerStartTime = 0.0;
 	this->mIsDocked = false;
 	this->mIsBlocked = false;
 }
-void UFGSplinePathMovementComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void UFGSplinePathMovementComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UFGSplinePathMovementComponent, mTargetList);
+	DOREPLIFETIME(UFGSplinePathMovementComponent, mEndOfPath);
+	DOREPLIFETIME(UFGSplinePathMovementComponent, mTransitionTarget);
+	DOREPLIFETIME(UFGSplinePathMovementComponent, mServerStartTime);
+	DOREPLIFETIME(UFGSplinePathMovementComponent, mIsDocked);
+	DOREPLIFETIME(UFGSplinePathMovementComponent, mIsBlocked);
+}
 void UFGSplinePathMovementComponent::BeginPlay(){ }
 void UFGSplinePathMovementComponent::EndPlay(const EEndPlayReason::Type EndPlayReason){ }
 void UFGSplinePathMovementComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction){ }

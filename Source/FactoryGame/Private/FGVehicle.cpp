@@ -3,9 +3,20 @@
 #include "FGVehicle.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "FGHealthComponent.h"
+#include "FGSwatchGroup.h"
 
 FVehicleSeat::FVehicleSeat(){ }
-void AFGVehicle::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGVehicle::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGVehicle, mHealthComponent);
+	DOREPLIFETIME(AFGVehicle, mNetConstructionID);
+	DOREPLIFETIME(AFGVehicle, mCustomizationData);
+	DOREPLIFETIME(AFGVehicle, mBuiltWithRecipe);
+	DOREPLIFETIME(AFGVehicle, mIsSelfDriving);
+	DOREPLIFETIME(AFGVehicle, mIsSubmergedInWater);
+	DOREPLIFETIME(AFGVehicle, mIsSimulated);
+	DOREPLIFETIME(AFGVehicle, mMapText);
+}
 bool AFGVehicle::IsRelevancyOwnerFor(const AActor* Actor, const AActor* Owner, const AActor* ConnectionActor) const{ return bool(); }
 AFGVehicle::AFGVehicle() : Super() {
 	this->mDisplayName = INVTEXT("");
@@ -20,19 +31,12 @@ AFGVehicle::AFGVehicle() : Super() {
 	this->mCustomizationData.SwatchDesc = nullptr;
 	this->mCustomizationData.PatternDesc = nullptr;
 	this->mCustomizationData.MaterialDesc = nullptr;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.R = 0.0;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.G = 0.0;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.B = 0.0;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.A = 1.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.R = 0.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.G = 0.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.B = 0.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.A = 1.0;
 	this->mCustomizationData.OverrideColorData.Metallic = 0.0;
 	this->mCustomizationData.OverrideColorData.Roughness = 0.0;
 	this->mCustomizationData.PatternRotation = 0;
 	this->mCustomizationData.ColorSlot = 0;
 	this->mCustomizationData.HasPower = 0;
+	this->mSwatchGroup = UFGSwatchGroup_Vehicle::StaticClass();
 	this->mBuiltWithRecipe = nullptr;
 	this->mIsSelfDriving = false;
 	this->mSelfDrivingController = nullptr;
@@ -138,6 +142,7 @@ void AFGVehicle::SetForceRealMode(bool forceRealMode){ }
 void AFGVehicle::SetForceSimulationMode(bool forceSimulationMode){ }
 void AFGVehicle::SetSimulated(bool newIsSimulated){ }
 void AFGVehicle::ApplyMeshPrimitiveData(const FFactoryCustomizationData& customizationData){ }
+TSubclassOf< class UFGFactoryCustomizationDescriptor_Swatch > AFGVehicle::GetDefaultSwatchCustomizationOverride(UObject* worldContext){ return TSubclassOf<class UFGFactoryCustomizationDescriptor_Swatch>(); }
 void AFGVehicle::OnCustomizationDataApplied(const FFactoryCustomizationData& customizationData){ }
 void AFGVehicle::OnRep_IsSimulated(){ }
 void AFGVehicle::OnTakeDamage(AActor* damagedActor, float damageAmount, const  UDamageType* damageType,  AController* instigatedBy, AActor* damageCauser){ }

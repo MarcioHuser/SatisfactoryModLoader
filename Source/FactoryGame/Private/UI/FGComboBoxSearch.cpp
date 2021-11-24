@@ -19,7 +19,7 @@ FString UFGComboBoxSearch::GetSelectedOption() const{ return FString(); }
 int32 UFGComboBoxSearch::GetSelectedIndex() const{ return int32(); }
 int32 UFGComboBoxSearch::GetOptionCount() const{ return int32(); }
 bool UFGComboBoxSearch::IsOpen() const{ return bool(); }
-void UFGComboBoxSearch::ReleaseSlateResources(bool bReleaseChildren){ }
+void UFGComboBoxSearch::ReleaseSlateResources(bool bReleaseChildren){ Super::ReleaseSlateResources(bReleaseChildren); }
 void UFGComboBoxSearch::PostInitProperties(){ Super::PostInitProperties(); }
 void UFGComboBoxSearch::Serialize(FArchive& Ar){ Super::Serialize(Ar); }
 void UFGComboBoxSearch::PostLoad(){ Super::PostLoad(); }
@@ -45,10 +45,6 @@ UFGComboBoxSearch::UFGComboBoxSearch(const FObjectInitializer& ObjectInitializer
 	this->Font.OutlineSettings.bSeparateFillAlpha = false;
 	this->Font.OutlineSettings.bApplyOutlineToDropShadows = false;
 	this->Font.OutlineSettings.OutlineMaterial = nullptr;
-	this->Font.OutlineSettings.OutlineColor.R = 0.0;
-	this->Font.OutlineSettings.OutlineColor.G = 0.0;
-	this->Font.OutlineSettings.OutlineColor.B = 0.0;
-	this->Font.OutlineSettings.OutlineColor.A = 1.0;
 	this->Font.TypefaceFontName = TEXT("Bold");
 	this->Font.Size = 16;
 	this->Font.LetterSpacing = 0;

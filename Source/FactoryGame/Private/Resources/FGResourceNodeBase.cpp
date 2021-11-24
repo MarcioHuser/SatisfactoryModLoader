@@ -12,7 +12,6 @@ AFGResourceNodeBase::AFGResourceNodeBase() : Super() {
 	this->mDecalComponent = nullptr;
 	this->mBoxComponent = nullptr;
 	this->mIsOccupied = false;
-	this->mIsLonerNode = false;
 	this->mAllowDecal = true;
 	this->mHighlightParticleSystemTemplate = nullptr;
 	this->mHighlightParticleSystemComponent = nullptr;
@@ -21,7 +20,12 @@ AFGResourceNodeBase::AFGResourceNodeBase() : Super() {
 	this->mAddToSignificanceManager = true;
 	this->mSignificanceRange = 18000.0;
 }
-void AFGResourceNodeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGResourceNodeBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGResourceNodeBase, mIsOccupied);
+	DOREPLIFETIME(AFGResourceNodeBase, mRevealedOnMapBy);
+	DOREPLIFETIME(AFGResourceNodeBase, mDoSpawnParticle);
+}
 void AFGResourceNodeBase::PostLoad(){ Super::PostLoad(); }
 void AFGResourceNodeBase::BeginPlay(){ }
 void AFGResourceNodeBase::EndPlay(const EEndPlayReason::Type endPlayReason){ }

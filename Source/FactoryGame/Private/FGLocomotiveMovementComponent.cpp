@@ -3,6 +3,12 @@
 #include "FGLocomotiveMovementComponent.h"
 
 UFGLocomotiveMovementComponent::UFGLocomotiveMovementComponent() : Super() {
+	this->mRawReverserInput = 0;
+	this->mRawSteeringInput = 0;
+	this->mRawThrottleInput = 0.0;
+	this->mRawDynamicBrakeInput = 0.0;
+	this->mRawAirBrakeInput = 0.0;
+	this->mRawHornInput = false;
 	this->mThrottleInputRate.RiseRate = 5.0;
 	this->mThrottleInputRate.FallRate = 5.0;
 	this->mDynamicBrakeInputRate.RiseRate = 5.0;
@@ -10,6 +16,12 @@ UFGLocomotiveMovementComponent::UFGLocomotiveMovementComponent() : Super() {
 	this->mDynamicBrakeVelocityThreshold = 0.0;
 	this->mAirBrakeInputRate.RiseRate = 5.0;
 	this->mAirBrakeInputRate.FallRate = 5.0;
+	this->mReverserInput = 0;
+	this->mSteeringInput = 0.0;
+	this->mThrottleInput = 0.0;
+	this->mAirBrakeInput = 0.0;
+	this->mDynamicBrakeInput = 0.0;
+	this->mHornInput = false;
 	this->mTractiveEffortCurve.EditorCurveData.DefaultValue = 3.40282e+38;
 	this->mTractiveEffortCurve.EditorCurveData.PreInfinityExtrap = ERichCurveExtrapolation::RCCE_Constant;
 	this->mTractiveEffortCurve.EditorCurveData.PostInfinityExtrap = ERichCurveExtrapolation::RCCE_Constant;
@@ -52,4 +64,7 @@ void UFGLocomotiveMovementComponent::ServerUpdateState_Implementation(int32 inRe
 bool UFGLocomotiveMovementComponent::ServerUpdateState_Validate(int32 inReverserInput, int32 inSteeringInput, float inThrottleInput, float inDynamicBrakeInput, float inAirBrakeInput, bool inHornInput){ return bool(); }
 void UFGLocomotiveMovementComponent::UseReplicatedState(){ }
 void UFGLocomotiveMovementComponent::UseMultipleUnitMasterState(const UFGLocomotiveMovementComponent* master){ }
-void UFGLocomotiveMovementComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const { Super::GetLifetimeReplicatedProps(OutLifetimeProps); }
+void UFGLocomotiveMovementComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty> & OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UFGLocomotiveMovementComponent, mReplicatedState);
+}

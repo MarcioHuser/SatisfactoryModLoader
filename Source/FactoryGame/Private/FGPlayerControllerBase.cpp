@@ -4,6 +4,7 @@
 #include "FGCheatManager.h"
 
 AFGPlayerControllerBase::AFGPlayerControllerBase() : Super() {
+	this->mCurrentServer = nullptr;
 	this->mAdminInterface = nullptr;
 	this->mReplicatedCheatManager = nullptr;
 	this->mDisableInputComponent = nullptr;
@@ -13,7 +14,11 @@ AFGPlayerControllerBase::AFGPlayerControllerBase() : Super() {
 	this->mAllowedInputWhenDead.Add(TEXT("Chat"));
 	this->CheatClass = UFGCheatManager::StaticClass();
 }
-void AFGPlayerControllerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGPlayerControllerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGPlayerControllerBase, mAdminInterface);
+	DOREPLIFETIME(AFGPlayerControllerBase, mReplicatedCheatManager);
+}
 void AFGPlayerControllerBase::BeginPlay(){ }
 bool AFGPlayerControllerBase::ReplicateSubobjects( UActorChannel *Channel,  FOutBunch *Bunch, FReplicationFlags *RepFlags){ return bool(); }
 void AFGPlayerControllerBase::ClientRestart_Implementation(APawn* newPawn){ }
@@ -45,6 +50,11 @@ void AFGPlayerControllerBase::Admin(const FString& command){ }
 void AFGPlayerControllerBase::ServerAdmin_Implementation(const FString& command){ }
 bool AFGPlayerControllerBase::ServerAdmin_Validate(const FString& command){ return bool(); }
 bool AFGPlayerControllerBase::ProcessConsoleExec(const TCHAR* Cmd, FOutputDevice& Ar, UObject* Executor){ return bool(); }
+TScriptInterface<class IFGSaveManagerInterface> AFGPlayerControllerBase::GetMostRelevantSaveManager(){ return TScriptInterface<class IFGSaveManagerInterface>(); }
+TScriptInterface<class IFGSaveManagerInterface> AFGPlayerControllerBase::GetLocalSaveManager(){ return TScriptInterface<class IFGSaveManagerInterface>(); }
 void AFGPlayerControllerBase::DiscardInput(){ }
+void AFGPlayerControllerBase::SetPlayer(UPlayer* InPlayer){ }
+void AFGPlayerControllerBase::OnNetCleanup( UNetConnection* Connection){ }
 void AFGPlayerControllerBase::EnablePlayerInput(bool enable){ }
+void AFGPlayerControllerBase::SetCurrentServer( UFGServerObject* CurrentServer){ }
 void AFGPlayerControllerBase::InitDeathInput(){ }

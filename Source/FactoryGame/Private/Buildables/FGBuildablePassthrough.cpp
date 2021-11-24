@@ -14,6 +14,9 @@ AFGBuildablePassthrough::AFGBuildablePassthrough() : Super() {
 	this->mMidMeshRotation.Pitch = 0.0;
 	this->mMidMeshRotation.Yaw = 0.0;
 	this->mMidMeshRotation.Roll = 0.0;
+	this->mEndCapTranslation.X = 0.0;
+	this->mEndCapTranslation.Y = 0.0;
+	this->mEndCapTranslation.Z = 0.0;
 	this->mClearanceHeightMin = 50.0;
 	this->mClearanceThickness = 80.0;
 	this->mUseSoftClearance = true;
@@ -22,7 +25,12 @@ AFGBuildablePassthrough::AFGBuildablePassthrough() : Super() {
 	this->mConnectionComponentClass = nullptr;
 }
 void AFGBuildablePassthrough::BeginPlay(){ }
-void AFGBuildablePassthrough::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGBuildablePassthrough::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGBuildablePassthrough, mSnappedBuildingThickness);
+	DOREPLIFETIME(AFGBuildablePassthrough, mBottomSnappedConnection);
+	DOREPLIFETIME(AFGBuildablePassthrough, mTopSnappedConnection);
+}
 void AFGBuildablePassthrough::StartIsLookedAtForDismantle_Implementation( AFGCharacterPlayer* byCharacter){ }
 void AFGBuildablePassthrough::StopIsLookedAtForDismantle_Implementation( AFGCharacterPlayer* byCharacter){ }
 void AFGBuildablePassthrough::GetChildDismantleActors_Implementation(TArray< AActor* >& out_ChildDismantleActors) const{ }

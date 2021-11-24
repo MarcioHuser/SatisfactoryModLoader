@@ -2,8 +2,12 @@
 
 #include "Buildables/FGBuildable.h"
 #include "Components/SceneComponent.h"
+#include "FGSwatchGroup.h"
 
-void UFGSignificantNetworkRCO::GetLifetimeReplicatedProps(::TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void UFGSignificantNetworkRCO::GetLifetimeReplicatedProps(::TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UFGSignificantNetworkRCO, mForceNetField_UFGSignificantNetworkRemoteCallObject);
+}
 void UFGSignificantNetworkRCO::Server_RequestDecoratorSignificantComponents_Implementation(AFGBuildable* actor, AFGPlayerController* controller){ }
 void UFGSignificantNetworkRCO::Server_RemoveDecoratorSignificantComponents_Implementation(AFGBuildable* actor, AFGPlayerController* controller){ }
 #if WITH_EDITOR
@@ -14,7 +18,16 @@ void AFGBuildable::CheckForErrors(){ Super::CheckForErrors(); }
 #if WITH_EDITOR
 void AFGBuildable::SetBuildableDisplayName(TSubclassOf< AFGBuildable > inClass, FText displayName){ }
 #endif 
-void AFGBuildable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGBuildable::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGBuildable, mColorSlot);
+	DOREPLIFETIME(AFGBuildable, mCustomizationData);
+	DOREPLIFETIME(AFGBuildable, mBuildEffectInstignator);
+	DOREPLIFETIME(AFGBuildable, mDidFirstTimeUse);
+	DOREPLIFETIME(AFGBuildable, mNetConstructionID);
+	DOREPLIFETIME(AFGBuildable, mBuiltWithRecipe);
+	DOREPLIFETIME(AFGBuildable, mOriginalBuildableVariant);
+}
 void AFGBuildable::PreReplication(IRepChangedPropertyTracker& ChangedPropertyTracker){ }
 AFGBuildable::AFGBuildable() : Super() {
 	this->mHologramClass = nullptr;
@@ -36,20 +49,13 @@ AFGBuildable::AFGBuildable() : Super() {
 	this->mCustomizationData.SwatchDesc = nullptr;
 	this->mCustomizationData.PatternDesc = nullptr;
 	this->mCustomizationData.MaterialDesc = nullptr;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.R = 0.0;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.G = 0.0;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.B = 0.0;
-	this->mCustomizationData.OverrideColorData.PrimaryColor.A = 1.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.R = 0.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.G = 0.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.B = 0.0;
-	this->mCustomizationData.OverrideColorData.SecondaryColor.A = 1.0;
 	this->mCustomizationData.OverrideColorData.Metallic = 0.0;
 	this->mCustomizationData.OverrideColorData.Roughness = 0.0;
 	this->mCustomizationData.PatternRotation = 0;
 	this->mCustomizationData.ColorSlot = 0;
 	this->mCustomizationData.HasPower = 0;
 	this->mDefaultSwatchCustomizationOverride = nullptr;
+	this->mSwatchGroup = UFGSwatchGroup_Standard::StaticClass();
 	this->mAllowColoring = true;
 	this->mBuildEffectTemplate = nullptr;
 	this->mDismantleEffectTemplate = nullptr;

@@ -8,12 +8,19 @@ AFGBuildableLightSource::AFGBuildableLightSource() : Super() {
 	this->mLightControlData.ColorSlotIndex = 0;
 	this->mLightControlData.Intensity = 1.0;
 	this->mLightControlData.IsTimeOfDayAware = false;
+	this->mCurrentLightColor = FLinearColor(1.0, 1.0, 1.0);
 	this->mPowerConsumption = 1.0;
 	this->mPowerInfo = CreateDefaultSubobject<UFGPowerInfoComponent>(TEXT("powerInfo"));
 	this->mHasPower = false;
 	this->mIsDay = false;
 }
-void AFGBuildableLightSource::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const{ }
+void AFGBuildableLightSource::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGBuildableLightSource, mIsEnabled);
+	DOREPLIFETIME(AFGBuildableLightSource, mLightControlData);
+	DOREPLIFETIME(AFGBuildableLightSource, mHasPower);
+	DOREPLIFETIME(AFGBuildableLightSource, mIsDay);
+}
 void AFGBuildableLightSource::BeginPlay(){ }
 void AFGBuildableLightSource::EndPlay(const EEndPlayReason::Type EndPlayReason){ }
 bool AFGBuildableLightSource::GetPoolHandleInitialState() const{ return bool(); }

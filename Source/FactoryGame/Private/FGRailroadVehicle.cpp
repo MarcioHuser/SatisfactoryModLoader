@@ -21,7 +21,19 @@ AFGRailroadVehicle::AFGRailroadVehicle() : Super() {
 	this->mHologramClass = AFGRailroadVehicleHologram::StaticClass();
 	this->SetReplicatingMovement(false);
 }
-void AFGRailroadVehicle::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const{ }
+void AFGRailroadVehicle::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGRailroadVehicle, mTrain);
+	DOREPLIFETIME(AFGRailroadVehicle, mCoupledVehicleFront);
+	DOREPLIFETIME(AFGRailroadVehicle, mCoupledVehicleBack);
+	DOREPLIFETIME(AFGRailroadVehicle, mIsOrientationReversed);
+	DOREPLIFETIME(AFGRailroadVehicle, mIsDerailed);
+	DOREPLIFETIME(AFGRailroadVehicle, mLastServerTime);
+	DOREPLIFETIME(AFGRailroadVehicle, mServerTrack);
+	DOREPLIFETIME(AFGRailroadVehicle, mServerOffset);
+	DOREPLIFETIME(AFGRailroadVehicle, mServerForward);
+	DOREPLIFETIME(AFGRailroadVehicle, mServerSpeed);
+}
 void AFGRailroadVehicle::BeginPlay(){ }
 void AFGRailroadVehicle::Destroyed(){ }
 void AFGRailroadVehicle::Serialize(FArchive& ar){ Super::Serialize(ar); }
@@ -47,6 +59,8 @@ bool AFGRailroadVehicle::IsDocked() const{ return bool(); }
 void AFGRailroadVehicle::SetTrackPosition(const FRailroadTrackPosition& position){ }
 void AFGRailroadVehicle::OnDerail(const FVector& velocity){ }
 void AFGRailroadVehicle::OnRerail(){ }
+void AFGRailroadVehicle::ShowDerailHologram(){ }
+void AFGRailroadVehicle::HideDerailHologram(){ }
 void AFGRailroadVehicle::DisplayDebug( UCanvas* canvas, const  FDebugDisplayInfo& debugDisplay, float& YL, float& YPos){ }
 void AFGRailroadVehicle::OnCollided_Implementation(AFGRailroadVehicle* withVehicle, float impactVelocity, bool isPrimaryEvent, bool isDerailed){ }
 void AFGRailroadVehicle::TickClientSimulation(float dt){ }
@@ -56,3 +70,5 @@ void AFGRailroadVehicle::DecoupleVehicleAt(ERailroadVehicleCoupler coupler){ }
 void AFGRailroadVehicle::OnRep_IsOrientationReversed(){ }
 void AFGRailroadVehicle::OnRep_Train(){ }
 void AFGRailroadVehicle::OnRep_IsDerailed(){ }
+void AFGRailroadVehicle::EnableDerailPhysics(const FVector& velocity){ }
+void AFGRailroadVehicle::DisableDerailPhysics(){ }

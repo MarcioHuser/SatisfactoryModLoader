@@ -8,31 +8,18 @@ FPresetHotbar::FPresetHotbar( AFGPlayerState* owningState, const FPresetHotbar& 
 AFGPlayerState::AFGPlayerState() : Super() {
 	this->mCurrentHotbarIndex = 0;
 	this->mSlotNum = -1;
-	this->mSlotData.PingColor.R = 0.0;
-	this->mSlotData.PingColor.G = 0.0;
-	this->mSlotData.PingColor.B = 0.0;
-	this->mSlotData.PingColor.A = 0.0;
-	this->mSlotData.NametagColor.R = 0.0;
-	this->mSlotData.NametagColor.G = 0.0;
-	this->mSlotData.NametagColor.B = 0.0;
-	this->mSlotData.NametagColor.A = 0.0;
+	this->mSlotData.PingColor = FLinearColor(0.0, 0.0, 0.0, 0.0);
+	this->mSlotData.NametagColor = FLinearColor(0.0, 0.0, 0.0, 0.0);
 	this->mOwnedPawn = nullptr;
 	this->mHasReceivedInitialItems = false;
 	this->mIsServerAdmin = false;
-	this->mCustomColorData.PrimaryColor.R = 0.0;
-	this->mCustomColorData.PrimaryColor.G = 0.0;
-	this->mCustomColorData.PrimaryColor.B = 0.0;
-	this->mCustomColorData.PrimaryColor.A = 1.0;
-	this->mCustomColorData.SecondaryColor.R = 0.0;
-	this->mCustomColorData.SecondaryColor.G = 0.0;
-	this->mCustomColorData.SecondaryColor.B = 0.0;
-	this->mCustomColorData.SecondaryColor.A = 1.0;
 	this->mCustomColorData.Metallic = 0.0;
 	this->mCustomColorData.Roughness = 0.0;
 	this->mTutorialSubsystem = nullptr;
 	this->mTutorialSubsystemClass = nullptr;
 	this->mNumArmSlots = 1;
 	this->mOnlyShowAffordableRecipes = false;
+	this->mLastSelectedResourceSinkShopCategory = nullptr;
 	this->mNumObservedInventorySlots = 0;
 	this->PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
 	this->PrimaryActorTick.EndTickGroup = ETickingGroup::TG_PrePhysics;
@@ -44,7 +31,28 @@ AFGPlayerState::AFGPlayerState() : Super() {
 	this->NetUpdateFrequency = 10.0;
 }
 void AFGPlayerState::Serialize(FArchive& ar){ Super::Serialize(ar); }
-void AFGPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGPlayerState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGPlayerState, mHotbars);
+	DOREPLIFETIME(AFGPlayerState, mPresetHotbars);
+	DOREPLIFETIME(AFGPlayerState, mCurrentHotbarIndex);
+	DOREPLIFETIME(AFGPlayerState, mBuildableSubCategoryDefaultMatDesc);
+	DOREPLIFETIME(AFGPlayerState, mMaterialSubCategoryDefaultMatDesc);
+	DOREPLIFETIME(AFGPlayerState, mNewRecipes);
+	DOREPLIFETIME(AFGPlayerState, mSlotNum);
+	DOREPLIFETIME(AFGPlayerState, mSlotData);
+	DOREPLIFETIME(AFGPlayerState, mIsServerAdmin);
+	DOREPLIFETIME(AFGPlayerState, mVisitedAreas);
+	DOREPLIFETIME(AFGPlayerState, mCustomColorData);
+	DOREPLIFETIME(AFGPlayerState, mRememberedFirstTimeEquipmentClasses);
+	DOREPLIFETIME(AFGPlayerState, mNumArmSlots);
+	DOREPLIFETIME(AFGPlayerState, mOnlyShowAffordableRecipes);
+	DOREPLIFETIME(AFGPlayerState, mCollapsedItemCategories);
+	DOREPLIFETIME(AFGPlayerState, mFilteredOutMapTypes);
+	DOREPLIFETIME(AFGPlayerState, mFilteredOutCompassTypes);
+	DOREPLIFETIME(AFGPlayerState, mNumObservedInventorySlots);
+	DOREPLIFETIME(AFGPlayerState, mFavoriteShopSchematics);
+}
 bool AFGPlayerState::ReplicateSubobjects( UActorChannel* channel,  FOutBunch* bunch, FReplicationFlags* repFlags){ return bool(); }
 void AFGPlayerState::BeginPlay(){ }
 void AFGPlayerState::CopyProperties(APlayerState* playerState){ }

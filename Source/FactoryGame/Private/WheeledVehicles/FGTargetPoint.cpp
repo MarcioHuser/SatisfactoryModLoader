@@ -6,6 +6,7 @@
 void AFGTargetPoint::Tick(float DeltaSeconds){ }
 #endif 
 AFGTargetPoint::AFGTargetPoint() : Super() {
+	this->mOwningList = nullptr;
 	this->mNext = nullptr;
 	this->mWaitTime = 3.0;
 	this->mTargetSpeed = -1;
@@ -13,19 +14,20 @@ AFGTargetPoint::AFGTargetPoint() : Super() {
 	this->mIsLoopTarget = false;
 	this->mIsDockingTarget = false;
 	this->mHostStation = nullptr;
-	this->PrimaryActorTick.TickGroup = ETickingGroup::TG_PrePhysics;
-	this->PrimaryActorTick.EndTickGroup = ETickingGroup::TG_PrePhysics;
-	this->PrimaryActorTick.bTickEvenWhenPaused = false;
-	this->PrimaryActorTick.bCanEverTick = true;
-	this->PrimaryActorTick.bStartWithTickEnabled = true;
-	this->PrimaryActorTick.bAllowTickOnDedicatedServer = true;
-	this->PrimaryActorTick.TickInterval = 0.0;
 	this->bAlwaysRelevant = true;
 	this->SetReplicatingMovement(true);
 	this->bReplicates = true;
 	this->NetDormancy = ENetDormancy::DORM_Initial;
 }
-void AFGTargetPoint::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGTargetPoint::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGTargetPoint, mNext);
+	DOREPLIFETIME(AFGTargetPoint, mWaitTime);
+	DOREPLIFETIME(AFGTargetPoint, mTargetSpeed);
+	DOREPLIFETIME(AFGTargetPoint, mIsLoopTarget);
+	DOREPLIFETIME(AFGTargetPoint, mIsDockingTarget);
+	DOREPLIFETIME(AFGTargetPoint, mHostStation);
+}
 void AFGTargetPoint::PostLoadGame_Implementation(int32 saveVersion, int32 gameVersion){ }
 bool AFGTargetPoint::ShouldSave_Implementation() const{ return bool(); }
 void AFGTargetPoint::StartIsLookedAt_Implementation( AFGCharacterPlayer* byCharacter, const FUseState& state){ }

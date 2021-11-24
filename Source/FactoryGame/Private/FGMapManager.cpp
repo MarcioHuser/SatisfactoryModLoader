@@ -7,6 +7,7 @@ AFGMapManager* AFGMapManager::Get(UObject* worldContext){ return nullptr; }
 AFGMapManager::AFGMapManager() : Super() {
 	this->mFogOfWarTexture = nullptr;
 	this->mCachedMinimapCaptureActor = nullptr;
+	this->mActorRepresentationManager = nullptr;
 	this->PrimaryActorTick.TickGroup = ETickingGroup::TG_DuringPhysics;
 	this->PrimaryActorTick.EndTickGroup = ETickingGroup::TG_PrePhysics;
 	this->PrimaryActorTick.bTickEvenWhenPaused = false;
@@ -15,7 +16,10 @@ AFGMapManager::AFGMapManager() : Super() {
 	this->PrimaryActorTick.bAllowTickOnDedicatedServer = true;
 	this->PrimaryActorTick.TickInterval = 0.1;
 }
-void AFGMapManager::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const{ }
+void AFGMapManager::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+}
 void AFGMapManager::BeginPlay(){ }
 void AFGMapManager::Tick(float dt){ }
 void AFGMapManager::PreSaveGame_Implementation(int32 saveVersion, int32 gameVersion){ }

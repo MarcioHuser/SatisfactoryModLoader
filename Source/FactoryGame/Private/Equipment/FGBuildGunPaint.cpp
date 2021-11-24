@@ -16,7 +16,10 @@ UFGBuildGunStatePaint::UFGBuildGunStatePaint() : Super() {
 	this->mLastAppliedActor = nullptr;
 	this->mPreviewActor = nullptr;
 }
-void UFGBuildGunStatePaint::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const{ }
+void UFGBuildGunStatePaint::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+}
 void UFGBuildGunStatePaint::BeginState_Implementation(){ }
 void UFGBuildGunStatePaint::EndState_Implementation(){ }
 void UFGBuildGunStatePaint::TickState_Implementation(float deltaTime){ }
@@ -43,4 +46,4 @@ void UFGBuildGunStatePaint::SpawnPreviewActor(AFGBuildable* aimedAtBuildable, TS
 USceneComponent* UFGBuildGunStatePaint::SetupComponent(USceneComponent* attachParent, UActorComponent* componentTemplate, const FName& componentName){ return nullptr; }
 void UFGBuildGunStatePaint::ValidateCost(){ }
 void UFGBuildGunStatePaint::AddConstructDisqualifier(TSubclassOf<  UFGConstructDisqualifier > disqualifier){ }
-float UFGBuildGunStatePaint::AlignPatternRotationWithActor(const AActor* actor, float currentPatternRotation) const{ return float(); }
+uint8 UFGBuildGunStatePaint::AlignPatternRotationWithActor(const AActor* actor, uint8 currentPatternRotation) const{ return uint8(); }

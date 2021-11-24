@@ -2,9 +2,9 @@
 
 #include "FGCharacterPlayer.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "FGOutlineComponent.h"
 #include "GameFramework/SpringArmComponent.h"
-#include "Components/SkeletalMeshComponent.h"
 #include "FGCharacterMovementComponent.h"
 
 AFGCharacterPlayer::AFGCharacterPlayer(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer.SetDefaultSubobjectClass<UFGCharacterMovementComponent>(ACharacter::CharacterMovementComponentName)) {
@@ -39,6 +39,7 @@ AFGCharacterPlayer::AFGCharacterPlayer(const FObjectInitializer& ObjectInitializ
 	this->mLastSafeGroundPositions[2].Z = 0.0;;
 	this->mLastSafeGroundPositionLoopHead = 0;
 	this->mCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT(" PlayerCamera "));
+	this->mCinematicCameraComponent = nullptr;
 	this->mSpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraSpringArm"));
 	this->mCameraComponent->SetupAttachment(mSpringArmComponent);
 	this->mCurrentCameraMode = ECameraMode::ECM_None;
@@ -78,7 +79,28 @@ AFGCharacterPlayer::AFGCharacterPlayer(const FObjectInitializer& ObjectInitializ
 	this->mMesh3P->SetupAttachment(GetCapsuleComponent());
 	this->mSpringArmComponent->SetupAttachment(GetCapsuleComponent());
 }
-void AFGCharacterPlayer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const{ }
+void AFGCharacterPlayer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGCharacterPlayer, mFoliagePickupProxy);
+	DOREPLIFETIME(AFGCharacterPlayer, mBuildGun);
+	DOREPLIFETIME(AFGCharacterPlayer, mResourceScanner);
+	DOREPLIFETIME(AFGCharacterPlayer, mResourceMiner);
+	DOREPLIFETIME(AFGCharacterPlayer, mWaitingClientAttachDrivable);
+	DOREPLIFETIME(AFGCharacterPlayer, mActiveEquipments);
+	DOREPLIFETIME(AFGCharacterPlayer, mAllAttachments);
+	DOREPLIFETIME(AFGCharacterPlayer, mActiveAttachments);
+	DOREPLIFETIME(AFGCharacterPlayer, mInventory);
+	DOREPLIFETIME(AFGCharacterPlayer, mBeltSlot);
+	DOREPLIFETIME(AFGCharacterPlayer, mTrashSlot);
+	DOREPLIFETIME(AFGCharacterPlayer, mPickupCounter);
+	DOREPLIFETIME(AFGCharacterPlayer, mDrivenVehicle);
+	DOREPLIFETIME(AFGCharacterPlayer, mRadiationIntensity);
+	DOREPLIFETIME(AFGCharacterPlayer, mRadiationDamageAngle);
+	DOREPLIFETIME(AFGCharacterPlayer, mRadiationImmunity);
+	DOREPLIFETIME(AFGCharacterPlayer, mInRadioactiveZone);
+	DOREPLIFETIME(AFGCharacterPlayer, mReplicatedIsSliding);
+	DOREPLIFETIME(AFGCharacterPlayer, mIncomingAttackers);
+}
 void AFGCharacterPlayer::PostActorCreated(){ Super::PostActorCreated(); }
 void AFGCharacterPlayer::PostInitializeComponents(){ Super::PostInitializeComponents(); }
 void AFGCharacterPlayer::BeginPlay(){ }

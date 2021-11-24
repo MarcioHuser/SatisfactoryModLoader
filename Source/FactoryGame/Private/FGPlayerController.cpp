@@ -4,6 +4,7 @@
 
 AFGPlayerController::AFGPlayerController() : Super() {
 	this->mCanAffectAudioVolumes = true;
+	this->mConsoleCommandManager = nullptr;
 	this->mInputComponentChords = nullptr;
 	this->mAttentionPingActorClass = nullptr;
 	this->mMapAreaCheckInterval = 0.25;
@@ -22,7 +23,12 @@ AFGPlayerController::AFGPlayerController() : Super() {
 	this->mMusicPlayerTickIntervalStart = 1.5;
 }
 bool AFGPlayerController::ProcessConsoleExec(const TCHAR* cmd, FOutputDevice& ar, UObject* executor){ return bool(); }
-void AFGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGPlayerController, mRemoteCallObjects);
+	DOREPLIFETIME(AFGPlayerController, mIsRespawning);
+	DOREPLIFETIME(AFGPlayerController, mInTutorialMode);
+}
 bool AFGPlayerController::ReplicateSubobjects( UActorChannel* channel,  FOutBunch* bunch, FReplicationFlags* repFlags){ return bool(); }
 void AFGPlayerController::PostInitializeComponents(){ Super::PostInitializeComponents(); }
 void AFGPlayerController::BeginPlay(){ }
@@ -63,6 +69,8 @@ void AFGPlayerController::RemovePlayerColorPresetAtIndex(int32 index){ }
 void AFGPlayerController::Server_RemovePlayerColorPresetAtIndex_Implementation(int32 index){ }
 void AFGPlayerController::AddPlayerColorPreset(FText presetName, FLinearColor color){ }
 void AFGPlayerController::Server_AddPlayerColorPreset_Implementation(const FText& presetName, FLinearColor color){ }
+void AFGPlayerController::SetDefaultSwatchForBuildableGroup(TSubclassOf<  UFGSwatchGroup > swatchGroup, TSubclassOf<  UFGFactoryCustomizationDescriptor_Swatch > newSwatch){ }
+void AFGPlayerController::Server_SetDefaultSwatchForBuildableGroup_Implementation(TSubclassOf<  UFGSwatchGroup > swatchGroup, TSubclassOf<  UFGFactoryCustomizationDescriptor_Swatch > newSwatch){ }
 void AFGPlayerController::SetHotbarIndex(int32 newIndex){ }
 int32 AFGPlayerController::GetCurrentHotbarIndex(){ return int32(); }
 int32 AFGPlayerController::GetNumHotbars(){ return int32(); }
