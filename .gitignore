@@ -92,3 +92,5 @@ Plugins/*
 /umodel - satisfactory.lnk
 Crypto.json
 /UmodelExport/*
+/SDL2_64.dll
+/notify.log
