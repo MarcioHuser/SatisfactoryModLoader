@@ -3,14 +3,19 @@
 #include "FGEventSubsystem.h"
 
 AFGEventSubsystem::AFGEventSubsystem() : Super() {
-	this->bAlwaysRelevant = true;
-	this->SetReplicates(true);
+	this->bIsReplicated = false;
 }
-void AFGEventSubsystem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const{ }
+void AFGEventSubsystem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AFGEventSubsystem, mCurrentEvents);
+}
 AFGEventSubsystem* AFGEventSubsystem::Get(UWorld* world){ return nullptr; }
 AFGEventSubsystem* AFGEventSubsystem::GetEventSubsystem(UObject* worldContext){ return nullptr; }
 TArray< EEvents > AFGEventSubsystem::GetCurrentEvents(){ return TArray<EEvents>(); }
-void AFGEventSubsystem::StoreCalendarDataForEvent(EEvents event, FCalendarData calendarData){ }
-bool AFGEventSubsystem::GetStoredCalendarDataForEvent(EEvents event, FCalendarData& out_calendarData){ return bool(); }
+void AFGEventSubsystem::StoreCalendarData(TSubclassOf<class UFGCalendarRewards> calendarRewardClass, const FCalendarData& calendarData){ }
+bool AFGEventSubsystem::GetStoredCalendarData(TSubclassOf<class UFGCalendarRewards> calendarRewardClass, FCalendarData& out_calendarData) const{ return bool(); }
+bool AFGEventSubsystem::CanOpenCalendarSlot(EEvents event, int32 dayNumber){ return bool(); }
 bool AFGEventSubsystem::GetOverridenEventDateTime(EEvents event, FDateTime& out_OverriddenDateTime){ return bool(); }
 bool AFGEventSubsystem::ShouldRunEvent(const FSimpleDate& Begin, const FSimpleDate& End, const FDateTime& now){ return bool(); }
+TSubclassOf<class AActor> AFGEventSubsystem::GetCalendarClassForCurrentEvent(){ return TSubclassOf<class AActor>(); }
+TSubclassOf<class AFGBuildable> AFGEventSubsystem::GetHubMiniGameClassForCurrentEvent(){ return TSubclassOf<class AFGBuildable>(); }

@@ -2,14 +2,17 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "CoreMinimal.h"
 #include "FGSubsystem.h"
 #include "FGTutorialSubsystem.h"
 #include "Resources/FGResourceDescriptor.h"
+#include "FGRecipe.h"
 #include "FGTutorialIntroManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE( FIntroSequenceStateUpdate );
 DECLARE_DYNAMIC_MULTICAST_DELEGATE( FCurrentIntroStepUpdate );
+DECLARE_DYNAMIC_MULTICAST_DELEGATE( FOnTutorialCompleted );
 
 //Steps in the intro tutorial
 UENUM( BlueprintType )
@@ -61,6 +64,9 @@ struct FTutorialHintData
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Tutorial" )
 	TSubclassOf< class UFGMessageBase > Message;
+
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Tutorial" )
+	TMap< TSubclassOf< class UFGMessageBase >, float > AdditionalMessages;
 };
 
 UCLASS( abstract )
@@ -215,6 +221,10 @@ public:
 	/** Called when mCurrentLocalTutorial updates */
 	UPROPERTY(BlueprintAssignable,Category="Tutorial")
 	FCurrentIntroStepUpdate mOnCurrentIntroStepUpdated;
+	
+	/** Called when the tutorial is completed. Only triggered on server for now. */
+	UPROPERTY(BlueprintAssignable,Category="Tutorial")
+	FOnTutorialCompleted mOnTutorialCompleted;
 
 protected:
 	/** Has a trading post been built */

@@ -2,8 +2,10 @@
 
 #pragma once
 
+#include "FactoryGame.h"
 #include "GameFramework/Info.h"
 #include "FGSaveInterface.h"
+#include "FGTrainDockingRules.h"
 #include "FGRailroadTimeTable.generated.h"
 
 /**
@@ -15,12 +17,12 @@ struct FACTORYGAME_API FTimeTableStop
 	GENERATED_BODY()
 public:
 	/** Where to stop. */
-	UPROPERTY( SaveGame, BlueprintReadWrite )
+	UPROPERTY( SaveGame, BlueprintReadWrite, VisibleAnywhere )
 	class AFGTrainStationIdentifier* Station = nullptr;
 
-	/** Time to stay. */
-	UPROPERTY( SaveGame, BlueprintReadWrite )
-	float Duration = 0.0f;
+	/** Station Rules */
+	UPROPERTY( SaveGame, BlueprintReadWrite, VisibleAnywhere )
+	FTrainDockingRuleSet DockingRuleSet;
 };
 
 /**
@@ -97,14 +99,22 @@ public:
 	UFUNCTION( BlueprintCallable, Category = "FactoryGame|Railroad|TimeTable" )
 	void IncrementCurrentStop();
 
+	/** Purge the list of any invalid stops. */
+	UFUNCTION( BlueprintCallable, Category = "FactoryGame|Railroad|TimeTable" )
+	void PurgeInvalidStops();
+	
+	/** Get the docking rules for a given stop */
+	UFUNCTION( BlueprintCallable, Category = "FactoryGame|RailRoad|TimeTable" )
+	void GetDockingRuleSetForStop( int32 index, FTrainDockingRuleSet& out_ruleSet ) const;
+
 private:
 	const int32 MAX_STOPS = 100;
 
 	/** Array of destinations this train will visit. */
-	UPROPERTY( SaveGame, Replicated )
+	UPROPERTY( SaveGame, Replicated, VisibleAnywhere, Category = "Time Table" )
 	TArray< FTimeTableStop > mStops;
 
 	/** Current stop the train is at or heading to. */
-	UPROPERTY( SaveGame )
+	UPROPERTY( SaveGame, VisibleAnywhere, Category = "Time Table" )
 	int32 mCurrentStop;
 };
