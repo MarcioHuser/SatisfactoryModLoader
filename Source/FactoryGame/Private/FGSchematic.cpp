@@ -23,12 +23,15 @@ UFGSchematic::UFGSchematic() : Super() {
 	this->mTimeToComplete = 600.0;
 	this->mSmallSchematicIcon = nullptr;
 	this->mDependenciesBlocksSchematicAccess = false;
+	this->mHiddenUntilDependenciesMet = false;
 	this->mDependsOnSchematic = nullptr;
 	this->mSchematicCategoryDeprecated = ESchematicCategory::ESC_LOGISTICS;
 }
 void UFGSchematic::PostLoad(){ Super::PostLoad(); }
 void UFGSchematic::Serialize(FArchive& ar){ Super::Serialize(ar); }
-FPrimaryAssetId UFGSchematic::GetPrimaryAssetId() const{ return FPrimaryAssetId(); }
+FPrimaryAssetId UFGSchematic::GetPrimaryAssetId() const {
+	return FPrimaryAssetId(StaticClass()->GetFName(), FPackageName::GetShortFName(GetOutermost()->GetFName()));
+}
 ESchematicType UFGSchematic::GetType(TSubclassOf< UFGSchematic > inClass) {
 	if (inClass)
 		return inClass.GetDefaultObject()->mType;
@@ -88,6 +91,8 @@ FSlateBrush UFGSchematic::GetItemIcon(TSubclassOf< UFGSchematic > inClass) {
 UTexture2D* UFGSchematic::GetSmallIcon(TSubclassOf< UFGSchematic > inClass){ return nullptr; }
 bool UFGSchematic::AreSchematicDependenciesMet(TSubclassOf< UFGSchematic > inClass, UObject* worldContext){ return bool(); }
 void UFGSchematic::GetSchematicDependencies(TSubclassOf< UFGSchematic > inClass, TArray<  UFGAvailabilityDependency* >& out_schematicDependencies){ }
+bool UFGSchematic::GetHiddenUntilDependenciesMet(TSubclassOf< UFGSchematic > inClass){ return bool(); }
+ESchematicState UFGSchematic::GetSchematicState(TSubclassOf< UFGSchematic > inClass, UObject* worldContext){ return ESchematicState(); }
 bool UFGSchematic::CanGiveAccessToSchematic(TSubclassOf< UFGSchematic > inClass, UObject* worldContext){ return bool(); }
 bool UFGSchematic::IsRepeatPurchasesAllowed(TSubclassOf< UFGSchematic > inClass){ return bool(); }
 void UFGSchematic::SortByMenuPriority(TArray< TSubclassOf< UFGSchematic > >& schematics){ }
