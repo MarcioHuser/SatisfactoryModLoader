@@ -99,3 +99,5 @@ Crypto.json
 /SDL2_64.dll
 /notify.log
 /Plugins/Alpakit/Source/Alpakit/Alpakit.rar
+
+*.bak
