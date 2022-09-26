@@ -113,6 +113,10 @@ public:
 	UFUNCTION( exec, CheatBoard, Category = "Player/Camera" )
 	virtual bool PlayerNoClipModeOnFly_Get();
 
+	/** Locally update all player nametags */
+	UFUNCTION( exec, CheatBoard, category = "Player" )
+	void UpdatePlayerNametags();
+
 	UFUNCTION( exec )
 	virtual void ClearGiveItemPopularList();
 	
@@ -227,6 +231,21 @@ public:
 
 	UFUNCTION( exec, CheatBoard, category = "Creature" )
 	void SetCreatureStressEnabled( bool enable );
+
+	UFUNCTION( Server, Reliable )
+	void Server_SpawnCreature( TSubclassOf< class AFGCreature > creatureClass, int32 numToSpawn );
+	UFUNCTION( exec, CheatBoard, category = "Creature" )
+	void SpawnCreature( TSubclassOf< class AFGCreature > creatureClass, int32 numToSpawn = 1 );
+
+	UFUNCTION( Server, Reliable )
+	void Server_KillAllCreaturesInRadius( float radius );
+	UFUNCTION( exec, CheatBoard, category = "Creature" )
+	void KillAllCreaturesInRadius( float radius );
+
+	UFUNCTION( Server, Reliable )
+	void Server_KillAllCreatures();
+	UFUNCTION( exec, CheatBoard, category = "Creature" )
+	void KillAllCreatures();
 
 	UFUNCTION( Server, Reliable )
 	void Server_SetTimeOfDay( int32 hour, int32 minute = 0 );
@@ -495,9 +514,6 @@ public:
 	void GetVehicleInfo();
 
 	UFUNCTION( exec )
-	void RunDebugMetric();
-
-	UFUNCTION( exec )
 	void MCP_Login( FString username, FString password );
 
 	UFUNCTION( exec )
@@ -690,7 +706,7 @@ public:
 	void Server_MarkTrackGraphsForRebuild();
 	UFUNCTION( exec )
 	void MarkTrackGraphsForRebuild();
-
+	
 	UFUNCTION( exec )
 	void RunHardwareBenchmark(int32 WorkScale = 10, float CPUMultiplier = 1.0f, float GPUMultiplier = 1.0f);
 

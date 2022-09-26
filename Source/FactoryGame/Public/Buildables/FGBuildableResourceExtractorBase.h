@@ -68,11 +68,11 @@ public:
 
 	/** Can this extractor occupy a resource node, given that it is not already occupied? */
 	bool IsAllowedOnResource( const TScriptInterface< class IFGExtractableResourceInterface >& resource ) const;
-
+	
 protected:
 	AActor* GetExtractableResourceActor() const { return mExtractableResource; }
 
-	virtual AActor* TryFindMissingResource() { return nullptr; }
+	virtual AActor* TryFindMissingResource();
 	virtual void OnExtractableResourceSet();
 
 	UFUNCTION()
