@@ -11,6 +11,7 @@
 #include "Patching/Patch/MainMenuPatch.h"
 #include "Patching/Patch/OfflinePlayerHandler.h"
 #include "Patching/Patch/OptionsKeybindPatch.h"
+#include "Patching/Patch/SaveMetadataPatch.h"
 #include "Player/PlayerCheatManagerHandler.h"
 // #include "Toolkit/OldToolkit/FGNativeClassDumper.h"
 
@@ -19,7 +20,7 @@
 #endif
 
 extern "C" DLLEXPORT const TCHAR* modLoaderVersionString = TEXT("3.3.2+") TEXT(SML_BUILD_METADATA);
-extern "C" DLLEXPORT const long targetGameVersion = 194714;
+extern "C" DLLEXPORT const long targetGameVersion = 202470;
 
 DEFINE_LOG_CATEGORY(LogSatisfactoryModLoader);
 
@@ -123,6 +124,9 @@ void FSatisfactoryModLoader::RegisterSubsystemPatches() {
 
     //Register options menu key bindings patch, providing better keybind categorization
     FOptionsKeybindPatch::RegisterPatch();
+
+    //Register save metadata patch to enable storing a save's mod list and other mod-specified metadata
+    FSaveMetadataPatch::RegisterPatch();
 
     //Only register these patches in shipping, where bodies of the ACharacter::Cheat methods are stripped
 #if UE_BUILD_SHIPPING
