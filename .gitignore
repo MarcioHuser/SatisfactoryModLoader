@@ -86,6 +86,7 @@ Plugins/*/Metadata/Crypto.json
 !Plugins/SML/
 !Plugins/SMLEditor/
 !Plugins/ExampleMod/
+!Plugins/AbstractInstance/
 
 # Custom stubs. Never to be commited
 /Content/WwiseAudio/*
