@@ -111,6 +111,4 @@ private:
 
 	UPROPERTY()
 	const class AFGBuildableFrackingExtractor* mDefaultExtractor;
-
-	friend class AFGBuildableFrackingActivator;
 };
