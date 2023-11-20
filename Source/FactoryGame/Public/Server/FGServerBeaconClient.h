@@ -5,12 +5,12 @@
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
 #include "OnlineBeaconClient.h"
-#include "Server/FGDedicatedServerTypes.h"
+#include "FGDedicatedServerTypes.h"
 #include "FGSaveSystem.h"
 
 #include "FGServerBeaconClient.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN( LogServerConnection, Log, Log );
+FACTORYGAME_API DECLARE_LOG_CATEGORY_EXTERN( LogServerConnection, Log, Log );
 
 DECLARE_DELEGATE_TwoParams( FOnJoinRequestAccepted, int32 Port, FServerEntryToken Ticket );
 
@@ -158,7 +158,7 @@ public:
 	void DeleteSaveSession(const FSessionSaveStruct& Session, FOnDeleteSaveGameComplete CompleteDelegate, void* UserData );
 	
 	UFUNCTION( Server, Reliable )
-	void LoadSaveFile(const FSaveHeader& SaveGame); 	
+	void LoadSaveFile(const FSaveHeader& SaveGame, const TArray<FString>& OptionsKeys, const TArray<FString>& OptionsValues ); 	
 
 protected:
 	virtual void OnConnected() override;

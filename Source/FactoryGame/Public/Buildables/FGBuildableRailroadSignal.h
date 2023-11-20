@@ -3,9 +3,9 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "FGRailroadTrackConnectionComponent.h"
-#include "Buildables/FGBuildable.h"
+#include "FGBuildable.h"
 #include "FGRailroadSignalBlock.h"
+#include "FGRailroadTrackConnectionComponent.h"
 #include "FGTrain.h"
 #include "FGBuildableRailroadSignal.generated.h"
 
@@ -28,6 +28,7 @@ public:
 
 	// Begin FGBuildable
 	virtual void OnBuildEffectFinished() override;
+	virtual void OnBuildEffectActorFinished() override;
 	virtual bool ShouldBeConsideredForBase_Implementation() override { return false; }
 	// End FGBuildable
 
@@ -156,6 +157,10 @@ protected:
 	/** Mesh for this signal, must be using the signal factory material for it to work. */
 	UPROPERTY( VisibleAnywhere )
 	UFGColoredInstanceMeshProxy* mSignalComponent;
+
+	/** True if we should draw debug cubes visible from afar, also make the signals always significant, must be set before BeginPlay. */
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Debug|Signal" )
+	bool mDrawDebugVisualState;
 	
 private:
 	friend class AFGRailroadSignalHologram;
@@ -227,7 +232,7 @@ private:
 	FDelegateHandle mBlockChangedHandle;
 
 	/** Is this a path signal. */
-	UPROPERTY( SaveGame, EditDefaultsOnly, Category = "FactoryGame|Railroad|Signal" )
+	UPROPERTY( SaveGame, EditDefaultsOnly, Category = "Signal" )
 	bool mIsPathSignal;
 
 	/** Is this signal bi-directional mean if this signal is paired with another one facing the opposite direction. */

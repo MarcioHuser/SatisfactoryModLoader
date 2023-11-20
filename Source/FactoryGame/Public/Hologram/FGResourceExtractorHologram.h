@@ -4,7 +4,7 @@
 
 #include "FactoryGame.h"
 #include "Resources/FGResourceDescriptor.h"
-#include "Hologram/FGFactoryHologram.h"
+#include "FGFactoryHologram.h"
 #include "FGResourceExtractorHologram.generated.h"
 
 /**
@@ -28,6 +28,7 @@ public:
 	virtual bool DoMultiStepPlacement( bool isInputFromARelease ) override;
 	virtual bool IsValidHitResult( const FHitResult& hitResult ) const override;
 	virtual AActor* GetUpgradedActor() const override;
+	virtual bool CanNudgeHologram() const override;
 	// End AFGHologram Interface
 
 protected:

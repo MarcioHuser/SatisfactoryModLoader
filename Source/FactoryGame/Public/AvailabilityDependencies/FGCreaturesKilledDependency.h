@@ -4,13 +4,14 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "AvailabilityDependencies/FGAvailabilityDependency.h"
+#include "FGAvailabilityDependency.h"
+#include "Templates/SubclassOf.h"
 #include "FGCreaturesKilledDependency.generated.h"
 
 /**
  * 
  */
-UCLASS()
+UCLASS( Blueprintable, abstract )
 class FACTORYGAME_API UFGCreaturesKilledDependency : public UFGAvailabilityDependency
 {
 	GENERATED_BODY()

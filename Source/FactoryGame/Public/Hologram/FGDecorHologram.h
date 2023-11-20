@@ -3,7 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Hologram/FGBuildableHologram.h"
+#include "FGBuildableHologram.h"
 #include "FGDecorHologram.generated.h"
 
 
@@ -23,7 +23,7 @@ protected:
 	// Begin AFGBuildableHologram interface
 	virtual void CheckValidPlacement() override;
 	virtual void ConfigureActor( class AFGBuildable* inBuildable ) const override;
-	virtual USceneComponent* SetupComponent( USceneComponent* attachParent, UActorComponent* componentTemplate, const FName& componentName );
+	virtual USceneComponent* SetupComponent( USceneComponent* attachParent, UActorComponent* componentTemplate, const FName& componentName, const FName& attachSocketName );
 	// End AFGBuildableHologram interface
 
 protected:

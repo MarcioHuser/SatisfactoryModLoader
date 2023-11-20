@@ -3,6 +3,7 @@
 #include "Creature/FGCreature.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SceneComponent.h"
+#include "Net/UnrealNetwork.h"
 
 TAutoConsoleVariable<int32> CVarCreatureDebug(TEXT("CVarCreatureDebug"), 0, TEXT(""));
 TAutoConsoleVariable<int32> CVarCreatureVisionDebug(TEXT("CVarCreatureVisionDebug"), 0, TEXT(""));
@@ -86,6 +87,7 @@ void AFGCreature::UpdateCreatureNavAgentProps(){ }
 bool AFGCreature::IsReadyToDespawn() const{ return bool(); }
 bool AFGCreature::ShouldSave_Implementation() const{ return bool(); }
 void AFGCreature::Died(AActor* died){ }
+void AFGCreature::DoRagdoll_Internal(){ }
 FVector AFGCreature::GetPawnViewLocation() const{ return FVector(); }
 UFGCreatureMovementComponent* AFGCreature::GetCreatureCharacterMovement() const{ return nullptr; }
 bool AFGCreature::GetAdjustedNavAgentProps(FNavAgentProperties& out_navAgentProps, UWorld* worldContext) const{ return bool(); }

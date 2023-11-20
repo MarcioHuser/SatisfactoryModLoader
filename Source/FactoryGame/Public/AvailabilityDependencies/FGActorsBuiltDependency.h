@@ -4,7 +4,8 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "AvailabilityDependencies/FGAvailabilityDependency.h"
+#include "FGAvailabilityDependency.h"
+#include "Templates/SubclassOf.h"
 #include "FGActorsBuiltDependency.generated.h"
 
 UENUM( BlueprintType )
@@ -18,7 +19,7 @@ enum class EActorBuiltDependencyType : uint8
 /**
 * Dependency that's met if we have built the given amount of actors
 */
-UCLASS()
+UCLASS( Blueprintable, abstract )
 class FACTORYGAME_API UFGActorsBuiltDependency : public UFGAvailabilityDependency
 {
 	GENERATED_BODY()

@@ -6,11 +6,8 @@
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "FGVehicleSubsystem.h"
+#include "SharedStats.h"
 #include "FGWheeledVehicleAIController.generated.h"
-
-// TODO: migrate from PhysX to Chaos; in the meantime, stfu
-#pragma warning( disable : 4996 )
-
 
 DECLARE_CYCLE_STAT( TEXT( "WheeledVehicle" ), STAT_ExecuteInterface_WheeledVehicle, STATGROUP_ExecuteInterface );
 
@@ -81,6 +78,7 @@ private:
 	 */
 	struct Output
 	{
+		bool BrakeAsReverse = true;
 		float Steering = 0.0f;
 		float Throttle = 0.0f;
 		float Brake = 0.0f;
@@ -152,27 +150,24 @@ private:
 	const FString& GetPlanName( Plan plan ) const;
 
 public:
-	static constexpr float FullSteeringAngleThreshold = 25.0f;
-	static constexpr float FullSteeringDifferenceThreshold = 25.0f;
+	static constexpr float FullSteeringAngleThreshold = 45.0f;
+	static constexpr float FullSteeringDifferenceThreshold = 45.0f;
 	static constexpr float ThrottleReleaseThreshold = 5.0f;
 	static constexpr float VehicleStillThreshold = 100.0f;
 	static constexpr float VehicleNeedsThrottleThreshold = 500.0f;
 	//static constexpr float MaxDistanceToSimulationToSides = 1000.0f;
 	//static constexpr float InFrontThreshold = 25.0f;
-	static constexpr float AlignedAngleAim = 15.0f;
+	static constexpr float AlignedAngleAim = 5.0f;
 	static constexpr float TooFastToFollowInReverse = 1000.0f;
 
 private:
 	TWeakObjectPtr< class AFGWheeledVehicle > mVehicle;
-	TWeakObjectPtr< class UWheeledVehicleMovementComponent > mMovement;
+	TWeakObjectPtr< class UFGWheeledVehicleMovementComponent > mMovement;
 	TWeakObjectPtr< class UFGSplinePathMovementComponent > mSimulationMovement;
 
 	class AFGTargetPoint* mCurrentTarget = nullptr;
 	class AFGTargetPoint* mPreviousTarget = nullptr;
-
-	UPROPERTY( Transient )
-	class UFGWheeledVehicleDetectionComponent* mDetection;
-
+	
 	FVector mDetectionBoxExtent;
 	FVector mDetectionBoxLocalOrigin;
 

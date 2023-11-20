@@ -3,8 +3,8 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Buildables/FGBuildable.h"
-#include "Buildables/FGBuildableCircuitSwitch.h"
+#include "FGBuildable.h"
+#include "FGBuildableCircuitSwitch.h"
 #include "FGPriorityPowerSwitchInfo.h"
 #include "FGBuildablePriorityPowerSwitch.generated.h"
 
@@ -34,25 +34,21 @@ public:
 	//~ End AFGBuildableCircuitSwitch interface
 	
 	/** Get the always relevant info for this switch. */
-	UFUNCTION( BlueprintPure, Category = "CircuitSwitch" )
+	UFUNCTION( BlueprintPure, Category = "FactoryGame|Power|PrioritySwitch" )
 	class AFGPriorityPowerSwitchInfo* GetInfo() const { return mInfo; }
-	
-	/** Get all the infos that belong to the same circuit group. */
-	UFUNCTION( BlueprintPure, Category = "CircuitSwitch" )
-	TArray< class AFGPriorityPowerSwitchInfo* > GetAllInfos() const;
 	
 	/**
 	 * @returns the priority with which this switch will be turned off automatically in case of power shortage.
 	 * A higher number will be turned off before a lower number. 0 (or less) means this switch will never be turned off automatically.
 	 */
-	UFUNCTION( BlueprintPure, Category = "CircuitSwitch" )
+	UFUNCTION( BlueprintPure, Category = "FactoryGame|Power|PrioritySwitch" )
 	int32 GetPriority() const { return mPriority; }
 
 	/**
 	 * @param priority the priority with which this switch will be turned off automatically in case of power shortage.
 	 * A higher number will be turned off before a lower number. 0 (or less) means this switch will never be turned off automatically.
 	 */
-	UFUNCTION( BlueprintCallable, Category = "CircuitSwitch" )
+	UFUNCTION( BlueprintCallable, Category = "FactoryGame|Power|PrioritySwitch" )
 	void SetPriority( int32 priority );
 
 	/**

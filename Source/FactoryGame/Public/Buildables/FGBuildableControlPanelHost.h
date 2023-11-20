@@ -3,7 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Buildables/FGBuildableCircuitBridge.h"
+#include "FGBuildableCircuitBridge.h"
 #include "FGBuildableControlPanelHost.generated.h"
 
 /**
@@ -34,7 +34,7 @@ protected:
 	void ControlledBuildablesChanged();
 
 private:
-	virtual void OnCircuitsChanged() override;
+	virtual void OnCircuitsRebuilt() override;
 	
 	void SearchDownstreamCircuit();
 

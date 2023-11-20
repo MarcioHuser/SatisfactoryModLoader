@@ -4,11 +4,11 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Buildables/FGBuildableTrainPlatform.h"
-#include "Replication/FGReplicationDetailInventoryComponent.h"
-#include "Replication/FGReplicationDetailActor_CargoPlatform.h"
+#include "FGBuildableTrainPlatform.h"
 #include "FGFreightWagon.h"
 #include "FGTrainDockingRules.h"
+#include "Replication/FGReplicationDetailActor_CargoPlatform.h"
+#include "Replication/FGReplicationDetailInventoryComponent.h"
 #include "FGBuildableTrainPlatformCargo.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FOnItemTransferRateUpdated, int32, itemTransferRate );
@@ -37,7 +37,7 @@ public:
 
 	/** Get the inventory the docked vehicle loads/unloads to  */
 	UFUNCTION( BlueprintPure, Category = "FactoryGame|Railroad|CargoPlatform" )
-	FORCEINLINE class UFGInventoryComponent* GetInventory() const{ return mCargoInventoryHandler->GetActiveInventoryComponent(); }
+	FORCEINLINE class UFGInventoryComponent* GetInventory() const{ return mCargoInventoryHandlerData.GetActiveInventoryComponent(); }
 
 	/** Get the docked actor if any. */
 	UFUNCTION( BlueprintPure, Category = "FactoryGame|Railroad|CargoPlatform" )
@@ -129,6 +129,12 @@ protected:
 	// Begin FGBuildableTrainPlatform interface
 	virtual void OnRep_UpdateDockingStatus() override;
 	// End FGBuildableTrainPlatform interface
+
+	virtual void GetAllReplicationDetailDataMembers(TArray<FReplicationDetailData*>& out_repDetailData) override
+	{
+		Super::GetAllReplicationDetailDataMembers( out_repDetailData );
+		out_repDetailData.Add( &mCargoInventoryHandlerData );
+	}
 
 private:
 
@@ -231,7 +237,7 @@ protected:
 	class UStaticMeshComponent* mCargoMeshComponent;
 
 	/** Maintainer of the active storage component for this actor. Use this to get the active inventory component. Never call mInventory directly. */
-	class UFGReplicationDetailInventoryComponent* mCargoInventoryHandler;
+	FReplicationDetailData mCargoInventoryHandlerData;
 
 	/** Set during a dock sequence, indicating if any items can be moved from the train to the platform */
 	UPROPERTY( Replicated, BlueprintReadOnly, Category = "FactoryGame|Railroad|CargoPlatform" )

@@ -12,6 +12,7 @@ AFGResourceScanner::AFGResourceScanner() : Super() {
 	this->mDistBetweenNodesInCluster = 1000.0;
 	this->mUnclusterRange = 30000.0;
 	this->mRepresentationLifeSpan = 25.0;
+	this->mNeedsDefaultEquipmentMappingContext = false;
 	this->mArmAnimation = EArmEquipment::AE_ResourceScanner;
 }
 void AFGResourceScanner::BeginPlay(){ }
@@ -31,4 +32,4 @@ void AFGResourceScanner::GenerateNodeClusters(){ }
 void AFGResourceScanner::GetNodesWithinDistance( AFGResourceNodeBase* node, float dist, TArray<  AFGResourceNodeBase* >& clusterNodes, TArray<  AFGResourceNodeBase* >& remainingNodes){ }
 void AFGResourceScanner::GetClosetClusters(TArray<FNodeClusterData>& closestClusters){ }
 void AFGResourceScanner::SplitNearbyClusters(TArray< FNodeClusterData >& clusters){ }
-void AFGResourceScanner::OnCheatBoardOpened(){ }
+void AFGResourceScanner::Input_Scan(const FInputActionValue& actionValue){ }

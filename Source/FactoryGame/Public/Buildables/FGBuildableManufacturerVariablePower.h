@@ -3,8 +3,8 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Buildables/FGBuildableManufacturer.h"
 #include "Curves/CurveFloat.h"
+#include "FGBuildableManufacturer.h"
 #include "FGBuildableManufacturerVariablePower.generated.h"
 
 UCLASS( Blueprintable )
@@ -18,12 +18,6 @@ public:
 	// Begin AActor interface
 	virtual void BeginPlay() override;
 	// End AActor interface
-
-	// Begin AFGBuildableFactory interface
-	FORCEINLINE virtual bool Factory_RunsOnPower() const override
-	{
-		return true;
-	}
 	
 	virtual float GetProducingPowerConsumptionBase() const override { return mVariablePowerConsumption; }
 	virtual void Factory_StartProducing() override;

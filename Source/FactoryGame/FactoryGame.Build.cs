@@ -17,33 +17,49 @@ public class FactoryGame : ModuleRules
 			"DeveloperSettings",
 			"PhysicsCore",
 			"InputCore",
-			"OnlineSubsystem", "OnlineSubsystemNull", "OnlineSubsystemEOS", "OnlineSubsystemUtils",
+			"OnlineSubsystem", "OnlineSubsystemNull", "OnlineSubsystemUtils", "OnlineServicesInterface",
+			"OnlineIntegration",
 			"SignificanceManager",
-			"APEX", "ApexDestruction",
+			"GeometryCollectionEngine",
+			"ChaosVehiclesCore", "ChaosVehicles", "ChaosSolverEngine",
 			"AnimGraphRuntime",
 			"AkAudio", 
-			"PhysXVehicles",
 			"AssetRegistry",
 			"NavigationSystem",
 			"ReplicationGraph",
 			"AIModule",
 			"GameplayTasks",
 			"SlateCore", "Slate", "UMG",
-			"InstancedSplines",
 			"RenderCore",
 			"CinematicCamera",
 			"Foliage",
             "Niagara",
+            "EnhancedInput",
+            "GameplayCameras",
+            "TemplateSequence",
+            "NetCore",
+            "GameplayTags",
+			"ModelViewViewModel",
 		});
+        
+		if (Target.Platform == UnrealTargetPlatform.Win64) {
+			// Plugins that only support Win64
+			PublicDependencyModuleNames.AddRange(new[] {
+				"OnlineSubsystemEOS",
+			});
+		}
 		
 		PublicDependencyModuleNames.AddRange(new[] {
 			"AbstractInstance",
+			"InstancedSplinesComponent",
+			"SignificanceISPC"
 		});
 		
 		PublicDependencyModuleNames.AddRange(new[] {
 			"DummyHeaders",
 		});
         
-		PublicDefinitions.Add( "IS_PUBLIC_BUILD=1" ); 
+		PublicDefinitions.Add("IS_PUBLIC_BUILD=1");
+		PublicDefinitions.Add("WITH_TELEMETRY=0");
 	}
 }

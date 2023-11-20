@@ -4,8 +4,10 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Unlocks/FGUnlock.h"
+#include "FGUnlock.h"
 #include "FGUnlockInfoOnly.generated.h"
+
+class UTexture2D;
 
 /**
  * Simple class to be used to add unlock data into the UI without unlocking anything
@@ -19,7 +21,7 @@ protected:
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
 	FText mUnlockName;
 
-	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )
+	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, meta = ( Multiline = true ) )
 	FText mUnlockDescription;
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly )

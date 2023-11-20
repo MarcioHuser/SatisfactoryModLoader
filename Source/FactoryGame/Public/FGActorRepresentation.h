@@ -3,6 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "FGConveyorItemRenderTargetWriter.h"
 #include "UObject/NoExportTypes.h"
 #include "FGActorRepresentation.generated.h"
 
@@ -100,9 +101,9 @@ struct FACTORYGAME_API FRepresentationVector2D
 
 	// Components
 	UPROPERTY()
-	float X;
+	float X = 0.f;
 	UPROPERTY()
-	float Y;
+	float Y = 0.f;
 };
 
 template<>

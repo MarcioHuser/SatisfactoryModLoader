@@ -3,12 +3,12 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Buildables/FGBuildable.h"
 #include "Components/SplineComponent.h"
 #include "Components/SplineMeshComponent.h"
-#include "FGInstancedSplineMeshComponent.h"
+#include "FGBuildable.h"
 #include "FGRailroadSignalBlock.h"
 #include "FGSplineBuildableInterface.h"
+#include "InstancedSplineMeshComponent.h"
 #include "FGBuildableRailroadTrack.generated.h"
 
 
@@ -105,6 +105,10 @@ public:
 	virtual bool CanDismantle_Implementation() const override;
 	// End IFGDismantleInterface
 
+	// Begin Save Interface
+	virtual void PostLoadGame_Implementation(int32 saveVersion, int32 gameVersion) override;
+	// End Save Interface
+
 	// Begin Buildable interface
 	virtual int32 GetDismantleRefundReturnsMultiplier() const override;
 	virtual bool ShouldBeConsideredForBase_Implementation() override { return false; }
@@ -200,17 +204,21 @@ public:
 	void AddOverlappingTrack( AFGBuildableRailroadTrack* track );
 
 	// Begin IFGSplineBuildableInterface
-	TArray< FSplinePointData > GetSplinePointData() { return mSplineData; };
+	const TArray< FSplinePointData >& GetSplinePointData() const { return mSplineData; };
 	float GetMeshLength() { return mMeshLength; }
 	FVector GetCollisionExtent() override { return COLLISION_EXTENT; }
 	float GetCollisionSpacing() override { return COLLISION_SPACING; }
 	FVector GetCollisionOffset() override { return COLLISION_OFFSET; }
 	UStaticMesh* GetUsedSplineMesh() override { return mMesh; }
+	void SetupConnections() override;
 	// End IFGSplineBuildableInterface
 	
 	FORCEINLINE UStaticMesh* GetMesh() const { return mMesh; }
 
+	virtual void PostSerializedFromBlueprint(bool isBlueprintWorld) override;
 
+	void UnrotateForBlueprintPlaced();
+	
 private:
 	void SetTrackGraphID( int32 trackGraphID );
 	void SetSignalBlock( TWeakPtr< FFGRailroadSignalBlock > block );
@@ -235,9 +243,8 @@ private:
 	UPROPERTY( VisibleAnywhere, Category = "Spline" )
 	class USplineComponent* mSplineComponent;
 
-	/** The spline meshes for this train track. */
 	UPROPERTY( VisibleAnywhere, Category = "Spline" )
-	class UFGInstancedSplineMeshComponent* mInstancedSplineComponent;
+	class UInstancedSplineMeshComponent* mInstancedSplineMesh;
 
 	/** Spline data saved in a compact form for saving and replicating. All the vectors are in local space. */
 	UPROPERTY( SaveGame, Replicated, Meta = (NoAutoJson = true) )
@@ -277,14 +284,35 @@ private:
 	int32 mSignalBlockID;
 
 	/** The instance spline mesh component dynamic spawned when needed to preview feedback. */
-	TWeakObjectPtr< UFGInstancedSplineMeshComponent > mBlockVisualizationSplineMeshComponent;
+	TWeakObjectPtr< UInstancedSplineMeshComponent > mBlockVisualizationSplineMeshComponent;
 
 	/* Mesh to use for block feedback. */
 	UPROPERTY( EditDefaultsOnly, Category = "Track|Block Visualization" )
 	UStaticMesh* mBlockVisualizationMesh;
+
+	/** Length of the block visualization mesh */
+	UPROPERTY( EditDefaultsOnly, Category = "Track|Block Visualization" )
+	float mBlockVisualizationMeshLength;
+
+	/** The offset for the spline data for the block visualization */
+	UPROPERTY( EditDefaultsOnly, Category = "Track|Block Visualization" )
+	int32 mBlockVisualizationNumPrimitiveDataFloats;
+	
+	/** The offset for the spline data for the block visualization */
+	UPROPERTY( EditDefaultsOnly, Category = "Track|Block Visualization" )
+	int32 mBlockVisualizationNumPerInstancePrimitiveDataCountOffset;
+	
+	/** Spline data settings for the visualization */
+	UPROPERTY( EditDefaultsOnly, Category = "Track|Block Visualization" )
+	FSplineDataSettings mBlockVisualizationSplineDataSettings;
+
+	/** First index of the Custom Data used for the block visualization color. It will use 3 custom data floats for R/G/B channels of the color */
+	UPROPERTY( EditDefaultsOnly, Category = "Track|Block Visualization" )
+	int32 mBlockVisualizationColorDataStartIndex;
 
 	// Collision Constants. These used to be magic numbers in the .cpp but were moved here so they could be accessed via the SplineBuildableInterface
 	static inline const FVector COLLISION_EXTENT = FVector( 200.f, 300.f, 30.f );
 	static inline const float COLLISION_SPACING =   300.f;
 	static inline const FVector COLLISION_OFFSET = FVector( 0.f, 0.f, 30.f + 1.f );
 };
+

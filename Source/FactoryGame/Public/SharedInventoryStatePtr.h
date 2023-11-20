@@ -3,11 +3,12 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "Engine/NetConnection.h"
+#include "Engine/PackageMapClient.h"
 #include "FGSaveSession.h"
+#include "Async/TaskGraphInterfaces.h"
 #include "GameFramework/Actor.h"
 #include "Templates/SharedPointer.h"
-#include "Engine/PackageMapClient.h"
-#include "Engine/NetConnection.h"
 #include "SharedInventoryStatePtr.generated.h"
 
 USTRUCT()
@@ -184,7 +185,7 @@ private:
 	/**
 	 * Custom reference counter with deleter.
 	 */
-	class TReferenceControllerWithNextFrameDeleter : public SharedPointerInternals::FReferenceControllerBase
+	class TReferenceControllerWithNextFrameDeleter : public SharedPointerInternals::TReferenceControllerBase<ESPMode::ThreadSafe>
 	{
 	public:
 		explicit TReferenceControllerWithNextFrameDeleter( AActor* inActorPtr ) :
@@ -198,7 +199,7 @@ private:
 			(
 				FSimpleDelegateGraphTask::FDelegate::CreateLambda( [ = ]()
 				{
-					if( !GExitPurge && ActorPtr.IsValid() && !ActorPtr->IsPendingKill() )
+					if( !GExitPurge && ActorPtr.IsValid() && ::IsValid( ActorPtr.Get() ) )
 					{
 						ActorPtr->SetActorHiddenInGame( true );
 						ActorPtr->SetLifeSpan( 0.001f ); // Delete next frame.
@@ -217,7 +218,7 @@ private:
 		TWeakObjectPtr< AActor > ActorPtr;
 	};
 
-	inline SharedPointerInternals::FReferenceControllerBase* NewReferenceControllerWithNextFrameDeleter( AActor* inActorPtr )
+	inline SharedPointerInternals::TReferenceControllerBase<ESPMode::ThreadSafe>* NewReferenceControllerWithNextFrameDeleter( AActor* inActorPtr )
 	{
 		return new TReferenceControllerWithNextFrameDeleter( inActorPtr );
 	}
@@ -240,9 +241,8 @@ private:
 	 * Reference counter for this state pointer.
 	 * this is only setup on the server and is completely ignored on clients and replication.
 	 */
-	SharedPointerInternals::FSharedReferencer< ESPMode::Fast > SharedReferenceCount;
+	SharedPointerInternals::FSharedReferencer< ESPMode::ThreadSafe > SharedReferenceCount;
 };
-FORCEINLINE FString VarToFString( FSharedInventoryStatePtr var ){ return FString::Printf( TEXT( "%s" ), *VarToFString(var.Get()) ); }
 
 template<> struct TIsZeroConstructType<FSharedInventoryStatePtr> { enum { Value = true }; };
 

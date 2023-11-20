@@ -43,6 +43,8 @@ public:
 	// Begin AFGHologram interface
 	virtual bool TrySnapToActor( const FHitResult& hitResult ) override;
 	virtual int32 GetRotationStep() const override;
+	virtual ENudgeFailReason NudgeHologram( const FVector& NudgeInput, const FHitResult& HitResult ) override;
+	virtual void UpdateRotationValuesFromTransform() override;
 	// End AFGHologram interface
 	
 protected:
@@ -93,7 +95,7 @@ protected:
 
 	/** Snapping offset of this attachment on the walls surface. */
 	UPROPERTY( EditDefaultsOnly, Category = "Hologram|Snapping" )
-	FVector2D mWallSnapOffset;
+	FVector mWallSnapOffset;
 
 	/** What axis to snap with when snapping to foundations and walls. */
 	UPROPERTY( EditDefaultsOnly, Category = "Hologram|Snapping" )

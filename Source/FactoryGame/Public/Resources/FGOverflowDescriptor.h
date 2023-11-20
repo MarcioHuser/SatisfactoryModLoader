@@ -4,7 +4,7 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Resources/FGItemDescriptor.h"
+#include "FGItemDescriptor.h"
 #include "FGOverflowDescriptor.generated.h"
 
 /**
@@ -16,4 +16,6 @@ class FACTORYGAME_API UFGOverflowDescriptor : public UFGItemDescriptor
 	GENERATED_BODY()
 public:
 	UFGOverflowDescriptor();
+protected:
+	FORCEINLINE virtual bool Internal_CanItemBePickedup() const override { return false; }
 };

@@ -3,7 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Hologram/FGFactoryHologram.h"
+#include "FGFactoryHologram.h"
 #include "FGTradingPostHologram.generated.h"
 
 /**
@@ -21,7 +21,7 @@ class FACTORYGAME_API AFGTradingPostHologram : public AFGFactoryHologram
 	virtual void SpawnChildren( AActor* hologramOwner, FVector spawnLocation, APawn* hologramInstigator ) override;
 	virtual AActor* Construct( TArray< AActor* >& out_children, FNetConstructionID netConstructionID ) override;
 protected:
-	virtual USceneComponent* SetupComponent( USceneComponent* attachParent, UActorComponent* componentTemplate, const FName& componentName ) override;
+	virtual USceneComponent* SetupComponent( USceneComponent* attachParent, UActorComponent* componentTemplate, const FName& componentName, const FName& attachSocketName ) override;
 	virtual void SetHologramLocationAndRotation( const FHitResult& hitResult ) override;
 
 	virtual void OnHologramTransformUpdated() override;

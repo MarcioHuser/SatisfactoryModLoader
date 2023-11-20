@@ -6,9 +6,11 @@
 #include "CoreMinimal.h"
 #include "FGSubsystem.h"
 #include "FGSaveInterface.h"
+#include "Containers/Queue.h"
+#include "Misc/EnumRange.h"
 #include "FGResourceSinkSubsystem.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN( LogResourceSink, Log, All );
+FACTORYGAME_API DECLARE_LOG_CATEGORY_EXTERN( LogResourceSink, Log, All );
 
 UENUM( BlueprintType )
 enum class EResourceSinkTrack : uint8
@@ -171,6 +173,8 @@ public:
 
 	int32 GetResourceSinkPointsForItem( TSubclassOf< class UFGItemDescriptor > itemDescriptor );
 
+	UFUNCTION( BlueprintPure, Category = "FactoryGame|ResourceSink" )
+	bool FindResourceSinkPointsForItem( TSubclassOf< class UFGItemDescriptor > itemDescriptor, int32& out_numPoints, EResourceSinkTrack& out_itemTrack );
 private:
 	/** Handle the points added to the point queue and adds them to the system */
 	void HandleQueuedPoints();

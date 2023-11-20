@@ -5,13 +5,14 @@
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
 #include "AkAudioEvent.h"
+#include "FGSaveInterface.h"
 
 #include "Curves/CurveFloat.h"
 #include "Resources/FGItemDescriptor.h"
 
 #include "Engine/EngineTypes.h"
 
-#include "Equipment/FGWeaponState.h"
+#include "FGWeaponState.h"
 
 #include "FGAmmoType.generated.h"
 
@@ -53,7 +54,7 @@ struct TStructOpsTypeTraits<FAmmoTickFunction> : public TStructOpsTypeTraitsBase
  *  Descriptor for all types of ammunition magazines and their effects.
  */
 UCLASS()
-class FACTORYGAME_API UFGAmmoType : public UFGItemDescriptor
+class FACTORYGAME_API UFGAmmoType : public UFGItemDescriptor, public IFGSaveInterface
 {
 	GENERATED_BODY()
 
@@ -63,6 +64,10 @@ public:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
+
+	// Begin IFGSaveInterface
+	virtual bool ShouldSave_Implementation() const override;
+	// End IFSaveInterface
 	
 	/** Mark this class as supported for networking */
 	virtual bool IsSupportedForNetworking() const override;
@@ -71,6 +76,7 @@ public:
 
 	// GetWorld function so we can access world context functions in blueprint like SpawnEmitterAtLocation
 	// Begin UObject interface
+	virtual void GetLifetimeReplicatedProps(TArray< FLifetimeProperty > & OutLifetimeProps) const override;
 	virtual UWorld* GetWorld() const override;
 	// End UObject interface
 
@@ -170,6 +176,9 @@ public:
 	UFUNCTION( BlueprintPure, Category="Ammunition")
 	FORCEINLINE TArray<FSkeletalMaterial> GetMagazineMaterials() const { return mMagazineMeshMaterials; }
 
+	UFUNCTION( BlueprintPure, Category="Ammunition")
+	TArray< UMaterialInstance* > GetMagazineMaterials1p() const { return mMagazineMeshMaterials1p; }
+
 	UFUNCTION( BlueprintPure, Category="Ammunition" )
 	FORCEINLINE float GetMaxAmmoEffectiveRange() const { return mMaxAmmoEffectiveRange; }
 
@@ -184,6 +193,9 @@ public:
 
 	UFUNCTION( BlueprintPure, Category = "Ammunition|FX" )
 	FORCEINLINE TArray<UAkAudioEvent*> GetFiringSounds() const { return mFiringSounds; }
+
+	UFUNCTION( BlueprintPure, Category = "Ammunition|FX" )
+	FORCEINLINE TArray<UAkAudioEvent*> GetFiringSounds1P() const { return mFiringSounds1P; }
 
 	/** Returns reload time multiplier in percent (1 = 100%, 0.5 = 50% time) */
 	UFUNCTION( BlueprintPure, Category="Ammunition|Modifiers" )
@@ -220,19 +232,19 @@ private:
 
 protected:
 	/** Weapon owning this ammo type descriptor and most likely the firing actor */
-	UPROPERTY()
+	UPROPERTY( Replicated )
 	AFGWeapon* mWeapon = nullptr;
 
 	/** The actor responsible for dealing the damage of the weapon */
-	UPROPERTY()
+	UPROPERTY( Replicated )
 	APawn* mInstigator = nullptr;
 
 	/** The transform used for spawning the projectile. Affected by dispersion. */
-	UPROPERTY()
+	UPROPERTY( Replicated )
 	FTransform mFiringTransform;
 
 	/** The general direction towards where we're firing. Unaffected by dispersion. */
-	UPROPERTY()
+	UPROPERTY( Replicated )
 	FVector mFiringDirection;
 
 	/** Maximum amount of ammunition held by this magazine type */
@@ -277,13 +289,13 @@ protected:
 
 private:
 	/** Initialization flag */
-	UPROPERTY()
+	UPROPERTY( Replicated )
 	bool mHasBeenInitialized = false;
 
-	UPROPERTY()
+	UPROPERTY( Replicated )
 	AActor* mAmmoTarget = nullptr;
 
-	UPROPERTY()
+	UPROPERTY( Replicated )
 	float mWeaponDamageMultiplier = 1.0f;
 
 	UPROPERTY( EditDefaultsOnly, Category = "Item" )
@@ -295,7 +307,10 @@ private:
 	UPROPERTY( EditDefaultsOnly, EditFixedSize, Category = "Item" )
 	TArray<FSkeletalMaterial> mMagazineMeshMaterials;
 
-	UPROPERTY( SaveGame, EditDefaultsOnly, Instanced, Category = "Ammunition|Damage" )
+	UPROPERTY( EditDefaultsOnly, Category="Item" )
+	TArray<UMaterialInstance* > mMagazineMeshMaterials1p;
+
+	UPROPERTY( EditDefaultsOnly, Instanced, Category = "Ammunition|Damage" )
 	TArray<  UFGDamageType*  > mDamageTypesOnImpact;
 
 	/** The noise to make when we fire the weapon. */
@@ -304,7 +319,7 @@ private:
 
 	/** Horizontal axis drives the damage falloff between 0-1 (1 = max effective range).
 	 * Up axis controls how much damage attenuation/amplification we get at said distance.*/
-	UPROPERTY( SaveGame, EditDefaultsOnly, Category="Ammunition|Damage" )
+	UPROPERTY( EditDefaultsOnly, Category="Ammunition|Damage" )
 	FRuntimeFloatCurve mAmmoDamageFalloff;
 
 	UPROPERTY( EditDefaultsOnly, Category = "Ammunition|FX" )
@@ -315,6 +330,9 @@ private:
 
 	UPROPERTY( EditDefaultsOnly, Category = "Ammunition|FX" )
 	TArray<UAkAudioEvent*> mFiringSounds;
+
+	UPROPERTY( EditDefaultsOnly, Category = "Ammunition|FX" )
+	TArray<UAkAudioEvent*> mFiringSounds1P;
 
 	/** To set the color of a spawned ammo type. */
 	UPROPERTY( EditDefaultsOnly, Category = "Ammunition|FX" )

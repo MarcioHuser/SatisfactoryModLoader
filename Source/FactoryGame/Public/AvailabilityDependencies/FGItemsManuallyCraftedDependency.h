@@ -4,13 +4,13 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "AvailabilityDependencies/FGAvailabilityDependency.h"
+#include "FGAvailabilityDependency.h"
 #include "FGItemsManuallyCraftedDependency.generated.h"
 
 /**
  * 
  */
-UCLASS()
+UCLASS( Blueprintable, abstract )
 class FACTORYGAME_API UFGItemsManuallyCraftedDependency : public UFGAvailabilityDependency
 {
 	GENERATED_BODY()

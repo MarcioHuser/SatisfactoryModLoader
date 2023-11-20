@@ -3,6 +3,7 @@
 #include "Hologram/FGSplineHologram.h"
 #include "Components/SceneComponent.h"
 #include "Components/SplineComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AFGSplineHologram::AFGSplineHologram() : Super() {
 	this->mSplineComponent = CreateDefaultSubobject<USplineComponent>(TEXT("mSplineComponent"));
@@ -27,6 +28,7 @@ void AFGSplineHologram::BeginPlay(){ }
 void AFGSplineHologram::SerializeConstructMessage(FArchive& ar, FNetConstructionID id){ }
 void AFGSplineHologram::ClientPreConstructMessageSerialization(){ }
 void AFGSplineHologram::ServerPostConstructMessageDeserialization(){ }
+bool AFGSplineHologram::CanNudgeHologram() const{ return bool(); }
 void AFGSplineHologram::OnPendingConstructionHologramCreated_Implementation(AFGHologram* fromHologram){ }
 bool AFGSplineHologram::IsConnectionSnapped(bool lastConnection){ return bool(); }
 void AFGSplineHologram::GetLastSplineData(FSplinePointData& data){ }

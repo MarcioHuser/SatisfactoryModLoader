@@ -1,0 +1,37 @@
+{
+	"FileVersion": 3,
+	"Version": 3,
+	"VersionName": "3.6.0",
+	"SemVersion": "3.6.0",
+	"FriendlyName": "Satisfactory Mod Loader",
+	"Description": "Mod loading and compatibility API for Satisfactory",
+	"Category": "Modding",
+	"CreatedBy": "SML Team",
+	"CreatedByURL": "https://github.com/satisfactorymodding/SatisfactoryModLoader",
+	"DocsURL": "https://docs.ficsit.app",
+	"MarketplaceURL": "",
+	"SupportURL": "",
+	"CanContainContent": true,
+	"IsBetaVersion": false,
+	"IsExperimentalVersion": false,
+	"Installed": false,
+	"Modules": [
+		{
+			"Name": "SML",
+			"Type": "Runtime",
+			"LoadingPhase": "PostDefault"
+		}
+	],
+	"LocalizationTargets": [
+		{
+			"Name": "SML",
+			"LoadingPolicy": "Always"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "EnhancedInput",
+			"Enabled": true
+		}
+	]
+}

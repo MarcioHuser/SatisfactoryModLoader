@@ -3,8 +3,8 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "FGInteractWidget.h"
 #include "FGPopupInstigatorInterface.h"
-#include "UI/FGInteractWidget.h"
 #include "FGPopupWidget.generated.h"
 
 DECLARE_DYNAMIC_DELEGATE( FPopupConfirmClicked );
@@ -25,28 +25,28 @@ struct FPopupData
 	GENERATED_BODY();
 public:
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Popup" )
-	FText Title;
+	FText Title = {};
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Popup" )
-	FText Body;
+	FText Body = {};
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Popup" )
-	TEnumAsByte< EPopupId > ID;
+	TEnumAsByte< EPopupId > ID = EPopupId::PID_NONE;
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Popup" )
-	TSubclassOf< class UUserWidget > PopupClass;
+	TSubclassOf< class UUserWidget > PopupClass = {};
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Popup" )
-	UObject* Instigator;
+	UObject* Instigator = nullptr;
 
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Popup" )
 	class UFGPopupWidgetContent* PopupContent = nullptr;
 		
 	UPROPERTY()
-	FPopupConfirmClicked PopupConfirmClickedDelegate_DEPRECATED;
+	FPopupConfirmClicked PopupConfirmClickedDelegate_DEPRECATED = {};
 
 	UPROPERTY()
-	FPopupClosed PopupClosedDelegate;
+	FPopupClosed PopupClosedDelegate = {};
 
 };
 
@@ -77,4 +77,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, VisibleAnywhere, Category = "Popup" )
 	UObject* mInstigator;
 
+	/** The popup widget content if the popup was created with an instance of this type. So this may be null for simple popups */
+	UPROPERTY(Transient)
+	TObjectPtr<UFGPopupWidgetContent> mContent;
 };

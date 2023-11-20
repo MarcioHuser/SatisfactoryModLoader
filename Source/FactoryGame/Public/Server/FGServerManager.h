@@ -4,14 +4,15 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
+#include "FGDedicatedServerTypes.h"
 #include "FGSaveSystem.h"
-#include "Subsystems/LocalPlayerSubsystem.h"
-#include "Server/FGServerBeaconClient.h"
-#include "Server/FGDedicatedServerTypes.h"
+#include "FGServerBeaconClient.h"
+#include "Containers/Ticker.h"
 #include "GameFramework/SaveGame.h"
+#include "Subsystems/LocalPlayerSubsystem.h"
 #include "FGServerManager.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN( LogServerManager, Log, Log );
+FACTORYGAME_API DECLARE_LOG_CATEGORY_EXTERN( LogServerManager, Log, Log );
 DECLARE_STATS_GROUP( TEXT( "ServerManager" ), STATGROUP_ServerManager, STATCAT_Advanced );
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FOnServerAddedDelegate, class UFGServerObject*, Server );
@@ -26,7 +27,7 @@ class FClientQuerySocket;
  * the dedicated server interface on clients
  */
 UCLASS( Config=ServerManager )
-class FACTORYGAME_API UFGServerManager : public ULocalPlayerSubsystem, public FTickerObjectBase
+class FACTORYGAME_API UFGServerManager : public ULocalPlayerSubsystem, public FTSTickerObjectBase
 {
 	GENERATED_BODY()
 public:

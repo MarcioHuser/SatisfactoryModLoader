@@ -3,10 +3,10 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "Buildables/FGBuildable.h"
+#include "FGEquipment.h"
 #include "GameFramework/Actor.h"
 #include "Resources/FGItemDescriptor.h"
-#include "Equipment/FGEquipment.h"
-#include "Buildables/FGBuildable.h"
 #include "FGPortableMinerDispenser.generated.h"
 
 UCLASS()
@@ -16,25 +16,16 @@ class FACTORYGAME_API AFGPortableMinerDispenser : public AFGEquipment
 public:
 	AFGPortableMinerDispenser();
 
-	/** It's a tick! */
-	virtual void Tick( float DeltaSeconds ) override;
-
 	void BeginPlay();
 
 	void SetMaterial( class UMaterialInterface* material );
 
-	/** Called on the owner, client or server but not both. */
-	void OnPrimaryFirePressed();
-
-	/** Only the server handles the building. */
-	UFUNCTION( Server, Reliable, WithValidation )
-	void Server_PrimaryFire();
-
 	UFUNCTION( BlueprintImplementableEvent )
 	void SpawnPortableMiner( class AFGResourceNode* resourceNode );
+
 protected:
-	/** Add custom bindings for this equipment */
-	virtual void AddEquipmentActionBindings() override;
+	virtual void HandleDefaultEquipmentActionEvent( EDefaultEquipmentAction action, EDefaultEquipmentActionEvent actionEvent ) override;
+	
 public:
 	/** What form can the overlapping resources be in. */
 	UPROPERTY( EditDefaultsOnly )

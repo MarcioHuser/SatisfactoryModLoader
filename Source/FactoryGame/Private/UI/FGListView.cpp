@@ -2,9 +2,11 @@
 
 #include "UI/FGListView.h"
 
-UFGListView::UFGListView(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
-
-}
 TSharedRef<STableViewBase> UFGListView::RebuildListWidget() {
   return ConstructListView<SFGListView>();
 }
+
+UFGListView::UFGListView(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
+	this->mWidgetBarStyle.Thickness = 8.0;
+}
+UUserWidget* UFGListView::GetEntryWidgetForItem(UObject* item) const{ return nullptr; }

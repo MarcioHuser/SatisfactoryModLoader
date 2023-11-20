@@ -4,7 +4,7 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Hologram/FGBuildableHologram.h"
+#include "FGBuildableHologram.h"
 #include "FGRailroadSignalHologram.generated.h"
 
 /**
@@ -27,9 +27,12 @@ public:
 	virtual bool IsValidHitResult( const FHitResult& hitResult ) const override;
 	virtual AActor* GetUpgradedActor() const override;
 	virtual bool TryUpgrade( const FHitResult& hitResult ) override;
+	virtual bool CanNudgeHologram() const override;
 	// End AFGHologram Interface
 
 protected:
+	bool IsLocallyOwnedHologram() const;
+
 	// Begin AFGBuildableHologram Interface
 	virtual void ConfigureActor( class AFGBuildable* inBuildable ) const override;
 	virtual void CheckValidPlacement() override;

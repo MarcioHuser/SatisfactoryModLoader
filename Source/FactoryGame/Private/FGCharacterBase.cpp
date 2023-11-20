@@ -3,6 +3,7 @@
 #include "FGCharacterBase.h"
 #include "FGDotReceiverComponent.h"
 #include "FGHealthComponent.h"
+#include "Net/UnrealNetwork.h"
 
 void FFootstepEffect::Reset(){ }
 AFGCharacterBase::AFGCharacterBase(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
@@ -17,9 +18,11 @@ AFGCharacterBase::AFGCharacterBase(const FObjectInitializer& ObjectInitializer) 
 	this->mFootstepLandingNoiseClass = nullptr;
 	this->mHealthComponent = CreateDefaultSubobject<UFGHealthComponent>(TEXT("HealthComponent"));
 	this->mDOTReceiverComponent = CreateDefaultSubobject<UFGDotReceiverComponent>(TEXT("DotReceiverComponent"));
+	this->mIsInGas = false;
 	this->mFallDamageCurve = nullptr;
 	this->mFallDamageCurveOverride = nullptr;
 	this->mFallDamageDamageType = nullptr;
+	this->mVehicleDamageMultiplier = 1.0;
 	this->mMaxDeathStayTime = 60.0;
 	this->mDeathRemoveCheckTime = 5.0;
 	this->mTakeDamageSound = nullptr;
@@ -32,19 +35,22 @@ AFGCharacterBase::AFGCharacterBase(const FObjectInitializer& ObjectInitializer) 
 	this->mIsRagdolled = false;
 	this->mRagdollMeshLoc = FVector::ZeroVector;
 	this->mRagdollMeshVelocity = FVector::ZeroVector;
-	this->mRagdollMeshLocBoneName = TEXT("pelvis");
-	this->mRagdollMeshPhysicsBoneName = TEXT("pelvis");
-	this->mSyncBodyMaxDistance = 6.0;
+	this->mRagdollMeshAngularVelocity = FVector::ZeroVector;
+	this->mRagdollMeshLocBoneName = TEXT("Pelvis");
+	this->mRagdollMeshPhysicsBoneName = TEXT("Pelvis");
 	this->mApplyDamageMomentum = false;
 	this->mNormalDamageMultiplier = 1.0;
 	this->mIsPossessed = false;
+	this->bReplicateUsingRegisteredSubObjectList = true;
 }
 void AFGCharacterBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AFGCharacterBase, mHealthComponent);
+	DOREPLIFETIME(AFGCharacterBase, mIsInGas);
 	DOREPLIFETIME(AFGCharacterBase, mIsRagdolled);
 	DOREPLIFETIME(AFGCharacterBase, mRagdollMeshLoc);
 	DOREPLIFETIME(AFGCharacterBase, mRagdollMeshVelocity);
+	DOREPLIFETIME(AFGCharacterBase, mRagdollMeshAngularVelocity);
 	DOREPLIFETIME(AFGCharacterBase, mIsPossessed);
 }
 void AFGCharacterBase::BeginPlay(){ }
@@ -61,6 +67,7 @@ void AFGCharacterBase::PostLoadGame_Implementation(int32 saveVersion, int32 game
 void AFGCharacterBase::GatherDependencies_Implementation(TArray< UObject* >& out_dependentObjects){ }
 bool AFGCharacterBase::NeedTransform_Implementation(){ return bool(); }
 bool AFGCharacterBase::ShouldSave_Implementation() const{ return bool(); }
+void AFGCharacterBase::LaunchCharacter(FVector LaunchVelocity, bool bXYOverride, bool bZOverride){ }
 void AFGCharacterBase::Died(AActor* thisActor){ }
 void AFGCharacterBase::OnTakeDamage(AActor* damagedActor, float damageAmount, const  UDamageType* damageType,  AController* instigatedBy, AActor* damageCauser){ }
 void AFGCharacterBase::OnTakePointDamage(AActor* damagedActor, float damage,  AController* instigatedBy, FVector hitLocation,  UPrimitiveComponent* hitComponent, FName boneName, FVector shotFromDirection, const  UDamageType* damageType, AActor* damageCauser){ }
@@ -70,15 +77,16 @@ int32 AFGCharacterBase::CalculateFallDamage_Implementation(float zSpeed) const{ 
 void AFGCharacterBase::SetFallDamageOverride(UCurveFloat* fallDamageCurveOverride){ }
 void AFGCharacterBase::PlayLandEffects(){ }
 bool AFGCharacterBase::IsAliveAndWell() const{ return bool(); }
-void AFGCharacterBase::PushedByVehicle( AFGVehicle* vehicle, FVector pushVelocity){ }
 void AFGCharacterBase::PlayFootstepEffect_Implementation(int32 footDown, bool playSound){ }
 bool AFGCharacterBase::TraceForGround(FVector traceStart, FVector traceEnd, FHitResult& out_hitResult, float& out_waterDepth) const{ return bool(); }
 const FFootstepEffect& AFGCharacterBase::GetFootstepEffect(const FHitResult& hitResult) const{ return *(new FFootstepEffect); }
 void AFGCharacterBase::RagdollCharacter(bool newRagdoll){ }
+void AFGCharacterBase::UpdateRagdollSyncData(){ }
 USkeletalMeshComponent* AFGCharacterBase::GetMesh3P() const{ return nullptr; }
 USkeletalMeshComponent* AFGCharacterBase::GetMainMesh() const{ return nullptr; }
 void AFGCharacterBase::CheckFallDamage(float zSpeed){ }
 void AFGCharacterBase::SetLocallyPossessed(bool inPossessed){ }
+void AFGCharacterBase::Native_OnLocallyPossessedChanged(bool isPossessed){ }
 UAkAudioEvent* AFGCharacterBase::GetFootstepEvent(int32 footDown) const{ return nullptr; }
 float AFGCharacterBase::AdjustDamage(AActor* damagedActor, float damageAmount, const  UDamageType* damageType,  AController* instigatedBy, AActor* damageCauser){ return float(); }
 void AFGCharacterBase::PlayFootstepAudio(int32 footIndex, const FHitResult& hitInfo, float waterDepth){ }

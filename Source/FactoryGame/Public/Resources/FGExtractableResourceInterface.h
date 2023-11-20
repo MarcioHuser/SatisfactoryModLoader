@@ -3,12 +3,13 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "UObject/Interface.h"
 #include "FGExtractableResourceInterface.generated.h"
 
 /**
  * Interface for all mineable resource objects ( Resource Nodes, Water Volumes )
  */
-UINTERFACE( Blueprintable, meta = ( CannotImplementInterfaceInBlueprint ) )
+UINTERFACE( BlueprintType, NotBlueprintable )
 class FACTORYGAME_API UFGExtractableResourceInterface : public UInterface
 {
 	GENERATED_UINTERFACE_BODY()

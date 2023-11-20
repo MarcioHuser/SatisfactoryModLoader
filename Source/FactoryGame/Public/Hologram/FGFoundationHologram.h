@@ -3,7 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Hologram/FGFactoryBuildingHologram.h"
+#include "FGFactoryBuildingHologram.h"
 #include "FGFoundationHologram.generated.h"
 
 /**
@@ -23,7 +23,7 @@ public:
 	// Begin AFGHologram interface
 	virtual void SetHologramLocationAndRotation( const FHitResult& hitResult ) override;
 	virtual bool TrySnapToActor( const FHitResult& hitResult ) override;
-	virtual void GetSupportedBuildModes_Implementation( TArray<TSubclassOf<UFGHologramBuildModeDescriptor>>& out_buildmodes ) const override;
+	virtual void GetSupportedBuildModes_Implementation( TArray<TSubclassOf<UFGBuildGunModeDescriptor>>& out_buildmodes ) const override;
 	virtual int32 GetRotationStep() const override;
 	// End AFGHologram interface
 

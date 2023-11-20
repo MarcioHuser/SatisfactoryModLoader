@@ -4,53 +4,57 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Equipment/FGEquipment.h"
+#include "FGEquipment.h"
 #include "FGEquipmentStunSpear.generated.h"
 
 class UFGDamageType;
-/**
- * 
- */
+
 UCLASS()
 class FACTORYGAME_API AFGEquipmentStunSpear : public AFGEquipment
 {
 	GENERATED_BODY()
 
 public:
-
 	AFGEquipmentStunSpear();
 
-	/** Add custom bindings for this equipment */
-	virtual void AddEquipmentActionBindings() override;
+	/** Called when the player uses the weapon, e.g. swings */
+	UFUNCTION( BlueprintImplementableEvent, Category = "Stun Spear", DisplayName = "PlaySwingEffects" )
+	void PlayStunEffects( bool secondSwing );
 
-	/** Called when the player clicks to "fire" */
-	UFUNCTION( BlueprintImplementableEvent, Category = "Stun Spear" )
-	void PlayStunEffects();
+	/** Called when the weapon swing hits actors */
+	UFUNCTION( BlueprintImplementableEvent, Category = "Stun Spear", DisplayName = "PlayHitEffects" )
+	void PlayHitEffects( const TArray<FHitResult>& hitResults );
 
-	UFUNCTION( BlueprintImplementableEvent, Category = "Stun Spear" )
-	void PlayHitEffects(const TArray<FHitResult> &hitResults);
-	
-	/** Getter for mShouldPlaySecondSwing */
-	UFUNCTION( BlueprintPure, Category = "Stun Spear" )
-	FORCEINLINE bool GetShouldPlaySecondSwing(){ return mShouldPlaySecondSwing; }
-
-	/** Start the damage chain */
+	/** Swings the weapon, assuming the current player is locally controlled. */
 	UFUNCTION( BlueprintCallable, Category = "Stun Spear" )
-	void DoAttack();
+	void Local_SwingWeapon();
 	
-	UFUNCTION( BlueprintNativeEvent, Category = "Hit Response" )
-	void OnHitTarget();
-
+	/** Perform the attack, should be called on the local instigator side */
+	UFUNCTION( BlueprintCallable, Category = "Stun Spear" )
+	void Local_Attack();
+	
+	UFUNCTION( BlueprintCallable, Category = "Stun Spear", meta = ( DeprecatedFunction, DeprecationMessage = "Old function doing nothing, left to let Anim_1P compile. Use Local_Attack instead" ) )
+	FORCEINLINE void DoAttack() {}
+	
 protected:
-	/** server notified of hit from client to verify */
-	UFUNCTION( Reliable, Server, WithValidation )
-	void Server_ShockEnemy( FVector attackDirection );
+	virtual void HandleDefaultEquipmentActionEvent( EDefaultEquipmentAction action, EDefaultEquipmentActionEvent actionEvent ) override;
+	
+	/** Plays hit VFX locally without checking whenever the current player is the instigator or not */
+	void PlayHitEffectsInternal( const TArray<FHitResult>& hitLocations );
 
-	UFUNCTION( Reliable, NetMulticast )
+	/** Processes hit results received from the client and applies damage/VFX */
+	UFUNCTION( Reliable, Server )
+	void Server_ProcessAttack( const TArray<FHitResult>& hitResults );
+
+	/** Processes player swinging on the server */
+	UFUNCTION( Reliable, Server )
+	void Server_ProcessPlayerSwing( bool secondSwing );
+
+	UFUNCTION( Unreliable, NetMulticast )
 	void Multicast_PlayHitEffects(const TArray<FHitResult> &hitResults);
-private:
-	/** Key binded functions */
-	virtual void OnFirePressed();
+
+	UFUNCTION( Unreliable, NetMulticast )
+	void Multicast_PlaySwingEffects( bool secondSwing );
 private:
 	/** Sphere collision component */
 	UPROPERTY( VisibleDefaultsOnly, Category = "Stun Spear" )
@@ -64,8 +68,12 @@ private:
 	TSubclassOf< class UFGNoise > mAttackNoise;
 
 public:
-	/** Timer started */
+	/** Time of the first swing */
 	float mFirstSwingTime;
+	/** Time the second swing was made */
+	float mSecondSwingTime;
+	/** Number of attacks that we are allowed to make since last swing. */
+	int32 mAttacksSinceLastSwing;
 	
 	/** The max amount of time between the first swing that will still trigger the second swing */
 	UPROPERTY( EditDefaultsOnly, Category = "Stun Spear" )
@@ -73,9 +81,6 @@ public:
 
 	/** Indicates if we should do the second swing */
 	bool mShouldPlaySecondSwing;
-
-	/** Timestamp when cooldown began */
-	float mCoolDown;
 
 	/** The max amount of time between the first swing that will still trigger the second swing */
 	UPROPERTY( EditDefaultsOnly, Category = "Stun Spear" )

@@ -3,14 +3,15 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "Actions/FGActionScorer.h"
 #include "CoreMinimal.h"
 #include "Engine/EngineTypes.h"
-#include "Creature/Actions/FGActionScorer.h"
-#include "Tickable.h"
 #include "Engine/World.h"
+#include "Tickable.h"
+#include "HAL/IConsoleManager.h"
 #include "FGAction.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN( LogAction, Log, All );
+FACTORYGAME_API DECLARE_LOG_CATEGORY_EXTERN( LogAction, Log, All );
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FActionFinished, bool, Success );
 
@@ -19,15 +20,15 @@ extern TAutoConsoleVariable< int32 > CVarActionDebug;
 UENUM(BlueprintType)
 enum EFGActionState
 {
-	Uninitialized,
-	Initialized,
-	Setup,
-	RunningPreAction,
-	RunningMainAction,
-	RunningPostAction,
-	Cancelled,
-	Finished,
-	Failed
+	EAS_Uninitialized,
+	EAS_Initialized,
+	EAS_Setup,
+	EAS_RunningPreAction,
+	EAS_RunningMainAction,
+	EAS_RunningPostAction,
+	EAS_Cancelled,
+	EAS_Finished,
+	EAS_Failed
 };
 
 /** Actions that can be performed by creatures.
@@ -47,6 +48,7 @@ public:		// PUBLIC FUNC
 	virtual bool CallRemoteFunction (UFunction * Function, void * Parms, struct FOutParmRec * OutParms, FFrame * Stack) override;
 	virtual int32 GetFunctionCallspace (UFunction* Function, FFrame* Stack) override;
 	virtual bool IsSupportedForNetworking () const override { return true; };
+	virtual bool IsNameStableForNetworking() const override { return true; }
 	virtual void BeginDestroy() override;
 
 	UFUNCTION(BlueprintCallable, Category="Action")
@@ -58,7 +60,7 @@ public:		// PUBLIC FUNC
 	
 	/** Has the action been initialized? If not, Do not do anything with it and make sure it gets initialized. */
 	UFUNCTION(BlueprintPure, Category="Action")
-	FORCEINLINE bool HasBeenInitialized() const { return mActionState != Uninitialized; }
+	FORCEINLINE bool HasBeenInitialized() const { return mActionState != EAS_Uninitialized; }
 
 	UFUNCTION(BlueprintPure, Category="Action")
 	FORCEINLINE FString GetActionDescription() const { return GetActionDescription_Native(); }
@@ -80,7 +82,7 @@ public:		// PUBLIC FUNC
 
 	/** Returns true if the action is still ongoing */
 	UFUNCTION(BlueprintPure, Category="Action")
-	FORCEINLINE bool IsActionExecuting() const { return mActionState == RunningMainAction || mActionState == RunningPreAction || mActionState == RunningPostAction; }
+	FORCEINLINE bool IsActionExecuting() const { return mActionState == EAS_RunningMainAction || mActionState == EAS_RunningPreAction || mActionState == EAS_RunningPostAction; }
 
 	/** To start the execution of the action. This function shouldn't be overriden unless you really know what you are doing.
 	 *	Will always call PerformAction, which can be overriden for custom behaviors.
@@ -277,7 +279,7 @@ protected:	// PROTECTED MEMBERS
 	TWeakObjectPtr<APawn> mPawn = nullptr;
 
 	/** The Controller of the pawn performing the action */
-	UPROPERTY()
+	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<AController> mController = nullptr;
 
 private:	// PRIVATE FUNC

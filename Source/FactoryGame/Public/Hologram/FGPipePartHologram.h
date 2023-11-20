@@ -3,7 +3,7 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Hologram/FGFactoryHologram.h"
+#include "FGFactoryHologram.h"
 #include "FGPipeConnectionComponent.h"
 #include "Resources/FGPoleDescriptor.h"
 #include "FGPipePartHologram.generated.h"
@@ -29,6 +29,7 @@ public:
 	virtual void SetHologramLocationAndRotation( const FHitResult& hitResult ) override;
 	virtual void CheckValidFloor( ) override;
 	virtual void GetIgnoredClearanceActors( TArray< AActor* >& ignoredActors ) const override;
+	virtual bool CanNudgeHologram() const override;
 	// End AFGHologram interface
 
 

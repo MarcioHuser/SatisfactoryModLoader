@@ -2,6 +2,7 @@
 
 #include "Resources/FGResourceDeposit.h"
 #include "Components/StaticMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AFGResourceDeposit::AFGResourceDeposit() : Super() {
 	this->mResourceDepositPackage.DropChance = 0.0;
@@ -11,9 +12,9 @@ AFGResourceDeposit::AFGResourceDeposit() : Super() {
 	this->mHasInitializedVisuals = false;
 	this->mDepositMeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DepositMesh"));
 	this->mOverrideResourceClass = nullptr;
+	this->mCanBeRadioactive = true;
 	this->mCanPlaceResourceExtractor = false;
 	this->mExtractMultiplier = 2;
-	this->bAlwaysRelevant = false;
 	this->RootComponent = mDepositMeshComponent;
 }
 void AFGResourceDeposit::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const {

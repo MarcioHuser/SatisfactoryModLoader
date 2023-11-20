@@ -5,6 +5,8 @@
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
 #include "Engine/DeveloperSettings.h"
+#include "Materials/MaterialInterface.h"
+#include "UObject/SoftObjectPtr.h"
 #include "FGOptimizationSettings.generated.h"
 
 
@@ -88,9 +90,9 @@ public:
 
 	/*Key: Highspec / default material, value low spec material.*/
 	UPROPERTY( EditAnywhere, config )
-	TMap< TAssetPtr<UMaterialInterface>, TAssetPtr<UMaterialInterface> > mMaterialSwapList;
+	TMap< TSoftObjectPtr<UMaterialInterface>, TSoftObjectPtr<UMaterialInterface> > mMaterialSwapList;
 
-	TMap< TAssetPtr<UMaterialInterface>, TAssetPtr<UMaterialInterface>> mResolvedMaterials;
+	TMap< TSoftObjectPtr<UMaterialInterface>, TSoftObjectPtr<UMaterialInterface>> mResolvedMaterials;
 	
 public:
 	/** Returns associated cull distance.**/

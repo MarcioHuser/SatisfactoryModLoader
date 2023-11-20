@@ -4,18 +4,19 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "FGOnlineSessionSettings.h"
-#include "FGOnlineSessionClient.h"
 #include "Engine/LocalPlayer.h"
-#include "OnlineSubsystemTypes.h"
 #include "FGErrorMessage.h"
-#include "UObject/CoreOnline.h"
-#include "EOSAccountHelpers.h"
+#include "FGOnlineSessionClient.h"
+#include "FGOnlineSessionSettings.h"
 #include "FindSessionsCallbackProxy.h"
-#include "EOSSDKForwards.h"
+#include "Online/CoreOnline.h"
+#include "Online/FGOnlineHelpers.h"
+#include "OnlineSubsystemTypes.h"
 #include "PlayerPresenceState.h"
+#include "OnlineIntegrationTypes.h"
 #include "FGLocalPlayer.generated.h"
 
+class UFGInputMappingContext;
 
 UCLASS()
 class UFGEM_LoggedOutFromOnlineService : public UFGErrorMessage
@@ -57,6 +58,11 @@ enum ELoginState
 	LS_LoggedIn			UMETA(DisplayName="LoggedIn")
 };
 
+namespace UE::Online
+{
+struct FAccountInfo;
+};
+
 USTRUCT(BlueprintType)
 struct FFGOnlineFriend
 {
@@ -87,8 +93,6 @@ struct FFGOnlineFriend
 	/** Internal friend data */
 	TSharedPtr<FOnlineFriend> Friend;
 };
-
-FORCEINLINE FString VarToFString( const FFGOnlineFriend& f ){ return FString::Printf( TEXT("%s"), *VarToFString(f.Friend->GetUserId()) ); }
 
 FORCEINLINE uint32 GetTypeHash( const FFGOnlineFriend& onlineFriend )
 {
@@ -159,7 +163,7 @@ public:
 	UFGLocalPlayer();
 
 	//~Begin ULocalPlayer interface
-	virtual void PlayerAdded( class UGameViewportClient* inViewportClient, int32 inControllerID ) override;
+	virtual void PlayerAdded( class UGameViewportClient* inViewportClient, FPlatformUserId inUserId ) override;
 	virtual void PlayerRemoved() override;
 	//~End ULocalPlayer interface
 	
@@ -289,6 +293,7 @@ public:
 	void LinkAccount();
 
 	virtual void SwitchController(class APlayerController* PC) override;
+	virtual FString GetNickname() const override;
 
 	/** Logout current account and login to a epic account and connect */
 	void LoginAndConnectOtherEpicAccount();
@@ -309,12 +314,14 @@ public:
 
 	void ContinueWithoutMultiplayer();
 
+	void FindChildMappingContexts( const UFGInputMappingContext* mainContext, TArray<UFGInputMappingContext*>& out_childContexts ) const;
 protected:
 	//~Begin Online Delegates
 	//~Begin OnlineIdentity delegates
 	void OnLoginStatusChanged( int32 localUserNum, ELoginStatus::Type previous, ELoginStatus::Type current, const FUniqueNetId& userId );
 	void OnLoginStatusChangedSteam(int32 localUserNum, ELoginStatus::Type previous, ELoginStatus::Type current, const FUniqueNetId& userId);
-
+	void OnLoginStatusChanged( TSharedRef<UE::Online::FAccountInfo> AccountInfo, EOnlineIntegrationUnmappedContext Context );
+	
 	void SteamTaskRetryWaiter();
 	void StartSteamEOSConnect();
 
@@ -476,4 +483,11 @@ protected:
 	bool mHastTriedLoggingIn = false;
 	bool mAutoSignedOutEpicDueToIncompatibility = false;
 	bool mResetAccountLinkingIsWaitingForEpicLogout = false;
+
+	/**
+	 * A cache of the parent to children mapping contexts, built when the player is added
+	 * Used to avoid frequently looking up asset registry when we are re-binding the input contexts on the player
+	 * TODO @Nick: FGLocalPlayer doesn't seem like the best place for this, but making a local player subsystem for this sounds a bit excessive
+	 */
+	TMultiMap<TSoftObjectPtr<UFGInputMappingContext>, TSoftObjectPtr<UFGInputMappingContext>> mParentToChildMappingContexts;
 };

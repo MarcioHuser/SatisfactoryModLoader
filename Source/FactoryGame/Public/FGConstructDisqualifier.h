@@ -94,7 +94,7 @@ class FACTORYGAME_API UFGCDEncroachingClearance : public UFGConstructDisqualifie
 
 	UFGCDEncroachingClearance()
 	{
-		mDisqfualifyingText = LOCTEXT( "UFGCDEncroachingClearance", "Encroaching other's clearance!" );
+		mDisqfualifyingText = LOCTEXT( "UFGCDEncroachingClearance", "Encroaching another object's clearance!" );
 	}
 };
 
@@ -105,7 +105,7 @@ class FACTORYGAME_API UFGCDEncroachingSoftClearance : public UFGConstructDisqual
 	
 	UFGCDEncroachingSoftClearance()
 	{
-		mDisqfualifyingText = LOCTEXT( "UFGCDEncroachingSoftClearance", "Overlapping other's clearance, clipping may occur." );
+		mDisqfualifyingText = LOCTEXT( "UFGCDEncroachingSoftClearance", "Overlapping another object's clearance, clipping may occur" );
 		mIsSoftDisqualifier = true;
 	}
 };
@@ -342,6 +342,17 @@ class FACTORYGAME_API UFGCDWireTooLong : public UFGConstructDisqualifier
 };
 
 UCLASS()
+class FACTORYGAME_API UFGCDWireConnectionAlreadyExists : public UFGConstructDisqualifier
+{
+	GENERATED_BODY()
+
+	UFGCDWireConnectionAlreadyExists()
+	{
+		mDisqfualifyingText = LOCTEXT( "UFGCDWireConnectionAlreadyExists", "Already connected with another wire!" );
+	}
+};
+
+UCLASS()
 class FACTORYGAME_API UFGCDInvalidSignSize : public UFGConstructDisqualifier
 {
 	GENERATED_BODY()
@@ -434,6 +445,17 @@ class FACTORYGAME_API UFGCDMustHaveRailRoadTrack : public UFGConstructDisqualifi
 	UFGCDMustHaveRailRoadTrack()
 	{
 		mDisqfualifyingText = LOCTEXT( "UFGCDMustHaveRailRoadTrack", "This must be placed on a railroad track!" );
+	}
+};
+
+UCLASS()
+class FACTORYGAME_API UFGCDNotEnoughSpaceOnTrack : public UFGConstructDisqualifier
+{
+	GENERATED_BODY()
+
+	UFGCDNotEnoughSpaceOnTrack()
+	{
+		mDisqfualifyingText = LOCTEXT( "UFGCDNotEnoughSpaceOnTrack", "Not enough space on track!" );
 	}
 };
 
@@ -631,7 +653,7 @@ class FACTORYGAME_API UFGCDNotAllowedInBlueprint : public UFGConstructDisqualifi
 	
 	UFGCDNotAllowedInBlueprint()
 	{
-		mDisqfualifyingText = LOCTEXT( "UFGCDNotAllowedInBlueprint", "Hologram cannot be placed in blueprint designer!" );
+		mDisqfualifyingText = LOCTEXT( "UFGCDNotAllowedInBlueprint", "Hologram cannot be placed in Blueprint Designer!" );
 	}
 };
 
@@ -643,7 +665,7 @@ class FACTORYGAME_API UFGCDIntersectingBlueprintDesigner : public UFGConstructDi
 	
 	UFGCDIntersectingBlueprintDesigner()
 	{
-		mDisqfualifyingText = LOCTEXT( "UFGCDIntersectingBlueprintDesigner", "Partially overlapping blueprint designer!" );
+		mDisqfualifyingText = LOCTEXT( "UFGCDIntersectingBlueprintDesigner", "Partially overlapping Blueprint Designer!" );
 	}
 };
 
@@ -655,6 +677,17 @@ class FACTORYGAME_API UFGCDDesignerWorldCommingling : public UFGConstructDisqual
 	UFGCDDesignerWorldCommingling()
 	{
 		mDisqfualifyingText = LOCTEXT( "UFGCDDesignerWorldCommingling", "Cannot connect buildables in a designer to world buildables!" );
+	}
+};
+
+UCLASS()
+class FACTORYGAME_API UFGCDInvalidUpgradeConnections : public UFGConstructDisqualifier
+{
+	GENERATED_BODY()
+	
+	UFGCDInvalidUpgradeConnections()
+	{
+		mDisqfualifyingText = LOCTEXT( "UFGCDInvalidUpgradeConnections", "Invalid upgrade, can't match all connections!" );
 	}
 };
 

@@ -5,10 +5,16 @@
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
 
-#include "DamageTypes/FGDamageType.h"
+#include "FGDamageType.h"
 #include "Engine/EngineTypes.h"
+#include "GameFramework/Actor.h"
 
 #include "FGPointDamageType.generated.h"
+
+class URadialIntMask;
+class UUniformVector;
+class UCullingField;
+class UPhysicsFieldComponent;
 
 /**
  *

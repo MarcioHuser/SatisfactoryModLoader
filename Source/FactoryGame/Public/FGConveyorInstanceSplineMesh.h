@@ -7,14 +7,11 @@
 
 #include "Buildables/FGBuildableConveyorBelt.h"
 #include "Buildables/FGBuildableConveyorLift.h"
-#include "FGInstancedSplineMeshComponent.h"
+#include "InstancedSplineMeshComponent.h"
 #include "FGConveyorInstanceSplineMesh.generated.h"
 
-/**
- * 
- */
 UCLASS()
-class FACTORYGAME_API UFGConveyorInstanceSplineMesh : public UFGInstancedSplineMeshComponent
+class FACTORYGAME_API UFGConveyorInstancedSplineMeshComponent : public UInstancedSplineMeshComponent
 {
 	GENERATED_BODY()
 

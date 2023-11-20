@@ -3,7 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Resources/FGBuildDescriptor.h"
+#include "FGBuildDescriptor.h"
 #include "FGVehicleDescriptor.generated.h"
 
 /**
@@ -31,6 +31,8 @@ protected:
 
 	virtual TSubclassOf< class AFGHologram > GetHologramClassInternal() const override;
 	virtual TSubclassOf< AActor > GetBuildClassInternal() const override;
+
+	FORCEINLINE virtual bool Internal_CanItemBePickedup() const override { return false; }
 
 public:
 	/** Value to display instead of display name and description. */

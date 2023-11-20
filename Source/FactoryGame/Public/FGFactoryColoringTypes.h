@@ -5,6 +5,7 @@
 #include "FactoryGame.h"
 #include "ItemAmount.h"
 #include "Resources/FGItemDescriptor.h"
+#include "Engine/Texture2D.h"
 #include "FGFactoryColoringTypes.generated.h"
 
 static const uint8 BUILDABLE_COLORS_MAX_SLOTS_LEGACY = 18;
@@ -88,6 +89,9 @@ public:
 
 	UPROPERTY( EditDefaultsOnly )
 	TSoftObjectPtr< UTexture2D > mIcon;
+
+protected:
+	FORCEINLINE virtual bool Internal_CanItemBePickedup() const override { return false; }
 
 };
 
@@ -290,12 +294,16 @@ public:
 
 	FFactoryCustomizationColorSlot() : 
 		PrimaryColor( FLinearColor( 0.f, 0.f, 0.f, 1.f ) ), 
-		SecondaryColor( FLinearColor( 0.f, 0.f, 0.f, 1.f ) )
+		SecondaryColor( FLinearColor( 0.f, 0.f, 0.f, 1.f ) ),
+		Metallic( 0.f ),
+		Roughness( 0.f )
 	{}
 
 	FFactoryCustomizationColorSlot( FLinearColor primary, FLinearColor secondary ) : 
 		PrimaryColor( primary ), 
-		SecondaryColor( secondary ) 
+		SecondaryColor( secondary ),
+		Metallic( 0.f ),
+		Roughness( 0.f )
 	{}
 
 	FORCEINLINE bool operator==( const FFactoryCustomizationColorSlot& other ) const 
@@ -378,7 +386,11 @@ struct FACTORYGAME_API FFactoryCustomizationData
 	FFactoryCustomizationData() :
 		SwatchDesc( nullptr ),
 		PatternDesc( nullptr ),
-		MaterialDesc( nullptr )
+		MaterialDesc( nullptr ),
+		PatternRotation( 0.f ),
+		ColorSlot( 0 ),
+		NeedsSkinUpdate( false ),
+		HasPower( false )
 	{}
 
 	/**

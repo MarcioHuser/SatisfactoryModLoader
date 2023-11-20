@@ -3,6 +3,7 @@
 #include "FGStartingPod.h"
 #include "Components/SceneComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Net/UnrealNetwork.h"
 
 AFGStartingPod::AFGStartingPod() : Super() {
 	this->mCachedPlayer = nullptr;
@@ -26,7 +27,7 @@ void AFGStartingPod::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLi
 }
 FVector AFGStartingPod::GetRefundSpawnLocationAndArea_Implementation(const FVector& aimHitLocation, float& out_radius) const{ return FVector(); }
 bool AFGStartingPod::CanDismantle_Implementation() const{ return bool(); }
-void AFGStartingPod::GetDismantleRefund_Implementation(TArray< FInventoryStack >& out_refund) const{ }
+void AFGStartingPod::GetDismantleRefund_Implementation(TArray< FInventoryStack >& out_refund, bool noBuildCostEnabled) const{ }
 void AFGStartingPod::PreUpgrade_Implementation(){ }
 void AFGStartingPod::Upgrade_Implementation(AActor* newActor){ }
 void AFGStartingPod::Dismantle_Implementation(){ }

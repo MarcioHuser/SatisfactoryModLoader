@@ -18,6 +18,7 @@ void UFGSaveSystem::GroupSavesPerSession(const TArray< FSaveHeader >& saves, TAr
 void UFGSaveSystem::SortSessions(TArray< FSessionSaveStruct >& sessions, ESaveSortMode sortMode, ESaveSortDirection sortDirection){ }
 void UFGSaveSystem::SortSaves(TArray< FSaveHeader >& saves, ESaveSortMode sortMode, ESaveSortDirection sortDirection){ }
 ESaveState UFGSaveSystem::GetSaveState(const FSaveHeader& saveGame){ return ESaveState(); }
+ESaveModCheckResult UFGSaveSystem::CheckModdedSaveCompatibility(const FSaveHeader& saveGame, FText& outCustomMessage){ return ESaveModCheckResult(); }
 bool UFGSaveSystem::IsSessionNameUsed(FString sessionName) const{ return bool(); }
 void UFGSaveSystem::AddSessionNameToUsed(FString sessionName){ }
 bool UFGSaveSystem::IsValidSaveName(FString saveName){ return bool(); }
@@ -27,9 +28,11 @@ ESaveExists UFGSaveSystem::GetCachedSaveExistsInSessions(const TArray<FSessionSa
 void UFGSaveSystem::DeleteSaveFiles(const TArray<FString>& saveNames, FOnDeleteSaveGameComplete completeDelegate, void* userData){ }
 bool UFGSaveSystem::GetAbsolutePathForSaveGame(const UWorld* world, const FString& saveName, FString& out_absoluteSaveGame){ return bool(); }
 FString UFGSaveSystem::CreateAbsolutePath(const UWorld* world, const FString& saveName, bool saveInCommonDir){ return FString(); }
+FString UFGSaveSystem::RemoveStandalonePrefix(const FString& string){ return FString(); }
 FString UFGSaveSystem::SanitizeMapName(const FString& mapName){ return FString(); }
 FString UFGSaveSystem::GenerateNewSessionName(){ return FString(); }
 bool UFGSaveSystem::FindNewMapName(const FString& oldMapName, FString& out_newMapName){ return bool(); }
+bool UFGSaveSystem::FindNewBlueprintWorldMapName(const FString& oldMapName, FString& out_newMapName){ return bool(); }
 bool UFGSaveSystem::FindNewClassName(const FString& oldClassName, FString& out_newClassName){ return bool(); }
 bool UFGSaveSystem::FindNewObjectName(const FString& oldObjectName, FString& out_newObjectName){ return bool(); }
 bool UFGSaveSystem::MoveSaveFileFromCommonToEpicLocation(const UWorld* world, const FString& saveName){ return bool(); }
@@ -39,8 +42,10 @@ bool UFGSaveSystem::IsEnumeratingLocalSaves(){ return bool(); }
 bool UFGSaveSystem::IsSaveManagerAvailable(){ return bool(); }
 void UFGSaveSystem::DeleteSaveFile(const FSaveHeader& SaveGame, FOnSaveMgrInterfaceDeleteSaveGameComplete CompleteDelegate){ }
 void UFGSaveSystem::DeleteSaveSession(const FSessionSaveStruct& Session, FOnSaveMgrInterfaceDeleteSaveGameComplete CompleteDelegate){ }
-void UFGSaveSystem::LoadSaveFile(const FSaveHeader& SaveGame,  APlayerController* Player){ }
+USessionMigrationSequence* UFGSaveSystem::LoadSaveFile(const FSaveHeader& SaveGame, TMap<FString, FString> Options,  APlayerController* Player){ return nullptr; }
 void UFGSaveSystem::SaveGame(const FString& SaveName, FOnSaveMgrInterfaceSaveGameComplete CompleteDelegate){ }
+bool UFGSaveSystem::AddBlueprintMapRedirector(FString oldName, FString newName){ return bool(); }
+void UFGSaveSystem::RemoveBlueprintMapRedirector(FString redirectorName){ }
 void UFGSaveSystem::BackupSaveCleanup(){ }
 void UFGSaveSystem::MigrateSavesToNewLocation(const FString& oldSaveLocation){ }
 void UFGSaveSystem::FindSaveGames_Internal(const FString& saveDirectory, TArray<FSaveHeader>& out_saveGames){ }
@@ -48,5 +53,6 @@ FString UFGSaveSystem::SaveNameToFileName(const FString& directory, const FStrin
 UWorld* UFGSaveSystem::GetWorld() const{ return nullptr; }
 void UFGSaveSystem::GatherUsedSaveIds(){ }
 FOnSaveCollectionChanged UFGSaveSystem::OnSaveCollectionChanged = FOnSaveCollectionChanged();
+FCheckModdedSaveCompatibility UFGSaveSystem::CheckModdedSaveCompatibilityDelegate = FCheckModdedSaveCompatibility();
 bool UFGSaveSystem::mIsVerifyingSaveSystem = bool();
 bool UFGSaveSystem::mIsUsingBundledSaves = bool();

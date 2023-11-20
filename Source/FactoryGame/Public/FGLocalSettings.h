@@ -22,27 +22,31 @@ public:
 	
 	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats", meta = (
 		ToolTip = "Extra items we always give you on startup in PIE and standalone" ) )
-	TArray< FItemAmount > mExtraItemsToStartWith;
+	TMap< TSoftClassPtr< class UFGItemDescriptor >, int32 > mExtraItemsToStartWith;
 
 	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats", meta = (
 		ToolTip = "Recipes you want to start with in PIE and standalone" ) )
-	TArray< TSubclassOf<class UFGRecipe> > mRecipesToStartWith;
+	TArray< TSoftClassPtr<class UFGRecipe> > mRecipesToStartWith;
 
 	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats", meta = (
 		ToolTip = "Schematics you want to start with in PIE and standalone" ) )
-	TArray< TSubclassOf<class UFGSchematic> > mSchematicsToStartWith;
+	TArray< TSoftClassPtr<class UFGSchematic> > mSchematicsToStartWith;
 
 	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats", meta = (
 	ToolTip = "Schematics you don't want to get when you give all schematics in PIE and standalone. Works for both the cheat menu and the bool below" ) )
-	TArray< TSubclassOf<class UFGSchematic> > mSchematicsToFilterWithGiveAllSchematics;
+	TArray< TSoftClassPtr<class UFGSchematic> > mSchematicsToFilterWithGiveAllSchematics;
 
 	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats" )
 	bool mGodMode;
 
 	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats", meta = (
 		ToolTip = "Set fly enabled on all players if true" ) )
-	bool mEnableFly;
+	bool mEnableFly = true;
 
+	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats", meta = (
+	ToolTip = "Set auto landing off on all players if false. Does nothing if flying is off." ) )
+	bool mEnableAutoLanding = true;
+	
 	UPROPERTY( EditAnywhere, config, Category = "Starting Resources/Cheats", meta = (
 		ToolTip = "Set fly ghost enabled on all players if true" ) )
 	bool mEnableFlyGhost;
@@ -102,6 +106,9 @@ public:
 	UPROPERTY( EditAnywhere, config, Category = Game, meta = ( ToolTip = "Enable this if you want the welcome pioneer logo to show when starting a game in editor" ) )
 	bool mShowFicsitSplashWidget;
 	
+	UPROPERTY( EditAnywhere, config, Category = Game, meta = ( ToolTip = "When true it doesn't show the Unstable Save Version and Offline Session popups in editor and standalone" ) )
+	bool mDisableSaveVersionAndOfflineWarnings;
+	
 	UPROPERTY( EditAnywhere, config, Category = Focus, meta = (
 		ToolTip = "Should widgets grab focus back on focus lost in PIE. Default is off to avoid intrusive behaviour when trying to work. This is a local change only" ) )
 	bool mLocalGreedyFocusInPIE;
@@ -109,4 +116,8 @@ public:
 	UPROPERTY( EditAnywhere, config, Category = Navigation, meta = (
 		ToolTip = "Enable Tab and Key navigation locally so we can test it without impact for rest of dev team or players. When this is true FFGNavigationConfig::EnableTabAndNavKeys will always set navigation to true" ) )
 	bool mEnableTabAndKeyNavigation;
+
+	UPROPERTY( EditAnywhere, config, Category = Input, meta = (
+		ToolTip = "For debug purposes. If true we show the enhanced input mappings in the options rebinding menu instead of the legacy system" ) )
+	bool mShowEnhancedInputInOptionsMenu;
 };

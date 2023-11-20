@@ -3,8 +3,8 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Buildables/FGBuildable.h"
-#include "Buildables/FGBuildablePoleBase.h"
+#include "FGBuildable.h"
+#include "FGBuildablePoleBase.h"
 #include "FGBuildablePole.generated.h"
 
 
@@ -52,7 +52,7 @@ public:
 	float mHeight;
 
 	/** The component we want to use with the pole */
-	UPROPERTY( VisibleAnywhere, Category = "Pole" )
+	UPROPERTY( VisibleAnywhere, BlueprintReadOnly, Category = "Pole" )
 	class UFGColoredInstanceMeshProxy* mPoleComponentProxy;
 
 	/** Connection component used */

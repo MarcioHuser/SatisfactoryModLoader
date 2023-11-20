@@ -4,15 +4,14 @@
 
 #include "FactoryGame.h"
 #include "FGCharacterBase.h"
-#include "Creature/FGAction.h"
+#include "FGAction.h"
 #include "BehaviorTree/BehaviorTree.h"
-
 #include "FGCreature.generated.h"
 
 class AFGCreature;
 class AFGCreatureController;
 
-DECLARE_LOG_CATEGORY_EXTERN( LogCreature, Log, All );
+FACTORYGAME_API DECLARE_LOG_CATEGORY_EXTERN( LogCreature, Log, All );
 
 extern TAutoConsoleVariable< int32 > CVarCreatureDebug;
 extern TAutoConsoleVariable< int32 > CVarCreatureVisionDebug;
@@ -110,7 +109,7 @@ enum class ECreatureState : uint8
 
 inline FString CreatureStateEnumToString( ECreatureState state )
 {
-	const UEnum* EnumPtr = FindObject< UEnum >( ANY_PACKAGE, TEXT( "ECreatureState" ), true );
+	const UEnum* EnumPtr = FindObject< UEnum >( nullptr, TEXT( "/Script/FactoryGame.ECreatureState" ), true );
 
 	if( !EnumPtr )
 	{
@@ -260,6 +259,7 @@ public:
 
 	// Begin FGCharacterBase
 	virtual void Died( AActor* died ) override;
+	virtual void DoRagdoll_Internal() override;
 	// End FGCharacterBase
 
 	/** @return	Pawn's eye location */

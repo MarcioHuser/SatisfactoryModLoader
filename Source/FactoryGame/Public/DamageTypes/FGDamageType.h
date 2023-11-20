@@ -4,8 +4,9 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-
 #include "GameFramework/DamageType.h"
+#include "HAL/IConsoleManager.h"
+#include "Templates/SubclassOf.h"
 #include "FGDamageType.generated.h"
 
 extern TAutoConsoleVariable< int32 > CVarDamageTypeRangeDebug;
@@ -21,8 +22,8 @@ public:
 	UFUNCTION( BlueprintCallable )
 	virtual void ProcessDamage( const FHitResult& hitResult, class AController* instigator, AActor* damageCauser, float damageAmount, TArray<AActor*> ignoredActors );
 
-	UFUNCTION()
-	void SpawnEffects(const FHitResult& hitResult, AActor* outer);
+	UFUNCTION( BlueprintCallable )
+	virtual void SpawnEffects(const FHitResult& hitResult, AActor* outer);
 
 	/** When pawn take damage from a source, they play this take damage event */
 	UPROPERTY( EditAnywhere, BlueprintReadOnly, Category = "SFX" )
@@ -46,6 +47,13 @@ public:
 	/** Always causes stun if this is set, overriding stun damage calculations  */
 	UPROPERTY( EditAnywhere, BlueprintReadOnly, Category = "DamageType" )
 	bool mAlwaysCauseStun;
+
+	//@todo Maybe add the other types and rework where they are used - BjörkhemT.
+	UPROPERTY( EditDefaultsOnly, Category = "Damage" )
+	bool mIsGasPointType = false;
+	UPROPERTY( EditDefaultsOnly, Category = "Damage" )
+	bool mIsGasRadialType = false;
+	
 };
 
 UENUM()

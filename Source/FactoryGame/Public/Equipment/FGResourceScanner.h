@@ -3,8 +3,8 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "FGEquipment.h"
 #include "Resources/FGResourceNodeBase.h"
-#include "Equipment/FGEquipment.h"
 #include "FGResourceScanner.generated.h"
 
 /** Holds information about resource node clusters. This could be saved in actors on the level for optimization. */
@@ -114,6 +114,9 @@ protected:
 
 	void SplitNearbyClusters( TArray< FNodeClusterData >& clusters );
 
+	/** Input Actions */
+	void Input_Scan( const FInputActionValue& actionValue );
+
 protected:
 	/** This is the resource class to scan for */
 	UPROPERTY()
@@ -153,9 +156,4 @@ protected:
 	/** A list of all the clusters of nodes non the level */
 	UPROPERTY()
 	TArray< FNodeClusterData > mNodeClusters;
-
-private:
-
-	// Temp fix for avoiding scanning when opening CheatBoard, function is bound to CheatBoard input
-	void OnCheatBoardOpened();
 };

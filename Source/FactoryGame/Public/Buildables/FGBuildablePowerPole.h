@@ -3,7 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "Buildables/FGBuildable.h"
+#include "FGBuildable.h"
 #include "FGBuildablePowerPole.generated.h"
 
 UENUM( BlueprintType )
@@ -11,7 +11,8 @@ enum class EPowerPoleType : uint8
 {
 	PPT_POLE 			UMETA( DisplayName = "Pole" ),
 	PPT_WALL 			UMETA( DisplayName = "Wall Plug" ),
-	PPT_WALL_DOUBLE 	UMETA( DisplayName = "Wall Plug Double" )
+	PPT_WALL_DOUBLE 	UMETA( DisplayName = "Wall Plug Double" ),
+	PPT_TOWER			UMETA( DisplayName = "Power Tower" )
 };
 
 /**
@@ -51,6 +52,9 @@ public:
 	UFUNCTION( BlueprintPure, Category = "PowerPole" )
 	class UFGPowerConnectionComponent* GetPowerConnection(int32 index) const { return mPowerConnections[index]; }
 
+	UFUNCTION( BlueprintPure, Category = "PowerPole" )
+	const TArray< class UFGPowerConnectionComponent* >& GetPowerConnections() const { return mPowerConnections; }
+
 	void OnPowerConnectionChanged(class UFGCircuitConnectionComponent* connection);
 
 	/** Updates the cached number of connections this power pole currently have. */
@@ -63,6 +67,10 @@ public:
 	/** Event that will be fired whenever mHasPower has changed */
 	UFUNCTION( BlueprintImplementableEvent, Category = "PowerPole" )
 	void OnHasPowerChanged( bool hasPower ) const;
+
+	/** Gets the max length a wire is allowed to be when connecting this power tower to another power tower. */
+	UFUNCTION( BlueprintPure, Category = "PowerPole" )
+	float GetPowerTowerWireMaxLength() const { return mPowerTowerWireMaxLength; }
 
 private:
 	void SetHasPower( bool hasPower );
@@ -90,6 +98,10 @@ private:
 	/** What kind of power pole this is. */
 	UPROPERTY( EditDefaultsOnly, Category = "PowerPole" )
 	EPowerPoleType mPowerPoleType;
+
+	/** When connecting a wire from this power tower to another power tower, this is the max length the wire is allowed to be. */
+	UPROPERTY( EditDefaultsOnly, Category = "PowerPole" )
+	float mPowerTowerWireMaxLength;
 
 	bool mIsDismantled;
 	bool mIsShowingDismantleOutline;

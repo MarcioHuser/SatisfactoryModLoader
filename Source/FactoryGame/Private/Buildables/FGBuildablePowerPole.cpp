@@ -4,12 +4,14 @@
 #include "Components/SceneComponent.h"
 #include "FGColoredInstanceMeshProxy.h"
 #include "Hologram/FGBuildableHologram.h"
+#include "Net/UnrealNetwork.h"
 
 AFGBuildablePowerPole::AFGBuildablePowerPole() : Super() {
 	this->mConnectionsWidgetComponent = nullptr;
 	this->mConnectionWidgetClass = nullptr;
 	this->mMeshComponentProxy = CreateDefaultSubobject<UFGColoredInstanceMeshProxy>(TEXT("PoleMeshProxy"));
 	this->mPowerPoleType = EPowerPoleType::PPT_POLE;
+	this->mPowerTowerWireMaxLength = 100000.0;
 	this->mHasPower = false;
 	this->mHologramClass = AFGBuildableHologram::StaticClass();
 	this->mMeshComponentProxy->SetupAttachment(RootComponent);

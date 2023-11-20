@@ -12,11 +12,13 @@ AFGGenericBuildableHologram::AFGGenericBuildableHologram() : Super() {
 	this->mCanSnapToAngularWalls = true;
 	this->mBeamSnappingMode = EBeamSnappingMode::BSM_None;
 	this->mPillarSnappingMode = EPillarSnappingMode::PSM_None;
-	this->mWallSnapOffset = FVector2D::ZeroVector;
+	this->mWallSnapOffset = FVector::ZeroVector;
 	this->mSnapAxis = EAxis::Z;
 	this->mFoundationSnappingInset = 0.0;
 }
 void AFGGenericBuildableHologram::BeginPlay(){ }
 bool AFGGenericBuildableHologram::TrySnapToActor(const FHitResult& hitResult){ return bool(); }
 int32 AFGGenericBuildableHologram::GetRotationStep() const{ return int32(); }
+ENudgeFailReason AFGGenericBuildableHologram::NudgeHologram(const FVector& NudgeInput, const FHitResult& HitResult){ return ENudgeFailReason(); }
+void AFGGenericBuildableHologram::UpdateRotationValuesFromTransform(){ }
 bool AFGGenericBuildableHologram::IsHologramIdenticalToActor(AActor* actor, const FVector& hologramLocationOffset) const{ return bool(); }

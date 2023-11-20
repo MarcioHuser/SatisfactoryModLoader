@@ -4,7 +4,8 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Creature/Actions/FGCreatureActionAnimatedBase.h"
+#include "FGCreatureActionAnimatedBase.h"
+#include "Curves/CurveFloat.h"
 #include "FGCreatureActionCharge.generated.h"
 
 /**
@@ -45,11 +46,16 @@ protected:
 	UFUNCTION( BlueprintNativeEvent, Category = "Charge" )
 	void ProcessHit( class AFGCharacterBase* HitCharacter, const FHitResult& HitResult );
 
+	virtual void OnMovementModeChanged( ACharacter* character, EMovementMode previousMode, uint8 prevCustomMode ) override;
+
 	UFUNCTION( NetMulticast, Reliable )
 	void NetMulticast_BeginCharge();
 
 	UFUNCTION( NetMulticast, Reliable )
 	void NetMulticast_EndCharge();
+
+	/** Called when the creature has been falling for X amount of time. */
+	void OnFall();
 
 protected:
 	/** Whether or not we should stop charging once we hit a target. */
@@ -103,6 +109,8 @@ protected:
 private:
 	float mOldRotationRate;
 	float mOldMaxWalkSpeed;
+
+	FTimerHandle mFallingRagdollTimer;
 
 	bool mIsCharging;
 };

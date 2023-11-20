@@ -19,7 +19,7 @@ AFGFoliagePickup::AFGFoliagePickup() : Super() {
 }
 void AFGFoliagePickup::BeginPlay(){ }
 void AFGFoliagePickup::Tick(float DeltaSeconds){ }
-void AFGFoliagePickup::UpdateUseState_Implementation( AFGCharacterPlayer* byCharacter, const FVector& atLocation,  UPrimitiveComponent* componentHit, FUseState& out_useState) const{ }
+void AFGFoliagePickup::UpdateUseState_Implementation( AFGCharacterPlayer* byCharacter, const FVector& atLocation,  UPrimitiveComponent* componentHit, FUseState& out_useState){ }
 bool AFGFoliagePickup::IsUseable_Implementation() const{ return bool(); }
 void AFGFoliagePickup::StartIsLookedAt_Implementation( AFGCharacterPlayer* byCharacter, const FUseState& state){ }
 FText AFGFoliagePickup::GetLookAtDecription_Implementation( AFGCharacterPlayer* byCharacter, const FUseState& state) const{ return FText(); }
@@ -27,9 +27,7 @@ void AFGFoliagePickup::StopIsLookedAt_Implementation( AFGCharacterPlayer* byChar
 void AFGFoliagePickup::BroadcastPickup_Implementation( UStaticMesh* fromStaticMesh, FVector atLocation){ }
 void AFGFoliagePickup::SetPickupData( UHierarchicalInstancedStaticMeshComponent* component, int32 instanceId, AFGCharacterPlayer* byCharacter){ }
 void AFGFoliagePickup::DoPickup(){ }
-void AFGFoliagePickup::OnUseKeyPressed(){ }
-void AFGFoliagePickup::OnUseKeyReleased(){ }
-void AFGFoliagePickup::Server_PickUpFoliage_Implementation( AFGCharacterPlayer* byCharacter, AFGFoliageRemoval* foliageRemoval, int index){ }
-bool AFGFoliagePickup::Server_PickUpFoliage_Validate( AFGCharacterPlayer* byCharacter, AFGFoliageRemoval* foliageRemoval, int index){ return bool(); }
-bool AFGFoliagePickup::AddToPlayerInventory( AFGCharacterPlayer* character,  UHierarchicalInstancedStaticMeshComponent* meshComponent){ return bool(); }
-bool AFGFoliagePickup::HasPlayerSpaceFor( AFGCharacterPlayer* character,  UHierarchicalInstancedStaticMeshComponent* meshComponent){ return bool(); }
+void AFGFoliagePickup::Input_Use(const  FInputActionValue& actionValue){ }
+void AFGFoliagePickup::Server_PickUpFoliage_Implementation( AFGCharacterPlayer* byCharacter, FFoliageInstanceStableId StableId, const FVector& instanceLocation){ }
+bool AFGFoliagePickup::AddToPlayerInventory( AFGCharacterPlayer* character,  UHierarchicalInstancedStaticMeshComponent* meshComponent, uint32 seed){ return bool(); }
+bool AFGFoliagePickup::HasPlayerSpaceFor( AFGCharacterPlayer* character,  UHierarchicalInstancedStaticMeshComponent* meshComponent, uint32 seed){ return bool(); }

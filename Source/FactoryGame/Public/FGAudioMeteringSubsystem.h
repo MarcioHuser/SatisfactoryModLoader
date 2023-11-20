@@ -3,10 +3,10 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "AkGameplayTypes.h"
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "UObject/NoExportTypes.h"
-#include "AkAudio/Classes/AkGameplayTypes.h"
 #include "AkMetering.h" // MODDING EDIT: Wwise changes
 #include "FGAudioMeteringSubsystem.generated.h"
 
@@ -27,7 +27,7 @@ public:
 	FNativeBusMeteringCallback OnNativeBusMeteringInfoUpdate;
 
 	UFUNCTION(BlueprintCallable)
-	void SetMeteringFlags(UPARAM(meta = (Bitmask, BitmaskEnum = EAkMeteringFlags) ) EAkMeteringFlags MeteringFlags);
+	void SetMeteringFlags(UPARAM(meta = (Bitmask, BitmaskEnum = "/Script/AkAudio.EAkMeteringFlags") ) EAkMeteringFlags MeteringFlags);
 	
 	virtual void BusMeteringInfoUpdate( const FAkBusMeteringInfo& meteringInfo ) override;
 

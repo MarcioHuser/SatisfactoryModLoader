@@ -4,8 +4,8 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Hologram/FGTrainPlatformHologram.h"
-#include "Hologram/FGFactoryBuildingHologram.h"
+#include "FGFactoryBuildingHologram.h"
+#include "FGTrainPlatformHologram.h"
 #include "FGTrainStationHologram.generated.h"
 
 
@@ -24,7 +24,7 @@ public:
 
 protected:
 	// Begin AFGHologram interface
-	virtual USceneComponent* SetupComponent( USceneComponent* attachParent, UActorComponent* componentTemplate, const FName& componentName ) override;
+	virtual USceneComponent* SetupComponent( USceneComponent* attachParent, UActorComponent* componentTemplate, const FName& componentName, const FName& attachSocketName ) override;
 	virtual void SetHologramLocationAndRotation( const FHitResult& hitResult ) override;
 	// End AFGHologram interface
 };

@@ -3,12 +3,13 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "CoreMinimal.h"
-#include "UObject/NoExportTypes.h"
-#include "FGSaveInterface.h"
-#include "Slate/WidgetTransform.h"
 #include "Containers/Map.h"
+#include "CoreMinimal.h"
+#include "FGSaveInterface.h"
+#include "GameFramework/Info.h"
 #include "Math/TransformCalculus2D.h"
+#include "Slate/WidgetTransform.h"
+#include "UObject/NoExportTypes.h"
 #include "FGTargetPointLinkedList.generated.h"
 
 USTRUCT( BlueprintType )
@@ -41,6 +42,7 @@ struct FDrivingTargetListMapData
 	TArray< FWidgetTransform > ArrowTransforms;
 };
 
+DECLARE_MULTICAST_DELEGATE_OneParam( FOnPathVisibilityChanged, bool );
 
 /**
  * 
@@ -195,6 +197,8 @@ public:
 	static constexpr float MaxSegmentExtent = 3000.0f;
 
 	float mCollisionAvoidanceDistance = 0.0f;
+	
+	FOnPathVisibilityChanged OnPathVisibilityChanged;
 
 private:
 	friend class UFGSplinePathMovementComponent;

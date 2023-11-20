@@ -4,11 +4,11 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
+#include "FGBuildable.h"
+#include "FGBuildableSignBase.h"
 #include "FGSignInterface.h"
-#include "FGSignificanceInterface.h"
-#include "Buildables/FGBuildable.h"
 #include "FGSignTypes.h"
-#include "Buildables/FGBuildableSignBase.h"
+#include "FGSignificanceInterface.h"
 #include "FGBuildableWidgetSign.generated.h"
 
 UCLASS()
@@ -70,6 +70,7 @@ public:
 	//~ End IFGFactoryClipboardInterface
 
 	virtual void OnBuildEffectFinished() override;
+	virtual void OnBuildEffectActorFinished() override;
 	
 	// When a text element is updated, this call will update that element and set the save data
 	UFUNCTION( BlueprintCallable, Category = "WidgetSign" )
@@ -82,18 +83,32 @@ public:
 	/** Updates all sign elements with currently set sign data */
 	void UpdateSignElements( FPrefabSignData& prefabSignData );
 
+	virtual float GetAdjustedEmissiveValue(int32 Level) const;
+
 protected:
 
 	/** Update sign prefab on replication */
 	UFUNCTION()
 	void OnRep_SignDataDirty();
 
+	/* Generate GUID based on settings*/
+	static uint32 GenerateGUID(FPrefabSignData& signData, UClass* Prefab, FVector2D Size);
+
+	virtual void ConvertToEmissiveOnly(FPrefabSignData& prefabSignData) const;
+
+	virtual void SetupMaterialInstanceForProxyPlane(UMaterialInstanceDynamic* Instance, UTextureRenderTarget2D* RenderTarget);
+
 protected:
 	friend class UFGSignBuildingWidget;
+	friend class AFGSignSubsystem;
 
-	/** Root UMG component */
-	UPROPERTY( VisibleAnywhere, Category = "WidgetSign" )
-	class UWidgetComponent* mWidgetComponent;
+
+	///** Root UMG component */
+	//UPROPERTY( VisibleAnywhere, Category = "WidgetSign" )
+	//class UWidgetComponent* mWidgetComponent;
+	
+	UPROPERTY( VisibleAnywhere, Category = "WidgetSign", meta = (AllowPrivateAccess = "true") )
+	TObjectPtr<UStaticMeshComponent> mSignProxyPlane;
 
 	/** Sign Descriptor. This is a class that holds information that can be shared across different signs of similar aspect ratios */
 	UPROPERTY( EditDefaultsOnly, Category = "WidgetSign" )
@@ -118,6 +133,18 @@ protected:
 	UPROPERTY( EditDefaultsOnly )
 	UMaterialInterface* mWidgetMaterial;
 
+	UPROPERTY( EditDefaultsOnly )
+	UMaterialInterface* mEmissiveOnlySignMaterial;
+	
+	UPROPERTY( EditDefaultsOnly )
+	UMaterialInterface* mDefaultSignMaterial;
+
+	UPROPERTY(EditDefaultsOnly)
+	FIntPoint mSignDrawSize;
+
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<UUserWidget> mWidgetClass;
+	
 	//////////////////////////////////////////////////////////////////////////
 	/// Saved Properties
 
@@ -149,5 +176,6 @@ protected:
 	// When a signs data is changed, the server will increment this. When the onRep fires the client will add this sign to the PendingSigns array in the sign subsystem
 	UPROPERTY( ReplicatedUsing=OnRep_SignDataDirty )
 	uint8 mDataVersion;
-
+	
+	uint32 mCachedGUID = 0;
 };

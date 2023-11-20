@@ -4,7 +4,7 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Equipment/FGEquipment.h"
+#include "FGEquipment.h"
 #include "FGGolfCartDispenser.generated.h"
 
 /**
@@ -17,26 +17,17 @@ class FACTORYGAME_API AFGGolfCartDispenser : public AFGEquipment
 public:
 	AFGGolfCartDispenser();
 
-	/** It's a tick! */
-	virtual void Tick( float DeltaSeconds ) override;
-
 	void BeginPlay();
 
 	void SetMaterial( class UMaterialInterface* material );
 
-	/** Called on the owner, client or server but not both. */
-	void OnPrimaryFirePressed();
-
-	/** Only the server handles the building. */
-	UFUNCTION( Server, Reliable, WithValidation )
-	void Server_PrimaryFire();
-
 	/** Handle the actual spawning */
 	UFUNCTION( BlueprintImplementableEvent )
 	void SpawnGolfCart( );
+
 protected:
-	/** Add custom bindings for this equipment */
-	virtual void AddEquipmentActionBindings() override;
+	virtual void HandleDefaultEquipmentActionEvent( EDefaultEquipmentAction action, EDefaultEquipmentActionEvent actionEvent ) override;
+	
 public:
 	// Trace distance when building. * /
 	UPROPERTY( EditDefaultsOnly, BlueprintReadOnly, Category = "Buildable" )

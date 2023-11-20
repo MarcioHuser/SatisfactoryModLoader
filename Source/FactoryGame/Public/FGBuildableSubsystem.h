@@ -3,10 +3,11 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "FGSubsystem.h"
 #include "FGFactoryColoringTypes.h"
 #include "FGSaveInterface.h"
+#include "FGSubsystem.h"
 #include "FactoryTick.h"
+#include "Materials/MaterialInterface.h"
 #include "FGBuildableSubsystem.generated.h"
 
 class UFGProductionIndicatorInstanceManager;
@@ -57,10 +58,10 @@ struct FDistanceBasedTickRate
 	GENERATED_BODY()
 
 	UPROPERTY( EditDefaultsOnly, Category = "Factory" )
-	float Distance;
+	float Distance = 0.f;
 
 	UPROPERTY( EditDefaultsOnly, Category = "Factory" )
-	float TickRate;
+	float TickRate = 0.f;
 };
 
 USTRUCT()
@@ -76,12 +77,15 @@ struct FBuildableBucket
 };
 
 USTRUCT()
-struct FConveyorBucket
+struct FConveyorTickGroup
 {
 	GENERATED_BODY()
 
-	FConveyorBucket(){}
-
+	FConveyorTickGroup(){}
+	
+	UPROPERTY()
+	AFGBuildable* ForceIntoSharedByBuildable = nullptr; 
+	
 	UPROPERTY()
 	TArray< class AFGBuildableConveyorBase* > Conveyors;
 };
@@ -164,6 +168,9 @@ public:
 	 */
 	void OnDesignerBuildableSpawned( AFGBuildable* buildable );
 
+	/** Updates a conveyor bucket and all conveyors in it with their tick location (first, mid, last) */
+	void AssignConveyorTickOrder( int32 id );
+	
 	/** Adds a conveyor to the conveyor buckets */
 	void AddConveyor( AFGBuildableConveyorBase* conveyor );
 	
@@ -182,12 +189,13 @@ public:
 	/**
 	 *	Remove a conveyor from the bucket it's assigned to
 	 *	If it's the only conveyor in the bucket the bucket will be removed
+	 *	@return returns true if it removed the bucket
 	 */
-	void RemoveConveyorFromBucket( AFGBuildableConveyorBase* conveyorToRemove );
+	bool RemoveConveyorFromBucket( AFGBuildableConveyorBase* conveyorToRemove );
 
-	/** Rearrange the conveyor buckets after we emptied a bucket */
+	/** Rearrange the conveyor buckets after we emptied a bucket. returns true if a memory swap occurs */
 	void RearrangeConveyorBuckets( int32 emptiedBucketID );
-
+	
 	/**
 	*	Splits up a conveyor bucket into two buckets
 	*	Empties the current bucket and adds all conveyors again into two buckets
@@ -248,7 +256,7 @@ public:
 	virtual void DisplayDebug( class UCanvas* canvas, const class FDebugDisplayInfo& debugDisplay, float& YL, float& YPos ) override;
 	void DebugGetFactoryActors( TArray< AActor* >& out_actors );
 
-	static FName GetMeshMapName( UStaticMesh* mesh, UMeshComponent* sourceComponent );
+	static FName GetMeshMapName( UStaticMesh* mesh, class UMeshComponent* sourceComponent );
 	
 	/** Returns the factory stat ID of the object used for the profiling tool. */
 	FORCEINLINE TStatId GetFactoryStatID( bool forDeferredUse = false ) const
@@ -266,12 +274,7 @@ public:
 #endif
 		return TStatId(); // not doing stats at the moment, or ever
 	}
-
-	UMaterial* GetFactoryDefaultMaterial()
-	{
-		return mDefaultFactoryMaterial;
-	}
-
+	
 	/** Generates a new NetConstructionID for buildables. Can be used from client to identify buildings that were constructed from server. */
 	FNetConstructionID GetNewNetConstructionID();
 
@@ -312,6 +315,9 @@ public:
 	{
 		return mCurrentSubStep == mCurrentSubStepMax;
 	}
+
+	/* Get "world time" for factory simulation. */
+	FORCEINLINE float GetFactorySimulationTime() const { return mAccumulatedFactorySimulationTime; }
 
 	// Called from BuildGunPaint for previewing skin logic
 	TArray< TSubclassOf< class AFGBuildable >> GetPreviewSkinsOnBuildableList() { return mPreviewSkinsOnBuildablesList; }
@@ -354,6 +360,8 @@ private:
 	}
 		
 public:
+	static const FName MaterialParameter_ConveyorSpeed;
+	
 	/** Distance used when calculating if a location is near a base */
 	UPROPERTY( EditDefaultsOnly, Category = "Factory" )
 	float mDistanceConsideredClose;
@@ -398,6 +406,13 @@ public:
 	/** This is externalized from the build gun state to allow for easier mod support */
 	UPROPERTY()
 	TArray< TSubclassOf< class AFGBuildable > > mPreviewSkinsOnBuildablesList;
+
+	UFUNCTION(BlueprintPure,Category = "BuildableSubsystem|Proximity")
+	int32 GetNumFactoriesNeededForCloseCheck() const { return mNumFactoriesNeededForCloseCheck; }
+
+	UFUNCTION(BlueprintPure,Category = "BuildableSubsystem|Proximity")
+	float GetDistanceConsideredClose() const { return mDistanceConsideredClose; }
+
 	
 private:
 
@@ -426,7 +441,10 @@ private:
 	*	A bucket can contain a single conveyor belt, a section or a looped section
 	*	An exception exists for belts that connect to buildables with 2 outputs, those are added to a separate buckets
 	*/
-	TArray< FConveyorBucket* > mConveyorBuckets;
+	TArray< FConveyorTickGroup* > mConveyorTickGroup;
+
+	UPROPERTY()
+	TMap< AFGBuildable*, int32 > mBuildableToSharedBucketIndexMap;
 
 	/** All conveyors that are not safe to execute in parallel
 	*	At the time of writing this is used only for conveyors connecting to buildings with multiple outputs
@@ -434,7 +452,7 @@ private:
 	TArray< AFGBuildableConveyorBase* > mSerialConveyorGroup;
 
 	// Groupings of conveyor buckets
-	TArray< TArray < FConveyorBucket* > > mConveyorBucketGroups;
+	TArray< TArray < FConveyorTickGroup* > > mConveyorBucketGroups;
 
 	// Track whether or not we need to repopulate our conveyor groups
 	bool mConveyorBucketGroupsDirty;
@@ -557,10 +575,6 @@ private:
 	/** Array with all the buildings that should replay their effect */
 	TArray< AFGBuildable* > mReplayEffectArray;
 
-	/**used for comparing and finding materials of factory meshes*/
-	UPROPERTY( EditDefaultsOnly )
-	UMaterial* mDefaultFactoryMaterial;
-
 	/** Used to store different belt materials and their speeds so their materials can be shared */
 	UPROPERTY()
 	TMap< int32, UMaterialInstanceDynamic* > mConveyorTrackSpeedToMaterial;
@@ -599,6 +613,8 @@ private:
 	UPROPERTY()
 	TMap < int32, TSubclassOf< class UFGFactoryCustomizationDescriptor_Swatch > > mSlotToSwatchDescMigrationMap;
 
+	/* World time for the factory tick*/
+	float mAccumulatedFactorySimulationTime;
 };
 
 template< typename T >

@@ -4,6 +4,7 @@
 
 #include "FactoryGame.h"
 #include "FGActorRepresentation.h"
+#include "Engine/DeveloperSettings.h"
 #include "FGMapCompassSettings.generated.h"
 
 UCLASS( config = Game, defaultconfig, meta = ( DisplayName = "Map and Compass" ) )
@@ -41,10 +42,10 @@ public:
 	float mHighestWorldLocation;
 
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
-	TAssetPtr<UStaticMesh> mMapMarkerMesh;
+	TSoftObjectPtr<UStaticMesh> mMapMarkerMesh;
 	
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
-	TAssetPtr<UMaterialInterface> mMapMarkerMaterial;
+	TSoftObjectPtr<UMaterialInterface> mMapMarkerMaterial;
 
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
 	int32 mDefaultStampIconID;
@@ -59,16 +60,16 @@ public:
 	float mMapMarkerObjectHeightOffset;
 
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
-	TAssetPtr<UStaticMesh> mHighlightedMarkerMesh;
+	TSoftObjectPtr<UStaticMesh> mHighlightedMarkerMesh;
 
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
 	FVector mHighlightMarkerMeshScale;
 	
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
-	TAssetPtr<UMaterialInterface> mHighlightedMarkerMaterial;
+	TSoftObjectPtr<UMaterialInterface> mHighlightedMarkerMaterial;
 
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
-	TAssetPtr<class UNiagaraSystem> mHighlightedMarkerNiagaraSystem;
+	TSoftObjectPtr<class UNiagaraSystem> mHighlightedMarkerNiagaraSystem;
 
 	UPROPERTY( EditAnywhere, config, Category = "Map Markers", meta = ( ToolTip = "" ) )
 	FText mMapMarkerFailedToAddMessage;

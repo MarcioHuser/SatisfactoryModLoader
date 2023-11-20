@@ -3,7 +3,7 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "FGWorldCreationInterface.h"
+#include "CoreMinimal.h"
 #include "FGEngineCommon.generated.h"
 
 
@@ -115,12 +115,6 @@ public:
 	 */
 	void Tick( float dt );
 
-	/** Implements IFGWorldCreationInterface::CreateWorld  */
-	class UWorld* CreateWorld( const FString& worldName );
-
-	/** Implements IFGWorldCreationInterface::DestroyWorld */
-	void DestroyWorld( class UWorld* world );
-
 	class UFGAtmosphereUpdater* GetAtmosphereUpdater();
 protected:
 #if WITH_EDITOR
@@ -163,15 +157,11 @@ private:
 	void HandleHiddenTextureStatsCommand( const TCHAR* cmd, FOutputDevice& ar );
 protected:
 	UPROPERTY( transient )
-	class UEngine* Engine;
-	
-	/** The worlds created through IFGWorldCreationInterface */
-	UPROPERTY( transient )
-	TArray<UWorld*> CreatedWorlds;
+	class UEngine* Engine{};
 
 	/** Height fog properties that's controlled from camera */
 	UPROPERTY()
-	class UFGAtmosphereUpdater* AtmosphereUpdater;
+	class UFGAtmosphereUpdater* AtmosphereUpdater{};
 private:
 #if STATS
 	/** The current stats collectors, @note: Threadcontext StatsThread */
@@ -181,6 +171,6 @@ private:
 	FDelegateHandle CollectStatsDelegateHandle;
 
 	/** If true, then we are collecting stats */
-	bool mCollectStats;
+	bool mCollectStats{};
 #endif
 };

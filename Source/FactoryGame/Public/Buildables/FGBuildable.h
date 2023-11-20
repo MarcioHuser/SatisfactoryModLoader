@@ -4,30 +4,32 @@
 
 #include "FactoryGame.h"
 #include "AbstractInstanceInterface.h"
-#include "GameFramework/Actor.h"
-#include "FGUseableInterface.h"
-#include "ItemAmount.h"
-#include "FGDismantleInterface.h"
-#include "FGBlueprintFunctionLibrary.h"
-#include "Animation/AnimInstance.h"
 #include "Engine/BlueprintGeneratedClass.h"
 #include "Engine/SCS_Node.h"
-#include "FGSaveInterface.h"
-#include "FactoryTick.h"
-#include "FGColorInterface.h"
-#include "Replication/FGReplicationDetailActorOwnerInterface.h"
-#include "FGBuildableSubsystem.h"
 #include "FGAttachmentPoint.h"
-#include "FGFactoryClipboard.h"
+#include "FGBlueprintFunctionLibrary.h"
+#include "FGBuildableSubsystem.h"
+#include "FGColorInterface.h"
 #include "FGDecorationTemplate.h"
+#include "FGDismantleInterface.h"
+#include "FGFactoryClipboard.h"
 #include "FGRainOcclusionActor.h"
 #include "FGRemoteCallObject.h"
-
+#include "FGSaveInterface.h"
+#include "FGUseableInterface.h"
+#include "FactoryTick.h"
+#include "GameFramework/Actor.h"
+#include "ItemAmount.h"
+#include "Replication/FGReplicationDetailActorOwnerInterface.h"
+#include "Replication/FGReplicationDetailInventoryComponent.h"
 #include "FGBuildable.generated.h"
 
-//@todonow These should CAPS_CASE according to the coding standard
-static const FString MainMeshName( TEXT( "MainMesh" ) );
-static const FName ClearanceDetectorVolumeName( TEXT( "ClearanceDetector" ) ); //@todo There's a duplicate of this in the CPP file.
+DECLARE_STATS_GROUP( TEXT( "FactoryQuick" ), STATGROUP_FactoryQuick, STATCAT_Advanced );
+
+#define FACTORY_QUICK_SCOPE_CYCLE_COUNTER(Stat) \
+	DECLARE_SCOPE_CYCLE_COUNTER(TEXT(#Stat),Stat,STATGROUP_FactoryQuick)
+
+static const FString MAIN_MESH_NAME( TEXT( "MainMesh" ) );
 
 #define GetLWActorTransform( inputActor ) IAbstractInstanceInterface::Execute_GetLightweightInstanceActorTransform( inputActor )
 
@@ -106,7 +108,7 @@ public:
  * PrimaryActorTick is disabled when the buildable is to far away to to not waste cycles on animations and other effects.
  * FactoryTick is always enabled (as long as bCanEverTick is true) so that the factory part of buildings always can simulate.
  */
-UCLASS( Abstract, Config=Engine, Meta=(AutoJson=true) )
+UCLASS( Abstract, Meta=(AutoJson=true) )
 class FACTORYGAME_API AFGBuildable : public AActor, public IFGDismantleInterface, public IFGSaveInterface, public IFGColorInterface, public IFGUseableInterface, public IFGFactoryClipboardInterface, public IAbstractInstanceInterface
 {
 	GENERATED_BODY()
@@ -177,7 +179,7 @@ public:
 	//~ End IFGColorInterface
 
 	//~ Begin IFGUseableInterface
-	virtual void UpdateUseState_Implementation( class AFGCharacterPlayer* byCharacter, const FVector& atLocation, class UPrimitiveComponent* componentHit, FUseState& out_useState ) const override;
+	virtual void UpdateUseState_Implementation( class AFGCharacterPlayer* byCharacter, const FVector& atLocation, class UPrimitiveComponent* componentHit, FUseState& out_useState ) override;
 	virtual void OnUse_Implementation( class AFGCharacterPlayer* byCharacter, const FUseState& state ) override;
 	virtual void OnUseStop_Implementation( class AFGCharacterPlayer* byCharacter, const FUseState& state ) override;
 	virtual bool IsUseable_Implementation() const override;
@@ -210,7 +212,7 @@ public:
 
 	//~ Begin IFGDismantleInterface
 	virtual bool CanDismantle_Implementation() const override;
-	virtual void GetDismantleRefund_Implementation( TArray< FInventoryStack >& out_refund ) const override;
+	virtual void GetDismantleRefund_Implementation( TArray< FInventoryStack >& out_refund, bool noBuildCostEnabled ) const override;
 	virtual FVector GetRefundSpawnLocationAndArea_Implementation( const FVector& aimHitLocation, float& out_radius ) const override;
 	virtual void PreUpgrade_Implementation() override;
 	virtual void Upgrade_Implementation( AActor* newActor ) override;
@@ -219,6 +221,14 @@ public:
 	virtual void StopIsLookedAtForDismantle_Implementation( class AFGCharacterPlayer* byCharacter ) override;
 	virtual void GetChildDismantleActors_Implementation( TArray< AActor* >& out_ChildDismantleActors ) const override;
 	//~ End IFGDismantleInterface
+
+	/** Returns what actor should be dismantled when trying to dismantle this one, in case we want to redirect it. */
+	UFUNCTION( BlueprintPure, Category = "Dismantle" )
+	AActor* GetDismantleRedirectActor() const { return mDismantleRedirectActor; }
+
+	/** Use this to redirect what actor gets dismantled when trying to dismantle this actor with the buildgun. */
+	UFUNCTION( BlueprintCallable, Category = "Dismantle" )
+	void SetDismantleRedirectActor( AActor* actorToRedirectTo ) { mDismantleRedirectActor = actorToRedirectTo; }
 
 	virtual void StartIsLookedAtForConnection( class AFGCharacterPlayer* byCharacter, class UFGCircuitConnectionComponent* overlappingConnection );
 	virtual void StopIsLookedAtForConnection( class AFGCharacterPlayer* byCharacter );
@@ -305,6 +315,10 @@ public:
 	virtual void ExecutePlayBuildEffects();
 	virtual void OnBuildEffectFinished();
 
+	/** Called when the build effect is finished to notify the blueprints */
+	UFUNCTION( BlueprintImplementableEvent, Category = "Buildable|Build Effect", DisplayName = "On Build Effect Finished" )
+	void K2_OnBuildEffectFinished();
+
 	UFUNCTION( BlueprintCallable, Category = "Buildable|Build Effect" )
 	virtual void PlayBuildEffectActor( AActor* inInstigator );
 
@@ -312,7 +326,7 @@ public:
 	virtual void ExecutePlayBuildActorEffects();
 	
 	UFUNCTION()
-	virtual void OnBuildEffectActorFinished( );
+	virtual void OnBuildEffectActorFinished();
 
 	/*Handles logic for blueprint / zooping build effect behaviour, returns true when it should be a part of the multi
 	 * build effect actor, false when it shouldn't */
@@ -328,17 +342,13 @@ public:
 	UFUNCTION( BlueprintNativeEvent )
 	bool CanBeSampled() const;
 
+	/** Used by the blueprint subsystem to notify a buildable a build effect is playing (before the build effect starts so that begin play can expect it) */
+	void SetIsPlayingBuildEffect( bool isPlaying ) { mBuildEffectIsPlaying = isPlaying; }
+
 	/** Returns whether or not the build effect is currently running */
+	UFUNCTION( BlueprintPure, Category = "Buildable|Build Effect" )
 	bool IsPlayingBuildEffect() const { return mBuildEffectIsPlaying; }
-
-	/** Display the highlight effect */
-	UFUNCTION( BlueprintCallable, Category = "Buildable" )
-	void ShowHighlightEffect();
-
-	/** Removes the highlight effect */
-	UFUNCTION( BlueprintCallable, Category = "Buildable" )
-	void RemoveHighlightEffect();
-
+	
 	/** Returns the cached bounds */
 	FORCEINLINE FBox GetCachedBounds() const { return mCachedBounds; }
 
@@ -378,10 +388,13 @@ public:
 	uint8 GetNumFactoryOuputConnections() const;
 
 	UFUNCTION( BlueprintPure, Category = "Buildable" )
-	bool ShouldModifyWorldGrid() const { return mShouldModifyWorldGrid; }
+	FORCEINLINE bool ShouldModifyWorldGrid() const { return mShouldModifyWorldGrid; }
 
 	UFUNCTION( BlueprintPure, Category = "Buildable" )
-	bool ShouldShowAttachmentPointVisuals() const { return mShouldShowAttachmentPointVisuals; }
+	FORCEINLINE bool ShouldShowAttachmentPointVisuals() const { return mShouldShowAttachmentPointVisuals; }
+
+	void SetMarkedForDismantle() { mIsAboutToBeDismantled = true; }
+	FORCEINLINE bool IsAboutToBeDismantled() const { return mIsAboutToBeDismantled; }
 
 	/** Fills an array with all attachment points of this buildable. */
 	virtual void GetAttachmentPoints( TArray< const FFGAttachmentPoint* >& out_points ) const;
@@ -392,6 +405,11 @@ public:
 	/** Should this buildable be relevant when considering if a location is near a base/factory area */
 	UFUNCTION( BlueprintNativeEvent, Category = "Buildable" )
 	bool ShouldBeConsideredForBase();
+
+	/** Set on begin play.*/
+	UFUNCTION( BlueprintNativeEvent, Category = "Buildable" )
+	float GetConsideredForBaseWeight() const;
+	float GetConsideredForBaseWeight_Implementation() const { return mIsConsideredForBaseWeightValue; }
 
 #if WITH_EDITOR
 	/** Sets the display name for this buildable. Only for editor use */
@@ -451,11 +469,18 @@ public:
 	/**
 	 * Called from blueprint subsystem after being loaded. Can be used to run custom logic post serialization
 	 */
-	virtual void PostSerializedFromBlueprint();
+	virtual void PostSerializedFromBlueprint( bool isBlueprintWorld = false );
 	
 	/** Assign a blueprint build effect id. The blueprint subsystem uses this to sync and then spawn build effects for blueprint buildings on clients*/
 	void SetBlueprintBuildEffectID( int32 buildEffectID ) { mBlueprintBuildEffectID = buildEffectID; }
 
+	/** @return the build effect used by this buildable */
+	UFUNCTION( BlueprintNativeEvent, Category = "Buildable|Build Effect" )
+	TSoftClassPtr< UFGMaterialEffect_Build > GetBuildEffectTemplate() const;
+	
+	/** @return the dismantle effect used by this buildable */
+	UFUNCTION( BlueprintNativeEvent, Category = "Buildable|Build Effect" )
+	TSoftClassPtr< UFGMaterialEffect_Build > GetDismantleEffectTemplate() const;
 protected:
 	/** Blueprint event for when materials are updated by the buildable subsystem*/
 	UFUNCTION( BlueprintImplementableEvent, Category = "Buildable|Build Effect" )
@@ -478,6 +503,12 @@ protected:
 
 	/** Called whenever mIsReplicatingDetails has changed, used to enable disable replication of subobjects. */
 	virtual void OnReplicatingDetailsChanged();
+
+	/**
+	 *	Must be overloaded by children that contain additional FReplicationDetailData and add the to the out_ data
+	 *	Failing to add may open the possibility for item duping if clients are preset
+	 */
+	virtual void GetAllReplicationDetailDataMembers( TArray< FReplicationDetailData* >& out_repDetailData ) {}
 
 	/**
 	 * For custom connections, if we want a custom implementation for
@@ -550,10 +581,7 @@ protected:
 	
 	/** Visually (CustomData / PIC ) does this building have "power". For now powered buildings this should always return true to light the emissive channel */
 	FORCEINLINE virtual float GetEmissivePower() { return 1.f; }
-
-	/** Setter for mDidFirstTimeUse so we can ensure that it is flagged for replication property */
-	void SetDidFirstTimeUse( bool didUse );
-
+	
 	UFUNCTION( BlueprintCallable, Category = "Buildable" )
 	TArray< UStaticMeshComponent* > CreateBuildEffectProxyComponents();
 
@@ -606,11 +634,7 @@ private:
 
 	/** Helper to verify the connection naming. */
 	bool CheckFactoryConnectionComponents( FString& out_message );
-
-	/** Let client see the highlight */
-	UFUNCTION()
-	void OnRep_DidFirstTimeUse();
-
+	
 	UFUNCTION()
 	void OnRep_LightweightTransform();
 	
@@ -636,11 +660,6 @@ public:
 	UPROPERTY(EditDefaultsOnly,Category = "Rendering")
 	float MaxRenderDistance;
 
-	//@todoGC look at the other todo for highlights.
-	/** Vector used to determine highlight effects location */
-	UPROPERTY( EditDefaultsOnly, Category = "Buildable" )
-	FVector mHighlightVector;
-
 	/* Pool handles used by the pooling system. */
 	TArray< struct FPoolHandle* > mPoolHandles;
 
@@ -661,6 +680,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Buildable")
 	bool mContainsComponents = true;
 
+	UPROPERTY(EditDefaultsOnly, Category="Proximity")
+	float mIsConsideredForBaseWeightValue = 1.f;
+	
 protected:
 	/* Begin css sparse data implementation */
 #if	WITH_EDITORONLY_DATA
@@ -671,6 +693,8 @@ protected:
 	UPROPERTY()
 	UFGBuildableSparseDataObject* mBuildableSparseDataCDO;
 
+	UPROPERTY()
+	AActor* mDismantleRedirectActor;
 	
 	//@todorefactor With meta = ( ShowOnlyInnerProperties ) it does not show and PrimaryActorTick seems to be all custom properties, so I moved to another category but could not expand.
 	/** Controls if we should receive Factory_Tick and how frequent. */
@@ -694,15 +718,6 @@ protected:
 	UPROPERTY( EditDefaultsOnly, Category = "Buildable" )
 	TSubclassOf< class UFGFactorySkinActorData > mFactorySkinClass;
 	
-	//@todoGC This is a good candidate for cleaning up, do we need to keep track of the build effect on a building.
-	/** What build effect to use when building this building */
-	UPROPERTY()
-	TSubclassOf< class UFGMaterialEffect_Build > mBuildEffectTemplate;
-
-	/** What build effect to use when dismantling this building */
-	UPROPERTY()
-	TSubclassOf< class UFGMaterialEffect_Build > mDismantleEffectTemplate;
-
 	/** Store the active effect so we can cancel an old one if we need to start a new. */
 	UPROPERTY()
 	UFGMaterialEffect_Build* mActiveBuildEffect;
@@ -713,14 +728,6 @@ protected:
 	 */
 	UPROPERTY( Replicated, meta = ( NoAutoJson = true ) )
 	AActor* mBuildEffectInstignator;
-
-	/** Name read from config */
-	UPROPERTY( config, noclear, meta = (NoAutoJson = true) )
-	FSoftClassPath mDismantleEffectClassName;
-
-	/** Name read from config */
-	UPROPERTY( config, noclear, meta = (NoAutoJson = true) )
-	FSoftClassPath mBuildEffectClassName;
 	
 	/** Build effect speed, a constant speed (distance over time) that the build effect should have, so bigger buildings take longer */
 	UPROPERTY( EditDefaultsOnly, Category = "Build Effect" )
@@ -764,11 +771,7 @@ protected:
 
 	/** Flag for if the buildable undergoes mesh changes and needs to update its shared material instances ( Tex. When a mesh component is added or changed after Native Begin Play */
 	uint8 mReevaluateMaterialsWithSubsystem : 1;
-
-	/** Should we show highlight when building this building */
-	UPROPERTY( EditDefaultsOnly, Category = "Buildable" )
-	uint8 mShouldShowHighlight:1;
-
+	
 	/** Whether or not we should create the visual mesh representation for attachment points. */
 	UPROPERTY( EditDefaultsOnly, Category = "Buildable" )
 	uint8 mShouldShowAttachmentPointVisuals:1;
@@ -779,21 +782,6 @@ protected:
 
 	UPROPERTY( EditDefaultsOnly, Category = "Buildable|Instances" )
 	uint8 mCanContainLightweightInstances:1;
-		
-	//@todoGC mHighlight*** only needs to be in the space elevator and hub.
-	/** Name read from config */
-	UPROPERTY( config, noclear, meta = (NoAutoJson = true) )
-	FStringClassReference mHighlightParticleClassName;
-	/** Particle system component  */
-	UPROPERTY( EditDefaultsOnly, Category = "Buildable" )
-	class UParticleSystem* mHighlightParticleSystemTemplate;
-	/** Particle system component  */
-	UPROPERTY( EditDefaultsOnly, Category = "Buildable" )
-	class UParticleSystemComponent* mHighlightParticleSystemComponent;
-
-	/** If this building should show highlight before first use, save when it has been shown */
-	UPROPERTY( SaveGame, ReplicatedUsing = OnRep_DidFirstTimeUse, meta = (NoAutoJson = true) )
-	bool mDidFirstTimeUse;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY( EditDefaultsOnly, Instanced, Category = "Buildable|Instances" )
@@ -936,6 +924,9 @@ private:
 	UPROPERTY( EditDefaultsOnly, Category = "Buildable" )
 	bool mShouldModifyWorldGrid;
 
+	/** True if this building is about to be dismantled. */
+	bool mIsAboutToBeDismantled;
+
 	UPROPERTY( Transient )
 	TArray< UStaticMeshComponent* > mProxyBuildEffectComponents;
 
@@ -954,6 +945,7 @@ private:
 	UPROPERTY( SaveGame, Replicated )
 	class AFGBlueprintProxy* mBlueprintProxy;
 	friend class AFGBlueprintProxy; // Friend in order for the proxy to set this reference.
+	friend class AFGBuildableBlueprintDesigner; // Friend in order for the blueprint designer to temporarily clear the proxy reference before serializing this building to a blueprint.
 
 	UPROPERTY( Replicated )
 	int32 mBlueprintBuildEffectID;

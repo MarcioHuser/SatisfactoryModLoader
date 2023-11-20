@@ -4,8 +4,8 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Templates/SubclassOf.h"
 #include "Engine/DeveloperSettings.h"
+#include "Templates/SubclassOf.h"
 #include "FGBlueprintSettings.generated.h"
 
 /**
@@ -21,6 +21,9 @@ public:
 	
 	UPROPERTY( EditAnywhere, config, Category = "The blueprint recipe class shared for all instanced blueprint descriptors" )
 	TSubclassOf< class UFGRecipe > mBlueprintRecipeClass;
+
+	UPROPERTY( EditAnywhere, config, Category = "The blueprint designer recipe class" )
+	TSubclassOf< class UFGRecipe > mBlueprintDesignerRecipeClass;
 
 	UPROPERTY(  EditAnywhere, config, Category = "Factory Blueprint Settings", meta = ( ToolTip = "The Icon ID to used for undefined categories" ))
 	int32 mUndefinedCategoryIconID;

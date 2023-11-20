@@ -4,7 +4,7 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "Creature/Actions/FGCreatureActionCharge.h"
+#include "FGCreatureActionCharge.h"
 
 #include "FGProjectile.h"
 
@@ -21,6 +21,10 @@ class FACTORYGAME_API UFGCreatureActionProjectileCharge : public UFGCreatureActi
 public:
 	UFGCreatureActionProjectileCharge( const FObjectInitializer& ObjectInitializer );
 
+	// Begin UObject Interface
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	// End UObject interface
+	
 	// Begin UFGAction Interface
 	virtual bool InitializeAction( AController* controller, APawn* pawn ) override;
 	// End UFGAction Interface

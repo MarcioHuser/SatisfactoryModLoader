@@ -3,23 +3,13 @@
 #pragma once
 
 #include "FactoryGame.h"
-#include "UObject/Object.h"
-#include "ItemAmount.h"
-#include "AssetBundleData.h"
-#include "IncludeInBuild.h"
-#include "Styling/SlateBrush.h"
+#include "AssetRegistry/AssetBundleData.h"
 #include "FGEventSubsystem.h"
+#include "IncludeInBuild.h"
+#include "ItemAmount.h"
+#include "Styling/SlateBrush.h"
+#include "UObject/Object.h"
 #include "FGSchematic.generated.h"
-
-//@todo [MODSUPPORT] This should maybe be implemented the same way as UFGBuildCategories?
-UENUM( BlueprintType )
-enum class ESchematicCategory :uint8
-{
-	ESC_LOGISTICS		UMETA( DisplayName = "Logistics" ),
-	ESC_PRODUCTION		UMETA( DisplayName = "Production" ),
-	ESC_EQUIPMENT		UMETA( DisplayName = "Equipment" ),
-	ESC_ORGANISATION	UMETA( DisplayName = "Organisation" )
-};
 
 //@todo [MODSUPPORT] This should maybe be implemented the same way as UFGBuildCategories?
 UENUM( BlueprintType )
@@ -46,18 +36,6 @@ enum class ESchematicState :uint8
 	ESS_Hidden			UMETA( DisplayName = "Hidden" )
 };
 
-//@todo-cleanup Is this used? I cannot find any references to it
-/** Holds info about a schematic cost. */
-USTRUCT( BlueprintType )
-struct FMultipleItemStruct
-{
-	GENERATED_BODY()
-
-	/** Cost of schematic if there are more than once item in this array the true cost will be randomly selected. */
-	UPROPERTY( EditDefaultsOnly )
-	TArray< FItemAmount > ItemCost;
-};
-
 /**
  * This is a schematic. It is purchased in the trading post and grants the player resources and/or recipes.
  */
@@ -73,8 +51,8 @@ public:
 	virtual void PostLoad() override;
 	virtual void Serialize( FArchive& ar ) override;
 #if WITH_EDITOR
-	virtual void PreSave( const class ITargetPlatform* targetPlatform ) override;
-	virtual EDataValidationResult IsDataValid(TArray<FText>& ValidationErrors) override;
+	virtual void PreSave( FObjectPreSaveContext saveContext ) override;
+	virtual EDataValidationResult IsDataValid(TArray< FText >& ValidationErrors) override;
 #endif
 	// End UObject interface
 
@@ -113,6 +91,10 @@ public:
 	/** Returns the cost of this schematic*/
 	UFUNCTION( BlueprintPure, Category = "Schematic" )
 	static TArray< FItemAmount > GetCost( TSubclassOf< UFGSchematic > inClass );
+
+	/** Returns if this schematic is player specific */
+	UFUNCTION( BlueprintPure, Category = "Schematic" )
+	static bool GetIsPlayerSpecific( TSubclassOf< UFGSchematic > inClass );
 
 	/** Returns the unlocks granted by this schematic */
 	UFUNCTION( BlueprintPure, Category = "Schematic" )
@@ -162,7 +144,7 @@ public:
 	UFUNCTION( BlueprintPure, Category = "Schematic" )
 	static bool CanGiveAccessToSchematic( TSubclassOf< UFGSchematic > inClass, UObject* worldContext );
 
-	/** Returns true if this schematic is allowed to be purchased more than once */
+	/** Returns true if this schematic only contains unlocks that can be purchased more than once. If we have no unlocks we return false */
 	UFUNCTION( BlueprintPure, Category = "Schematic" )
 	static bool IsRepeatPurchasesAllowed( TSubclassOf< UFGSchematic > inClass );
 
@@ -228,10 +210,15 @@ protected:
 	UPROPERTY( EditDefaultsOnly, Category = "Schematic" )
 	TArray< TSubclassOf<UFGSchematic> > mRelevantShopSchematics;
 
+	/** If true this schematic is purchased per player rather than session wide. Only really applicable if type is EST_ResourceSink so we
+	 *  do a check for that in IsDataValid */
+	UPROPERTY( EditDefaultsOnly, Category = "Unlocks" )
+	bool mIsPlayerSpecific;
+	
 	/** The unlocks you get when purchasing */
 	UPROPERTY( EditDefaultsOnly, Instanced, Category = "Unlocks" )
 	TArray< class UFGUnlock* > mUnlocks;
-
+	
 	/** Icon used when displaying this schematic */
 	UPROPERTY( EditDefaultsOnly, Category = "UI" )
 	FSlateBrush mSchematicIcon;
@@ -248,7 +235,7 @@ protected:
 	UPROPERTY( EditDefaultsOnly, Category = "Dependencies" )
 	bool mDependenciesBlocksSchematicAccess;
 
-	/** Should schematic be hidden utnil dependencies are met. Used to filter out the visibilty of schematics when browsing them ingame */
+	/** Should schematic be hidden until dependencies are met. Used to filter out the visibility of schematics when browsing them ingame */
 	UPROPERTY( EditDefaultsOnly, Category = "Dependencies" )
 	bool mHiddenUntilDependenciesMet;
 
@@ -265,9 +252,6 @@ protected:
 	UPROPERTY( VisibleDefaultsOnly, Category = "Deprecated - To be removed", meta = ( DeprecatedProperty, DeprecationMessage = "Use availability dependencies instead", NoAutoJson = true ) )
 	TArray< TSubclassOf< UFGSchematic > > mAdditionalSchematicDependencies;
 	
-	/** The category this schematic belongs to. */
-	UPROPERTY( VisibleDefaultsOnly, Category = "Deprecated - To be removed", meta = ( DeprecatedProperty, DeprecationMessage = "Use new schematic category object instead", NoAutoJson = true ) )
-	ESchematicCategory mSchematicCategoryDeprecated;
 	// End Deprecated
 
 private:

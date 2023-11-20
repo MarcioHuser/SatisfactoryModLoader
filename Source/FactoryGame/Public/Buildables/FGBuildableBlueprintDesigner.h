@@ -3,13 +3,13 @@
 #pragma once
 
 #include "FactoryGame.h"
+#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "CoreMinimal.h"
-#include "Buildables/FGBuildable.h"
-#include "Buildables/FGBuildableStorage.h"
+#include "FGBuildable.h"
+#include "FGBuildableStorage.h"
 #include "FGFactoryBlueprintTypes.h"
 #include "FGPlayerController.h"
 #include "ItemAmount.h"
-#include "Components/HierarchicalInstancedStaticMeshComponent.h"
 #include "FGBuildableBlueprintDesigner.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FOnRecordDataChanged, FBlueprintRecord, blueprintRecord );
@@ -55,10 +55,14 @@ public:
 	// End IFGSaveInterface
 
 	// Begin Dismantle Interface
-	virtual void GetDismantleRefund_Implementation( TArray< FInventoryStack >& out_refund ) const override;
+	virtual void GetDismantleRefund_Implementation( TArray< FInventoryStack >& out_refund, bool noBuildCostEnabled ) const override;
 	virtual void Dismantle_Implementation() override;
 	virtual bool CanDismantle_Implementation() const override;
 	// end Dismantle interface
+
+	// Begin AFGBuildable interface
+	virtual void RegisterInteractingPlayer_Implementation(AFGCharacterPlayer* player) override;
+	// End AFGBuildable interface
 
 	/** Draws the tiles for visualizing the Rectangular prism */
 	static void BuildTiledMeshes( UInstancedStaticMeshComponent* tiledMeshComp, const FIntVector& dims );
@@ -70,8 +74,11 @@ public:
 	void OnBuildableConstructedInsideDesigner( AFGBuildable* buildable ); 
 	void OnBuildableDismantledInsideDesigner( AFGBuildable* buildable );
 
+	/** Called when the buildable cost changes inside of the blueprint designer. Used to recompute the cost */
+	void OnBuildableChangedInsideDesigner( AFGBuildable* buildable );
+
 	/** Calculates the item amount of all buildables inside the blueprint designer (for reporting to UI) */
-	void CalculateBlueprintCost( TArray<FItemAmount>& cost );
+	void CalculateBlueprintCost( TArray<FItemAmount>& cost ) const;
 	
 	UFUNCTION( BlueprintCallable, Category="Blueprint Designer" )
 	void SaveBlueprint( FBlueprintRecord blueprintRecord, AFGPlayerController* controller );
@@ -84,7 +91,7 @@ public:
 	void DismantleCurrentBuildables( AFGPlayerController* controller );
 
 	/** Gets the refund amount for dismantling current buildables */
-	void GetCurrentBuildablesDismantleRefund( TArray< FInventoryStack >& out_refund );
+	void GetCurrentBuildablesDismantleRefund( TArray< FInventoryStack >& out_refund, bool noBuildCostEnabled );
 
 	UFUNCTION( BlueprintCallable, Category="Blueprint Designer" )
 	EBlueprintDesignerLoadResult LoadBlueprintIntoDesigner( UFGBlueprintDescriptor* blueprintDescriptor, AFGPlayerController* controller );
@@ -134,6 +141,7 @@ public:
 
 	void OnBuildingsChanged();
 
+	void RecalculateBlueprintCost();
 private:
 	UFUNCTION()
 	void OnRep_Buildables();
@@ -218,6 +226,9 @@ private:
 
 	UPROPERTY()
 	UFGBlueprintDescriptor* mCurrentBlueprintDescriptor;
+
+	UPROPERTY()
+	bool mIsDismantlingAll = false;
 	
 };
 

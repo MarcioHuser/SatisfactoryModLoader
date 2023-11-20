@@ -9,7 +9,7 @@
 #include "FGWorldScannableData.h"
 #include "FGScannableSubsystem.generated.h"
 
-DECLARE_LOG_CATEGORY_EXTERN( LogScannableSubsystem, Log, All );
+FACTORYGAME_API DECLARE_LOG_CATEGORY_EXTERN( LogScannableSubsystem, Log, All );
 
 /**
  * 
@@ -42,6 +42,8 @@ public:
 	void OnDropPodLooted( class AFGDropPod* dropPod );
 	
 	void OnCreatureSpawnerUpdated( class AFGCreatureSpawner* creatureSpawner, bool scannable );
+	void OnCreatureSpawnerAdded( class AFGCreatureSpawner* creatureSpawner );
+	void OnCreatureSpawnerRemoved( class AFGCreatureSpawner* creatureSpawner );
 
 	const TArray< class AFGDropPod* >& GetUnlootedDropPods() const { return mUnlootedDropPods; }
 

@@ -6,6 +6,7 @@
 #include "FGSubsystem.h"
 #include "FGActorRepresentation.h"
 #include "FGRemoteCallObject.h"
+#include "Engine/Texture2D.h"
 #include "FGActorRepresentationManager.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam( FOnActorRepresentationAdded, UFGActorRepresentation*, newRepresentation );
@@ -82,7 +83,6 @@ public:
 	// Begin AActor interface
 	virtual void GetLifetimeReplicatedProps( TArray<FLifetimeProperty>& OutLifetimeProps ) const override;
 	virtual void PreReplication( IRepChangedPropertyTracker& changedPropertyTracker ) override;
-	virtual bool ReplicateSubobjects( class UActorChannel* channel, class FOutBunch* bunch, FReplicationFlags* repFlags ) override;
 	virtual void OnSubobjectCreatedFromReplication(UObject* newSubobject) override;
 	virtual void OnSubobjectDestroyFromReplication(UObject* subobject) override;
 	virtual void BeginPlay() override;

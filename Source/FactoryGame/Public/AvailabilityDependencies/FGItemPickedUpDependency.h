@@ -4,7 +4,7 @@
 
 #include "FactoryGame.h"
 #include "CoreMinimal.h"
-#include "AvailabilityDependencies/FGAvailabilityDependency.h"
+#include "FGAvailabilityDependency.h"
 #include "FGItemPickedUpDependency.generated.h"
 
 /**
@@ -21,6 +21,10 @@ public:
 
 	UFUNCTION( BlueprintCallable, BlueprintPure = false, Category = "Dependency" )
 	void GetItems( TArray< TSubclassOf< class UFGItemDescriptor > >& out_items ) const;
+
+#if WITH_EDITOR
+	void Init( TArray< TSubclassOf< class UFGItemDescriptor > > items, bool requireAllItemsToBePickedUp );
+#endif
 
 protected:
 	/** The items that should have been picked up for this dependency to be met */
