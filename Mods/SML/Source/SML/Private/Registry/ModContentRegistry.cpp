@@ -73,38 +73,25 @@ FGameObjectRegistryState::~FGameObjectRegistryState()
 
 const FGameObjectRegistration* FGameObjectRegistryState::RegisterObject( FName InRegistrationPluginName, UObject* Object, EGameObjectRegistrationFlags ExtraFlags )
 {
-	if ( bRegistryFrozen )
-	{
-		const FString Context = FString::Printf( TEXT("Attempt to register object '%s' in frozen registry. Make sure your modded content registration is happening in the 'Initialization' Lifecycle Phase and not 'Post Initialization'"), *GetPathNameSafe( Object ) );
-		NOTIFY_INVALID_REGISTRATION( *Context );
-		return nullptr;
+	FString Context;
+	if (!CanRegisterObject(Object, ExtraFlags, Context)) {
+		NOTIFY_INVALID_REGISTRATION(*Context);
+		return FindObjectRegistration(Object);
 	}
-	if ( !IsValid( Object ) )
-	{
-		const FString Context = FString::Printf( TEXT("Attempt to register an invalid object in the content registry.") );
-		NOTIFY_INVALID_REGISTRATION( *Context );
-		return nullptr;
-	}
+	
 	FGameObjectRegistration* Registration = FindOrAddObject( Object );
 
-	// Allow implicit registration clarification (e.g. re-registering implicit entries)
-	// Also allow re-registering if extra flags contains BuiltIn (e.g. vanilla registrations have priority over modded ones)
-	if ( !Registration->HasAnyFlags( EGameObjectRegistrationFlags::Unregistered | EGameObjectRegistrationFlags::Implicit ) && !EnumHasAnyFlags( ExtraFlags, EGameObjectRegistrationFlags::BuiltIn ) )
-	{
-		const FString Context = FString::Printf( TEXT("Object '%s' has already been registered!"), *GetPathNameSafe( Object ) );
-		NOTIFY_INVALID_REGISTRATION( *Context );
-		return Registration;
-	}
+	// Filter flags, for example if being passed Implicit and BuiltIn, when the object is already explicitly registered
+	const EGameObjectRegistrationFlags NewFlags = ExtraFlags & GetAllowedNewFlags( Object );
 
 	Registration->ClearFlags( EGameObjectRegistrationFlags::Unregistered | EGameObjectRegistrationFlags::Implicit );
-	Registration->AddFlags( ExtraFlags );
+	Registration->AddFlags( NewFlags );
 	Registration->RegistrarModReference = InRegistrationPluginName;
 
-	const FString Context = UModContentRegistry::GetCallStackContext();
 	const bool bIsRegistrationImplicit = Registration->HasAnyFlags( EGameObjectRegistrationFlags::Implicit );
 
 	UE_LOG( LogContentRegistry, Verbose, TEXT("Registering Object '%s' (%s)%s [%s]"), *GetFullNameSafe( Object ), *InRegistrationPluginName.ToString(),
-		bIsRegistrationImplicit ? TEXT(" [implicit]") : TEXT(""), *Context );
+		bIsRegistrationImplicit ? TEXT(" [implicit]") : TEXT(""), *UModContentRegistry::GetCallStackContext() );
 
 	OnObjectRegisteredDelegate.Broadcast( Registration );
 	return Registration;
@@ -127,21 +114,66 @@ FGameObjectRegistration* FGameObjectRegistryState::FindOrAddObject( UObject* Obj
 	return ExistingRegistration;
 }
 
-bool FGameObjectRegistryState::AttemptRegisterObject( FName InRegistrationPluginName, UObject* Object )
-{
+bool FGameObjectRegistryState::CanRegisterObject(UObject* Object, EGameObjectRegistrationFlags ExtraFlags, FString& OutMessage) {
 	if ( bRegistryFrozen )
 	{
+		OutMessage = FString::Printf( TEXT("Attempt to register object '%s' in frozen registry. Make sure your modded content registration is happening in the 'Initialization' Lifecycle Phase and not 'Post Initialization'"), *GetPathNameSafe( Object ) );
 		return false;
 	}
 	if ( !IsValid( Object ) )
 	{
+		OutMessage = FString::Printf( TEXT("Attempt to register an invalid object in the content registry.") );
+		return false;
+	}
+	if (EnumHasAnyFlags(ExtraFlags, EGameObjectRegistrationFlags::Unregistered)) {
+		OutMessage = FString::Printf( TEXT("Attempt to register an object with Unregistered flag set.") );
+		return false;
+	}
+	
+	FGameObjectRegistration* Registration = FindOrAddObject( Object );
+	
+	// Allow implicit registration clarification (e.g. re-registering implicit entries)
+	// Also allow re-registering if extra flags contains BuiltIn (e.g. vanilla registrations have priority over modded ones)
+	if ( !Registration->HasAnyFlags( EGameObjectRegistrationFlags::Unregistered | EGameObjectRegistrationFlags::Implicit ) && !EnumHasAnyFlags( ExtraFlags, EGameObjectRegistrationFlags::BuiltIn ) )
+	{
+		OutMessage = FString::Printf( TEXT("Object '%s' has already been registered!"), *GetPathNameSafe( Object ) );
+		return false;
+	}
+
+	return true;
+}
+
+EGameObjectRegistrationFlags FGameObjectRegistryState::GetAllowedNewFlags(UObject* Object) const {
+	if ( !IsValid( Object ) )
+	{
+		return EGameObjectRegistrationFlags::None;
+	}
+	const FGameObjectRegistration* Registration = FindObjectRegistration( Object );
+
+	// Never allow Removed, since it's handled by MarkObjectAsRemoved
+	
+	if ( !Registration || Registration->HasAnyFlags(EGameObjectRegistrationFlags::Unregistered | EGameObjectRegistrationFlags::Implicit) )
+	{
+		// Allow Implicit only on unregistered objects, or if it is already set
+		// so that is is kept when re-registering as Implicit
+		return EGameObjectRegistrationFlags::Implicit | EGameObjectRegistrationFlags::BuiltIn;
+	}
+	return EGameObjectRegistrationFlags::BuiltIn;
+}
+
+bool FGameObjectRegistryState::AttemptRegisterObject( FName InRegistrationPluginName, UObject* Object, EGameObjectRegistrationFlags ExtraFlags )
+{
+	FString Message;
+	if ( !CanRegisterObject(Object, ExtraFlags, Message) )
+	{
 		return false;
 	}
 	const FGameObjectRegistration* ExistingRegistration = FindOrAddObject( Object );
+	const EGameObjectRegistrationFlags NewFlags = ExtraFlags & GetAllowedNewFlags( Object );
 
-	if ( ExistingRegistration->HasAnyFlags( EGameObjectRegistrationFlags::Unregistered ) )
+	if ( !ExistingRegistration->HasAllFlags( NewFlags ) )
 	{
-		RegisterObject( InRegistrationPluginName, Object, EGameObjectRegistrationFlags::Implicit );
+		RegisterObject( InRegistrationPluginName, Object, NewFlags );
 		return true;
 	}
 	return false;
@@ -164,8 +196,7 @@ void FGameObjectRegistryState::MarkObjectAsRemoved( UObject* Object )
 	FGameObjectRegistration* ExistingRegistration = FindOrAddObject( Object );
 	if ( !ExistingRegistration->HasAnyFlags( EGameObjectRegistrationFlags::Removed ) )
 	{
-		const FString Context = UModContentRegistry::GetCallStackContext();
-		UE_LOG( LogContentRegistry, Display, TEXT("Marking Object '%s' as Removed [%s]"), *GetPathNameSafe( Object ), *Context );
+		UE_LOG( LogContentRegistry, Display, TEXT("Marking Object '%s' as Removed [%s]"), *GetPathNameSafe( Object ), *UModContentRegistry::GetCallStackContext() );
 
 		ExistingRegistration->AddFlags( EGameObjectRegistrationFlags::Removed );
 	}
@@ -189,8 +220,7 @@ void FGameObjectRegistryState::AddObjectReference( UObject* Object, UObject* Ref
 	FGameObjectRegistration* ExistingRegistration = FindOrAddObject( Object );
 	if ( !ExistingRegistration->ReferencedBy.Contains( ReferencedBy ) )
 	{
-		const FString Context = UModContentRegistry::GetCallStackContext();
-		UE_LOG( LogContentRegistry, Verbose, TEXT("Adding Reference to '%s' from '%s' [%s]"), *GetPathNameSafe( Object ), *GetPathNameSafe( ReferencedBy ), *Context );
+		UE_LOG( LogContentRegistry, Verbose, TEXT("Adding Reference to '%s' from '%s' [%s]"), *GetPathNameSafe( Object ), *GetPathNameSafe( ReferencedBy ), *UModContentRegistry::GetCallStackContext() );
 		
 		ExistingRegistration->ReferencedBy.Add( ReferencedBy );
 	}
@@ -314,9 +344,14 @@ void UModContentRegistry::ModifySchematicList( TArray<TSubclassOf<UFGSchematic>>
 		}
 
 		const FGameObjectRegistration* Registration = SchematicRegistryState.FindObjectRegistration( mAvailableSchematics[SchematicIndex] );
-		fgcheck( Registration );
 
-		if ( Registration->HasAnyFlags( EGameObjectRegistrationFlags::Removed ) )
+		// Unlike the cleanup of mAllSchematics above, mAvailableSchematics is SaveGame,
+		// and might contain mod schematics that are now not registered
+		// (for example schematics registered based on settings or the presence of another mod).
+		// The class would still exist, therefore the IsValid check above does not apply.
+		// The intent of a schematic not being registered is for it not to be present in the game,
+		// so we remove it from the list in that case as well.
+		if ( !Registration || Registration->HasAnyFlags( EGameObjectRegistrationFlags::Removed ) )
 		{
 			mAvailableSchematics.RemoveAt( SchematicIndex );
 		}
@@ -510,7 +545,12 @@ bool UModContentRegistry::GetRecipeInfo( TSubclassOf<UFGRecipe> Recipe, FGameObj
 FGameObjectRegistration UModContentRegistry::GetItemDescriptorInfo( TSubclassOf<UFGItemDescriptor> ItemDescriptor )
 {
 	ItemRegistryState.AttemptRegisterObject( NAME_None, ItemDescriptor );
-	return *ItemRegistryState.FindObjectRegistration( ItemDescriptor );
+	if (const FGameObjectRegistration* ItemRegistration = ItemRegistryState.FindObjectRegistration(ItemDescriptor))
+	{
+		return *ItemRegistration;
+	}
+	// Since the ItemRegistryState is never frozen, this will only be reached if the ItemDescriptor is invalid
+	return FGameObjectRegistration{};
 }
 
 bool UModContentRegistry::IsItemDescriptorVanilla( TSubclassOf<UFGItemDescriptor> ItemDescriptor )
@@ -730,9 +770,16 @@ FString UModContentRegistry::GetCallStackContext()
 
 void UModContentRegistry::AutoRegisterSchematicReferences(TSubclassOf<UFGSchematic> Schematic, FName RegistrarPluginName)
 {
+	const FGameObjectRegistration* Registration = SchematicRegistryState.FindObjectRegistration( Schematic );
+	// Propagate BuiltIn flag
+	const EGameObjectRegistrationFlags PropagateFlags = Registration->Flags & ( EGameObjectRegistrationFlags::BuiltIn );
+
+	// Objects referenced receive the Implicit flag, along with the propagated flags
+	const EGameObjectRegistrationFlags Flags = EGameObjectRegistrationFlags::Implicit | PropagateFlags; 
+	
 	for ( const FItemAmount& ItemAmount : UFGSchematic::GetCost( Schematic ) )
 	{
-		ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemAmount.ItemClass );
+		ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemAmount.ItemClass, Flags );
 		ItemRegistryState.AddObjectReference( ItemAmount.ItemClass, Schematic );
 	}
 
@@ -740,13 +787,13 @@ void UModContentRegistry::AutoRegisterSchematicReferences(TSubclassOf<UFGSchemat
 	UFGSchematic::GetSchematicDependencies( Schematic, AvailabilityDependencies );
 	for ( UFGAvailabilityDependency* AvailabilityDependency : AvailabilityDependencies )
 	{
-		AutoRegisterAvailabilityDependencyReferences( AvailabilityDependency, Schematic, RegistrarPluginName );
+		AutoRegisterAvailabilityDependencyReferences( AvailabilityDependency, Schematic, RegistrarPluginName, PropagateFlags );
 	}
 	
     const TArray<UFGUnlock*> Unlocks = UFGSchematic::GetUnlocks(Schematic);
     for ( UFGUnlock* Unlock : Unlocks )
     {
-    	AutoRegisterUnlockReferences( Unlock, Schematic, RegistrarPluginName );
+    	AutoRegisterUnlockReferences( Unlock, Schematic, RegistrarPluginName, PropagateFlags );
     }
 
 	TArray<TSubclassOf<UFGSchematic>> RelevantShopSchematics;
@@ -756,20 +803,26 @@ void UModContentRegistry::AutoRegisterSchematicReferences(TSubclassOf<UFGSchemat
 		// FactoryGame itself has a None reference in one of it's schematics
 		if ( OtherSchematic )
 		{
-			SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, OtherSchematic );
+			SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, OtherSchematic, Flags );			
             SchematicRegistryState.AddObjectReference( OtherSchematic, Schematic );
 		}
 	}
 }
 
 void UModContentRegistry::AutoRegisterResearchTreeReferences( TSubclassOf<UFGResearchTree> ResearchTree, FName RegistrarPluginName ) {
+	const FGameObjectRegistration* Registration = ResearchTreeRegistryState.FindObjectRegistration( ResearchTree );
+	// Propagate BuiltIn flag
+	const EGameObjectRegistrationFlags PropagateFlags = Registration->Flags & ( EGameObjectRegistrationFlags::BuiltIn );
+
+	// Objects referenced receive the Implicit flag, along with the propagated flags
+	const EGameObjectRegistrationFlags Flags = EGameObjectRegistrationFlags::Implicit | PropagateFlags; 
 	
     const TArray<UFGResearchTreeNode*> Nodes = UFGResearchTree::GetNodes( ResearchTree );
     for ( const UFGResearchTreeNode* Node : Nodes)
     {
         if ( const TSubclassOf<UFGSchematic> NodeSchematic = Node->GetNodeSchematic() )
         {
-	        SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, NodeSchematic );
+        	SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, NodeSchematic, Flags );
         	SchematicRegistryState.AddObjectReference( NodeSchematic, ResearchTree );
         }
     }
@@ -777,62 +830,72 @@ void UModContentRegistry::AutoRegisterResearchTreeReferences( TSubclassOf<UFGRes
 	TArray<UFGAvailabilityDependency*> UnlockDependencies = UFGResearchTree::GetUnlockDependencies( ResearchTree );
 	for ( UFGAvailabilityDependency* Dependency : UnlockDependencies )
 	{
-		AutoRegisterAvailabilityDependencyReferences( Dependency, ResearchTree, RegistrarPluginName );
+		AutoRegisterAvailabilityDependencyReferences( Dependency, ResearchTree, RegistrarPluginName, PropagateFlags );
 	}
 }
 
 void UModContentRegistry::AutoRegisterRecipeReferences( TSubclassOf<UFGRecipe> Recipe, FName RegistrarPluginName )
 {
+	const FGameObjectRegistration* Registration = RecipeRegistryState.FindObjectRegistration( Recipe );
+	// Propagate BuiltIn flag
+	const EGameObjectRegistrationFlags PropagateFlags = Registration->Flags & ( EGameObjectRegistrationFlags::BuiltIn );
+
+	// Objects referenced receive the Implicit flag, along with the propagated flags
+	const EGameObjectRegistrationFlags Flags = EGameObjectRegistrationFlags::Implicit | PropagateFlags; 
+	
 	TArray<FItemAmount> AllItemReferences;
 	AllItemReferences.Append( UFGRecipe::GetProducts( Recipe ) );
 	AllItemReferences.Append( UFGRecipe::GetIngredients( Recipe ) );
 
 	for ( const FItemAmount& ItemAmount : AllItemReferences )
 	{
-		ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemAmount.ItemClass );
+		ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemAmount.ItemClass, Flags );
 		ItemRegistryState.AddObjectReference( ItemAmount.ItemClass, Recipe );
 	}
 	
 	if ( const TSubclassOf<UFGCustomizationRecipe> CustomizationRecipe = UFGRecipe::GetMaterialCustomizationRecipe( Recipe ) )
 	{
-		RecipeRegistryState.AttemptRegisterObject( RegistrarPluginName, CustomizationRecipe );
+		RecipeRegistryState.AttemptRegisterObject( RegistrarPluginName, CustomizationRecipe, Flags );
 		RecipeRegistryState.AddObjectReference( CustomizationRecipe, Recipe );
 	}
 }
 
 bool UModContentRegistry::IsDescriptorFilteredOut( const UObject* ItemDescriptor, EGetObtainableItemDescriptorsFlags Flags )
 {
-	if ( !EnumHasAnyFlags( Flags, EGetObtainableItemDescriptorsFlags::IncludeBuildings ) && ItemDescriptor->IsA<UFGBuildingDescriptor>() )
-	{
+	if (!ItemDescriptor) {
+		UE_LOG(LogContentRegistry, Warning, TEXT("IsDescriptorFilteredOut called with null ItemDescriptor, returning true (filtering out)"));
 		return true;
 	}
-	if ( !EnumHasAnyFlags( Flags, EGetObtainableItemDescriptorsFlags::IncludeCustomizations ) && ItemDescriptor->IsA<UFGFactoryCustomizationDescriptor>() )
-	{
+	const auto descriptorClass = Cast<UClass>(ItemDescriptor);
+
+	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeBuildings) && descriptorClass->IsChildOf<UFGBuildingDescriptor>()) {
 		return true;
 	}
-	if ( !EnumHasAnyFlags( Flags, EGetObtainableItemDescriptorsFlags::IncludeCreatures ) && ItemDescriptor->IsA<UFGCreatureDescriptor>() )
-	{
+	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeCustomizations) && descriptorClass->IsChildOf<UFGFactoryCustomizationDescriptor>()) {
 		return true;
 	}
-	if ( !EnumHasAnyFlags( Flags, EGetObtainableItemDescriptorsFlags::IncludeVehicles ) && ItemDescriptor->IsA<UFGVehicleDescriptor>() )
-	{
+	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeCreatures) && descriptorClass->IsChildOf<UFGCreatureDescriptor>()) {
 		return true;
 	}
-	if ( !EnumHasAnyFlags( Flags, EGetObtainableItemDescriptorsFlags::IncludeSpecial ) && ( ItemDescriptor->IsA<UFGWildCardDescriptor>() ||
-		ItemDescriptor->IsA<UFGAnyUndefinedDescriptor>() || ItemDescriptor->IsA<UFGOverflowDescriptor>() || ItemDescriptor->IsA<UFGNoneDescriptor>() ))
-	{
+	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeVehicles) && descriptorClass->IsChildOf<UFGVehicleDescriptor>()) {
+		return true;
+	}
+	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeSpecial) && ( descriptorClass->IsChildOf<UFGWildCardDescriptor>() || descriptorClass->IsChildOf<UFGAnyUndefinedDescriptor>() || descriptorClass->IsChildOf<UFGOverflowDescriptor>() || descriptorClass->IsChildOf<UFGNoneDescriptor>() )) {
 		return true;
 	}
 	return false;
 }
 
-void UModContentRegistry::AutoRegisterUnlockReferences( UFGUnlock* Unlock, UObject* ReferencedBy, FName RegistrarPluginName )
+void UModContentRegistry::AutoRegisterUnlockReferences( UFGUnlock* Unlock, UObject* ReferencedBy, FName RegistrarPluginName, EGameObjectRegistrationFlags PropagateFlags )
 {
+	// Objects referenced receive the Implicit flag, along with the propagated flags
+	const EGameObjectRegistrationFlags Flags = EGameObjectRegistrationFlags::Implicit | PropagateFlags; 
+
 	if ( const UFGUnlockRecipe* UnlockRecipe = Cast<UFGUnlockRecipe>( Unlock ) )
 	{
 		for ( TSubclassOf<UFGRecipe> Recipe : UnlockRecipe->GetRecipesToUnlock() )
 		{
-			RecipeRegistryState.AttemptRegisterObject( RegistrarPluginName, Recipe );
+			RecipeRegistryState.AttemptRegisterObject( RegistrarPluginName, Recipe, Flags );			
 			RecipeRegistryState.AddObjectReference( Recipe, ReferencedBy  );
 		}
 	}
@@ -840,7 +903,7 @@ void UModContentRegistry::AutoRegisterUnlockReferences( UFGUnlock* Unlock, UObje
 	{
 		for ( const FScannableResourcePair& ResourcePair : ResourceUnlock->GetResourcesToAddToScanner() )
 		{
-			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ResourcePair.ResourceDescriptor );
+			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ResourcePair.ResourceDescriptor, Flags );
 			ItemRegistryState.AddObjectReference( ResourcePair.ResourceDescriptor, ReferencedBy  );
 		}
 	}
@@ -848,7 +911,7 @@ void UModContentRegistry::AutoRegisterUnlockReferences( UFGUnlock* Unlock, UObje
 	{
 		for ( const FScannableObjectData& ObjectData : ObjectUnlock->GetScannableObjectsToUnlock() )
 		{
-			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ObjectData.ItemDescriptor );
+			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ObjectData.ItemDescriptor, Flags );
 			ItemRegistryState.AddObjectReference( ObjectData.ItemDescriptor, ReferencedBy  );
 		}
 	}
@@ -856,7 +919,7 @@ void UModContentRegistry::AutoRegisterUnlockReferences( UFGUnlock* Unlock, UObje
 	{
 		for ( TSubclassOf<UFGSchematic> InnerSchematic : SchematicUnlock->GetSchematicsToUnlock() )
 		{
-			SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, InnerSchematic );
+			SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, InnerSchematic, Flags );
 			SchematicRegistryState.AddObjectReference( InnerSchematic, ReferencedBy  );
 		}
 	}
@@ -864,19 +927,22 @@ void UModContentRegistry::AutoRegisterUnlockReferences( UFGUnlock* Unlock, UObje
 	{
 		for ( const FItemAmount& ItemAmount : ItemUnlock->GetItemsToGive() )
 		{
-			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemAmount.ItemClass );
+			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemAmount.ItemClass, Flags );
 			ItemRegistryState.AddObjectReference( ItemAmount.ItemClass, ReferencedBy  );
 		}
 	}
 }
 
-void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvailabilityDependency* Dependency, UObject* ReferencedBy, FName RegistrarPluginName )
+void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvailabilityDependency* Dependency, UObject* ReferencedBy, FName RegistrarPluginName, EGameObjectRegistrationFlags PropagateFlags )
 {
+	// Objects referenced receive the Implicit flag, along with the propagated flags
+	const EGameObjectRegistrationFlags Flags = EGameObjectRegistrationFlags::Implicit | PropagateFlags;
+	
 	if ( const UFGConsumablesConsumedDependency* ConsumableDependency = Cast<UFGConsumablesConsumedDependency>( Dependency ) )
 	{
 		for ( const auto& Pair : ConsumableDependency->GetItemAmount() )
 		{
-			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, Pair.Key );
+			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, Pair.Key, Flags );
 			ItemRegistryState.AddObjectReference( Pair.Key, ReferencedBy  );
 		}
 	}
@@ -887,7 +953,7 @@ void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvail
 		
 		for ( const TSubclassOf<UFGItemDescriptor>& ItemDescriptor : Items )
 		{
-			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemDescriptor );
+			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, ItemDescriptor, Flags );
 			ItemRegistryState.AddObjectReference( ItemDescriptor, ReferencedBy  );
 		}
 	}
@@ -895,7 +961,7 @@ void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvail
 	{
 		for ( const auto& Pair : ManuallyCraftedDependency->GetItemsManuallyCraftedCount() )
 		{
-			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, Pair.Key );
+			ItemRegistryState.AttemptRegisterObject( RegistrarPluginName, Pair.Key, Flags );			
 			ItemRegistryState.AddObjectReference( Pair.Key, ReferencedBy  );
 		}
 	}
@@ -906,7 +972,7 @@ void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvail
 
 		for ( const TSubclassOf<UFGRecipe>& Recipe : Recipes )
 		{
-			RecipeRegistryState.AttemptRegisterObject( RegistrarPluginName, Recipe );
+			RecipeRegistryState.AttemptRegisterObject( RegistrarPluginName, Recipe, Flags );
 			RecipeRegistryState.AddObjectReference( Recipe, ReferencedBy  );
 		}
 	}
@@ -917,7 +983,7 @@ void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvail
 
 		for ( const TSubclassOf<UFGSchematic>& Schematic : Schematics )
 		{
-			SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, Schematic );
+			SchematicRegistryState.AttemptRegisterObject( RegistrarPluginName, Schematic, Flags );
 			SchematicRegistryState.AddObjectReference( Schematic, ReferencedBy  );
 		}
 	}
@@ -928,7 +994,7 @@ void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvail
 
 		for ( const TSubclassOf<UFGResearchTree>& ResearchTree : ResearchTrees )
 		{
-			ResearchTreeRegistryState.AttemptRegisterObject( RegistrarPluginName, ResearchTree );
+			ResearchTreeRegistryState.AttemptRegisterObject( RegistrarPluginName, ResearchTree, Flags );
 			ResearchTreeRegistryState.AddObjectReference( ResearchTree, ReferencedBy );
 		}
 	}

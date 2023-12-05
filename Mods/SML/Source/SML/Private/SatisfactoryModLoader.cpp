@@ -6,7 +6,6 @@
 #include "Network/NetworkHandler.h"
 #include "Registry/RemoteCallObjectRegistry.h"
 #include "Network/SMLConnection/SMLNetworkManager.h"
-#include "Patching/Patch/CheatManagerPatch.h"
 #include "Player/SMLRemoteCallObject.h"
 #include "Patching/Patch/SaveMetadataPatch.h"
 #include "Player/PlayerCheatManagerHandler.h"
@@ -130,7 +129,6 @@ void FSatisfactoryModLoader::RegisterSubsystems() {
 
     //Only register these patches in shipping, where bodies of the ACharacter::Cheat methods are stripped
 #if UE_BUILD_SHIPPING
-    FCheatManagerPatch::RegisterPatch();
 	FPlayerCheatManagerHandler::RegisterHandler();
 #endif
 
