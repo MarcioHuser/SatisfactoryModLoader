@@ -4,6 +4,10 @@
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 
+void AFGDestructibleActor::GetClearanceData_Implementation(TArray< FFGClearanceData >& out_data) const {
+	out_data = mClearanceData;
+}
+
 AFGDestructibleActor::AFGDestructibleActor() : Super() {
 	this->mStaticMeshProxy = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMeshProxy"));
 	this->mGeometryCollection = nullptr;
@@ -17,7 +21,7 @@ AFGDestructibleActor::AFGDestructibleActor() : Super() {
 	this->mDestroyedByActor = nullptr;
 	this->mHasBeenFractured = false;
 	this->bReplicates = true;
-	this->NetDormancy = ENetDormancy::DORM_Initial;
+	this->NetDormancy = ENetDormancy::DORM_DormantAll;
 	this->RootComponent = mStaticMeshProxy;
 }
 void AFGDestructibleActor::BeginPlay(){ }
@@ -29,6 +33,7 @@ void AFGDestructibleActor::PostLoadGame_Implementation(int32 saveVersion, int32 
 void AFGDestructibleActor::GatherDependencies_Implementation(TArray< UObject* >& out_dependentObjects){ }
 bool AFGDestructibleActor::NeedTransform_Implementation(){ return bool(); }
 bool AFGDestructibleActor::ShouldSave_Implementation() const{ return bool(); }
+bool AFGDestructibleActor::IsMeshChainSawable(UStaticMesh* Mesh) const{ return bool(); }
 void AFGDestructibleActor::SetDestructibleActorState(EDestructibleActorState newState){ }
 void AFGDestructibleActor::ApplyDestructibleActorState(){ }
 void AFGDestructibleActor::OnDestructibleFractured(){ }

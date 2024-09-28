@@ -13,14 +13,15 @@ public:
 	
 	virtual void Init() override;
 
-	// TODO: Use this to sync the settings to the client on join
-
 	static ASessionSettingsSubsystem* Get(UWorld* World);
 
 	void OnSessionSettingUpdated(const FString StrID, FVariant value);
 	void PushSettingToSessionSettings( const FString& StrID, FVariant value );
 
-private:	
+private:
+	void GameModePostLogin(AGameModeBase* GameMode, APlayerController* PlayerController) const;
+	void SendAllSessionSettings(AFGPlayerController* PlayerController) const;
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_SessionSettingUpdated(const FString& StrID, const FString& ValueString);
 
@@ -36,6 +37,10 @@ public:
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_RequestSessionSettingUpdate(const FString& SessionSettingName, const FString& ValueString);
+
+	UFUNCTION(Client, Reliable, WithValidation)
+	void Client_SendSessionSetting(const FString& SessionSettingName, const FString& ValueString);
+
 private:
 	UPROPERTY(Replicated)
 	bool mForceNetField_USMLSessionSettingsRemoteCallObject;

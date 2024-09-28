@@ -1,9 +1,9 @@
 #pragma once
 #include "FGInventoryComponent.h"
 #include "Internationalization/Text.h"
-#include "Components/VerticalBox.h"
 #include "Components/Widget.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Subsystems/GameInstanceSubsystem.h"
 #include "ItemTooltipSubsystem.generated.h"
 
 UCLASS()

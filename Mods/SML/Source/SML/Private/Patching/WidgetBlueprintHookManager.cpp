@@ -3,6 +3,8 @@
 #include "Blueprint/WidgetBlueprintGeneratedClass.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/PanelWidget.h"
+#include "Engine/Engine.h"
+#include "UObject/Package.h"
 
 DEFINE_LOG_CATEGORY(LogWidgetBlueprintHookManager);
 
@@ -242,6 +244,11 @@ void UWidgetBlueprintHookManager::RegisterWidgetBlueprintHook(UWidgetBlueprintHo
 	//Blueprint hooking in editor is extremely dangerous as it modifies the source assets
 	//TODO: Hooks can be supported in the editor too by only adding them on the PIE-cloned objects
 	if (!FPlatformProperties::RequiresCookedData()) {
+		return;
+	}
+	
+	// Widgets are not included on servers
+	if (FPlatformProperties::IsServerOnly()) {
 		return;
 	}
 

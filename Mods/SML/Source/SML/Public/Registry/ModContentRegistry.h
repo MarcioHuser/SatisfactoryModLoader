@@ -6,6 +6,7 @@
 #include "FGResourceSinkSubsystem.h"
 #include "Engine/DataTable.h"
 #include "Misc/EnumClassFlags.h"
+#include "Subsystems/WorldSubsystem.h"
 #include "ModContentRegistry.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogContentRegistry, Log, All);
@@ -137,7 +138,7 @@ enum class EGetObtainableItemDescriptorsFlags : uint8
 	IncludeCustomizations = 0x04 UMETA( DisplayName = "Include Customizations" ),
 	IncludeVehicles = 0x08 UMETA( DisplayName = "Include Vehicles" ),
 	IncludeCreatures = 0x10 UMETA( DisplayName = "Include Creatures" ),
-	IncludeSpecial = 0x20 UMETA( DisplayName = "Include Special (WildCard, AnyUndefined, Overflow, None)" ),
+	IncludeSpecial = 0x20 UMETA( DisplayName = "Include Special (WildCard, AnyUndefined, Overflow, None, SML.Registry.Item.SpecialItemDescriptor)" ),
 	Default = None,
 };
 
@@ -220,7 +221,7 @@ public:
     UFUNCTION(BlueprintPure, Category = "Mod Content Registry")
     void GetObtainableItemDescriptors(TArray<FGameObjectRegistration>& OutItemDescriptors, UPARAM(meta = (Bitmask, BitmaskEnum = "/Script/SML.EGetObtainableItemDescriptorsFlags")) EGetObtainableItemDescriptorsFlags Flags = EGetObtainableItemDescriptorsFlags::Default) const;
 
-	static bool IsDescriptorFilteredOut( const UObject* ItemDescriptor, EGetObtainableItemDescriptorsFlags Flags );
+	bool IsDescriptorFilteredOut( const UObject* ItemDescriptor, EGetObtainableItemDescriptorsFlags Flags ) const;
 	
 	/** Retrieves list of all currently registered research trees */
 	UFUNCTION(BlueprintPure, Category = "Mod Content Registry")
@@ -283,6 +284,7 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	// End USubsystem interface
+
 	static void AddReferencedObjects(UObject* InThis, FReferenceCollector& Collector);
 private:
 	friend class FGameObjectRegistryState;
@@ -296,10 +298,12 @@ private:
     UPROPERTY( Transient )
     TArray<FPendingResourceSinkRegistration> PendingItemSinkPointsRegistrations;
 	
-	int32 PreSpawnInitializationStack;
-	int32 PostSpawnInitializationStack;
+	int32 PreSpawnInitializationStack{0};
+	int32 PostSpawnInitializationStack{0};
 	FDelegateHandle OnActorPreSpawnDelegateHandle;
 	FDelegateHandle OnActorPostSpawnDelegateHandle;
+
+	bool bBegunPlay{false};
 	
 	/** Pointer to the currently active script callstack frame, used for debugging purposes */
 	static FFrame* ActiveScriptFramePtr;
@@ -325,7 +329,9 @@ private:
 	FOnWorldBeginPlay OnWorldBeginPlayDelegate;
 	
 	void ModifySchematicList( TArray<TSubclassOf<UFGSchematic>>& RefSchematics );
+	void ModifySchematicListInternal( TArray<TSubclassOf<UFGSchematic>>& RefSchematics );
 	void ModifyResearchTreeList( TArray<TSubclassOf<UFGResearchTree>>& RefResearchTrees );
+	void ModifyResearchTreeListInternal( TArray<TSubclassOf<UFGResearchTree>>& RefResearchTrees );
 	
 	void AutoRegisterSchematicReferences(TSubclassOf<UFGSchematic> Schematic, FName RegistrarPluginName);
 	void AutoRegisterResearchTreeReferences(TSubclassOf<UFGResearchTree> ResearchTree, FName RegistrarPluginName);

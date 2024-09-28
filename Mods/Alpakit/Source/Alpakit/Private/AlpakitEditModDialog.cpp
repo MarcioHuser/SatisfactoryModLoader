@@ -1,11 +1,13 @@
 ﻿#include "AlpakitEditModDialog.h"
 
+#include "Alpakit.h"
 #include "ISourceControlModule.h"
 #include "ISourceControlProvider.h"
 #include "ISourceControlOperation.h"
 #include "ISourceControlState.h"
 #include "ModMetadataObject.h"
 #include "SourceControlOperations.h"
+#include "Util/SemVersion.h"
 
 #define LOCTEXT_NAMESPACE "AlpakitEditMod"
 
@@ -23,6 +25,13 @@ void SAlpakitEditModDialog::Construct(const FArguments& InArgs, TSharedRef<IPlug
 	EditModule.RegisterCustomClassLayout(UModMetadataObject::StaticClass()->GetFName(), FOnGetDetailCustomizationInstance::CreateStatic(&FModMetadataCustomization::MakeInstance));
 	TSharedRef<IDetailsView> PropertyView = EditModule.CreateDetailView(FDetailsViewArgs(false, false, false, FDetailsViewArgs::ActorsUseNameArea, true));
 	PropertyView->SetObject(MetadataObject, true);
+	PropertyView->OnFinishedChangingProperties().AddLambda([this](const FPropertyChangedEvent&){
+		UpdateGameVersionTarget();
+	});
+
+	FString TargetSMLVersion = TEXT("^") + FAlpakitModule::GetCurrentSMLVersion();
+
+	UpdateGameVersionTarget();
 	
 	SWindow::Construct(SWindow::FArguments()
 		.ClientSize(FVector2D(800.0f, 700.0f))
@@ -33,6 +42,54 @@ void SAlpakitEditModDialog::Construct(const FArguments& InArgs, TSharedRef<IPlug
 			.Padding(FMargin(8.0f, 8.0f))
 			[
 				SNew(SVerticalBox)
+
+				+SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill)
+				[
+					SNew(SBox)
+					.Visibility_Lambda([this, TargetSMLVersion]
+					{
+						FString SMLVersion = GetSMLDependencyVersion();
+						if (SMLVersion.IsEmpty() || SMLVersion == TargetSMLVersion)
+							return EVisibility::Collapsed;
+						return EVisibility::Visible;
+					})
+					.Content()
+					[
+						SNew(SButton)
+						.ButtonColorAndOpacity(FLinearColor::Red)
+						.Text(FText::Format(LOCTEXT("UpdateSMLVersionButtonLabel", "Click to update SML dependency to {0}"), FText::FromString(TargetSMLVersion)))
+						.HAlign(HAlign_Center)
+						.OnClicked_Lambda([this, TargetSMLVersion]
+						{
+							SetSMLDependencyVersion(TargetSMLVersion);
+							return FReply::Handled();
+						})
+					]
+				]
+
+				+SVerticalBox::Slot().AutoHeight().HAlign(HAlign_Fill)
+				[
+					SNew(SBox)
+					.Visibility_Lambda([this]
+					{
+						if (FormatGameVersionRange(ModGameVersionRange) == FormatGameVersionRange(TargetGameVersionRange))
+							return EVisibility::Collapsed;
+						return EVisibility::Visible;
+					})
+					.Content()
+					[
+						SNew(SButton)
+						.ButtonColorAndOpacity(FLinearColor::Red)
+						.Text_Lambda([this]{ return FText::Format(LOCTEXT("UpdateGameVersionButtonLabel", "Click to update Game Version to {0}"), FText::FromString(FormatGameVersionRange(TargetGameVersionRange))); })
+						.HAlign(HAlign_Center)
+						.OnClicked_Lambda([this]
+						{
+							MetadataObject->GameVersion = FormatGameVersionRange(TargetGameVersionRange);
+							UpdateGameVersionTarget();
+							return FReply::Handled();
+						})
+					]
+				]
 
 				+ SVerticalBox::Slot()
 				.Padding(5)
@@ -55,18 +112,68 @@ void SAlpakitEditModDialog::Construct(const FArguments& InArgs, TSharedRef<IPlug
 	);
 }
 
+FString SAlpakitEditModDialog::GetSMLDependencyVersion() const
+{
+	FModDependencyDescriptorData* SMLDependency = MetadataObject->Dependencies.FindByPredicate([](FModDependencyDescriptorData& Dependency)
+	{
+		return Dependency.Name == TEXT("SML");
+	});
+	if (SMLDependency != nullptr)
+		return SMLDependency->SemVersion;
+	
+	return TEXT("");
+}
+
+void SAlpakitEditModDialog::SetSMLDependencyVersion(FString Version) const
+{
+	FModDependencyDescriptorData* SMLDependency = MetadataObject->Dependencies.FindByPredicate([](FModDependencyDescriptorData& Dependency)
+	{
+		return Dependency.Name == TEXT("SML");
+	});
+	if (SMLDependency == nullptr)
+		return;
+	SMLDependency->SemVersion = Version;
+}
+
+void SAlpakitEditModDialog::UpdateGameVersionTarget() {
+	FString _;
+	GameVersion.ParseVersion(FString::Printf(TEXT("%s.0.0"), *FAlpakitModule::GetCurrentGameVersion()), _);
+	if (!MetadataObject->GameVersion.IsEmpty()) {
+		ModGameVersionRange.ParseVersionRange(MetadataObject->GameVersion, _);
+
+		TargetGameVersionRange.ParseVersionRange(MetadataObject->GameVersion, _);
+		for (FVersionComparatorCollection& ComparatorCollection : TargetGameVersionRange.Collections) {
+			ComparatorCollection.Comparators.Add(FVersionComparator(EVersionComparisonOp::GREATER_EQUALS, GameVersion));
+		}
+
+		if (!TargetGameVersionRange.Matches(GameVersion)) {
+			TargetGameVersionRange = FVersionRange::CreateRangeWithMinVersion(GameVersion);
+		}
+	} else {
+		ModGameVersionRange = FVersionRange();
+		TargetGameVersionRange = FVersionRange::CreateRangeWithMinVersion(GameVersion);
+	}
+}
+
+FString SAlpakitEditModDialog::FormatGameVersionRange(const FVersionRange& Range) {
+	return Range.ToString().Replace(TEXT(".0.0"), TEXT(""));
+}
+
 FReply SAlpakitEditModDialog::OnOkClicked() {
 	FPluginDescriptor OldDescriptor = Mod->GetDescriptor();
 
 	// Update the descriptor with the new metadata
 	FPluginDescriptor NewDescriptor = OldDescriptor;
+	// Ensure we have don't modify the original descriptor for the changed check
+	NewDescriptor.CachedJson = MakeShared<FJsonObject>();
+	FJsonObject::Duplicate(OldDescriptor.CachedJson, NewDescriptor.CachedJson);
 	MetadataObject->CopyIntoDescriptor(NewDescriptor);
 	MetadataObject->RemoveFromRoot();
 
 	// Close the properties window
 	RequestDestroyWindow();
 
-	// Write both to strings
+	// Compare the old and new descriptor, so we don't write to the file if nothing changed
 	FString OldText;
 	OldDescriptor.Write(OldText);
 	FString NewText;
@@ -88,8 +195,10 @@ FReply SAlpakitEditModDialog::OnOkClicked() {
 		}
 
 		// Write to the file and update the in-memory metadata
+		// Don't use UpdateDescriptor because it doesn't allow removing fields
+		FString PluginDescriptorPath = Mod->GetDescriptorFileName();
 		FText FailReason;
-		if(!Mod->UpdateDescriptor(NewDescriptor, FailReason))
+		if(!NewDescriptor.Save(PluginDescriptorPath, FailReason))
 		{
 			FMessageDialog::Open(EAppMsgType::Ok, FailReason);
 		}

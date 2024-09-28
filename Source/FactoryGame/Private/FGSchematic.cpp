@@ -75,6 +75,11 @@ EDataValidationResult UFGSchematic::IsDataValid(TArray< FText >& ValidationError
 		}
 	}
 
+	if (!mSchematicIcon.IsSet() || !IsValid(mSchematicIcon.GetResourceObject())) {
+		ValidationErrors.Add(NSLOCTEXT("Schematic", "SchematicValidation_InvalidIcon", "Invalid icon set for schematic. This will cause the milestone to not display its unlocks or cost in the HUB."));
+		ValidationResult = EDataValidationResult::Invalid;
+	}
+
 	return ValidationResult;
 }
 #endif
@@ -107,6 +112,7 @@ UFGSchematic::UFGSchematic() : Super() {
 void UFGSchematic::PostLoad(){ Super::PostLoad(); }
 void UFGSchematic::Serialize(FArchive& ar){ Super::Serialize(ar); }
 FText UFGSchematic::GetSchematicDescription(TSubclassOf< UFGSchematic > inClass){ return FText(); }
+FGameplayTag UFGSchematic::GetStatisticGameplayTag(TSubclassOf< UFGSchematic > inClass){ return FGameplayTag(); }
 float UFGSchematic::GetMenuPriority(TSubclassOf< UFGSchematic > inClass){ return float(); }
 bool UFGSchematic::GetIsPlayerSpecific(TSubclassOf< UFGSchematic > inClass){ return bool(); }
 void UFGSchematic::GetRelevantUnlockedShopSchematics(UObject* worldContext, TSubclassOf< UFGSchematic > inClass, TArray< TSubclassOf< UFGSchematic > >& out_schematics){ }
@@ -121,3 +127,4 @@ bool UFGSchematic::IsRepeatPurchasesAllowed(TSubclassOf< UFGSchematic > inClass)
 void UFGSchematic::SortByMenuPriority(TArray< TSubclassOf< UFGSchematic > >& schematics){ }
 TArray< EEvents > UFGSchematic::GetRelevantEvents(TSubclassOf< UFGSchematic > inClass){ return TArray<EEvents>(); }
 bool UFGSchematic::IsIncludedInBuild(TSubclassOf< UFGSchematic > inClass){ return bool(); }
+FGameplayTag UFGSchematic::GetSchematicUnlockTag(TSubclassOf< UFGSchematic > inClass){ return FGameplayTag(); }

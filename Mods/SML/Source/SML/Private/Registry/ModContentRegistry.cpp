@@ -1,4 +1,6 @@
 #include "Registry/ModContentRegistry.h"
+#include "Registry/SMLExtendedAttributeProvider.h"
+#include "Registry/ContentTagRegistry.h"
 #include "FGGameMode.h"
 #include "FGGameState.h"
 #include "FGResearchManager.h"
@@ -13,12 +15,13 @@
 #include "AvailabilityDependencies/FGItemPickedUpDependency.h"
 #include "AvailabilityDependencies/FGItemsManuallyCraftedDependency.h"
 #include "AvailabilityDependencies/FGRecipeUnlockedDependency.h"
-#include "AvailabilityDependencies/FGResearchTreeUnlockedDependency.h"
+#include "AvailabilityDependencies/FGResearchTreeProgressionDependency.h"
 #include "AvailabilityDependencies/FGSchematicPurchasedDependency.h"
 #include "Creature/FGCreatureDescriptor.h"
 #include "Patching/NativeHookManager.h"
 #include "Reflection/ReflectionHelper.h"
 #include "Engine/AssetManager.h"
+#include "GameplayTagsModule.h"
 #include "Kismet/BlueprintAssetHelperLibrary.h"
 #include "ModLoading/PluginModuleLoader.h"
 #include "Resources/FGAnyUndefinedDescriptor.h"
@@ -301,7 +304,28 @@ void UModContentRegistry::OnSchematicPurchased(TSubclassOf<UFGSchematic> Schemat
     }
 }
 
-void UModContentRegistry::ModifySchematicList( TArray<TSubclassOf<UFGSchematic>>& RefSchematics )
+void UModContentRegistry::ModifySchematicList(TArray<TSubclassOf<UFGSchematic>>& RefSchematics) {
+	// PopulateSchematicList happens during PreInitializeComponents,
+	// while WorldModules get constructed during OnActorsInitialized
+	// BeginPlay is a reasonable moment in the lifecycle past OnActorsInitialized to delay this to,
+	// since mods could technically register schematics during POST_INITIALIZE, and we can't guarantee
+	// the order in which bindings to the same delegate are executed.
+
+	// On the client, the world will BeginPlay before the actor is replicated,
+	// so by the time we reach this point, WorldBeginPlayDelegate will have already fired.
+	// But this also means that mod content was registered, so we can safely modify the list here.
+	
+	if (bBegunPlay) {
+		ModifySchematicListInternal(RefSchematics);
+	} else {
+		OnWorldBeginPlayDelegate.AddWeakLambda(this, [&] {
+			ModifySchematicListInternal(RefSchematics);
+		});
+	}
+}
+
+
+void UModContentRegistry::ModifySchematicListInternal( TArray<TSubclassOf<UFGSchematic>>& RefSchematics )
 {
 	// Register vanilla schematics in the registry first
 	{
@@ -333,30 +357,6 @@ void UModContentRegistry::ModifySchematicList( TArray<TSubclassOf<UFGSchematic>>
 		}
 	}
 
-	TArray<TSubclassOf<UFGSchematic>>& mAvailableSchematics = AFGSchematicManager::Get(GetWorld())->mAvailableSchematics;
-	// Cleanup invalid or removed schematics from the available schematics list
-	for ( int32 SchematicIndex = mAvailableSchematics.Num() - 1; SchematicIndex >= 0; SchematicIndex-- )
-	{
-		if ( !IsValid( mAvailableSchematics[SchematicIndex] ) )
-		{
-			mAvailableSchematics.RemoveAt( SchematicIndex );
-			continue;
-		}
-
-		const FGameObjectRegistration* Registration = SchematicRegistryState.FindObjectRegistration( mAvailableSchematics[SchematicIndex] );
-
-		// Unlike the cleanup of mAllSchematics above, mAvailableSchematics is SaveGame,
-		// and might contain mod schematics that are now not registered
-		// (for example schematics registered based on settings or the presence of another mod).
-		// The class would still exist, therefore the IsValid check above does not apply.
-		// The intent of a schematic not being registered is for it not to be present in the game,
-		// so we remove it from the list in that case as well.
-		if ( !Registration || Registration->HasAnyFlags( EGameObjectRegistrationFlags::Removed ) )
-		{
-			mAvailableSchematics.RemoveAt( SchematicIndex );
-		}
-	}
-
 	// Append non-builtin objects to the resulting schematic list
 	for ( const FGameObjectRegistration* Registration : SchematicRegistryState.GetAllRegistrationsCopyFree() )
 	{
@@ -368,7 +368,19 @@ void UModContentRegistry::ModifySchematicList( TArray<TSubclassOf<UFGSchematic>>
 	SchematicRegistryState.FreezeRegistry();
 }
 
-void UModContentRegistry::ModifyResearchTreeList( TArray<TSubclassOf<UFGResearchTree>>& RefResearchTrees )
+void UModContentRegistry::ModifyResearchTreeList(TArray<TSubclassOf<UFGResearchTree>>& RefResearchTrees) {
+	// Similarly to PopulateSchematicList, PopulateResearchTreeList happens during PreInitializeComponents.
+	if (bBegunPlay) {
+		ModifyResearchTreeListInternal(RefResearchTrees);
+	} else {
+		OnWorldBeginPlayDelegate.AddWeakLambda(this, [&] {
+			ModifyResearchTreeListInternal(RefResearchTrees);
+		});
+	}	
+}
+
+
+void UModContentRegistry::ModifyResearchTreeListInternal( TArray<TSubclassOf<UFGResearchTree>>& RefResearchTrees )
 {
 	// Register vanilla research trees in the registry first
 	{
@@ -652,6 +664,9 @@ void UModContentRegistry::Initialize( FSubsystemCollectionBase& Collection )
 
 void UModContentRegistry::OnWorldBeginPlay(UWorld& InWorld) {
 	OnWorldBeginPlayDelegate.Broadcast();
+	// Apparently World->bBegunPlay is not set by the time the manager delegates are called on clients
+	// Maybe it just isn't set on clients at all
+	bBegunPlay = true;
 }
 
 void UModContentRegistry::OnSchematicRegisteredCallback( const FGameObjectRegistration* Schematic )
@@ -675,30 +690,13 @@ void UModContentRegistry::OnActorPreSpawnInitialization( AActor* Actor )
 {
 	if ( AFGSchematicManager* SchematicManager = Cast<AFGSchematicManager>( Actor ) )
 	{
-		SchematicManager->PopulateSchematicListDelegate.AddWeakLambda( this, [&](TArray<TSubclassOf<UFGSchematic>>& RefSchematics) {
-			// PopulateSchematicList happens during PreInitializeComponents,
-			// while WorldModules get constructed during OnActorsInitialized
-			// Additionally, the schematic list is used to populate the available schematics during AFGSchematicManager::BeginPlay
-			// so we need to defer the registration until right before that.
-			// UWorldSubsystem::OnWorldBeginPlay is called before BeginPlay is dispatched to actors, and this subsystem
-			// just so happens to be a UWorldSubsystem, so we can use that to our advantage.
-			OnWorldBeginPlayDelegate.AddWeakLambda(this, [&]() {
-				ModifySchematicList(RefSchematics);
-			});
-		});
+		SchematicManager->PopulateSchematicListDelegate.AddUObject( this, &UModContentRegistry::ModifySchematicList );
 		SchematicManager->PurchasedSchematicDelegate.AddUniqueDynamic( this, &UModContentRegistry::OnSchematicPurchased );
 		PreSpawnInitializationStack++;
 	}
 	if ( AFGResearchManager* ResearchManager = Cast<AFGResearchManager>( Actor ) )
 	{
-		ResearchManager->PopulateResearchTreeListDelegate.AddWeakLambda( this, [&](TArray<TSubclassOf<UFGResearchTree>>& RefResearchTrees) {
-			// Similarly to PopulateSchematicList, PopulateResearchTreeList happens during PreInitializeComponents.
-			// This research tree array is the final one, as opposed to mAvailableSchematics in the schematic manager,
-			// but BeginPlay is still a good time for this to be delayed to.
-			OnWorldBeginPlayDelegate.AddWeakLambda(this, [&]() {
-				ModifyResearchTreeList(RefResearchTrees);
-			});
-		});
+		ResearchManager->PopulateResearchTreeListDelegate.AddUObject( this, &UModContentRegistry::ModifyResearchTreeList );
 		PreSpawnInitializationStack++;
 	}
 	
@@ -880,7 +878,7 @@ static bool IsResourceFormFilteredOut(EResourceForm ResourceForm, EGetObtainable
 	}
 }
 
-bool UModContentRegistry::IsDescriptorFilteredOut( const UObject* ItemDescriptor, EGetObtainableItemDescriptorsFlags Flags )
+bool UModContentRegistry::IsDescriptorFilteredOut( const UObject* ItemDescriptor, EGetObtainableItemDescriptorsFlags Flags ) const
 {
 	if (!ItemDescriptor) {
 		UE_LOG(LogContentRegistry, Warning, TEXT("IsDescriptorFilteredOut called with null ItemDescriptor, returning true (filtering out)"));
@@ -888,6 +886,7 @@ bool UModContentRegistry::IsDescriptorFilteredOut( const UObject* ItemDescriptor
 	}
 	const TSubclassOf<UFGItemDescriptor> descriptorClass = const_cast<UClass*>(Cast<UClass>(ItemDescriptor));
 	if (!descriptorClass) {
+		UE_LOG(LogContentRegistry, Warning, TEXT("IsDescriptorFilteredOut called with non-ItemDescriptor, returning true (filtering out)"));
 		return true;
 	}
 	if (IsResourceFormFilteredOut(UFGItemDescriptor::GetForm(descriptorClass), Flags)) {
@@ -906,8 +905,13 @@ bool UModContentRegistry::IsDescriptorFilteredOut( const UObject* ItemDescriptor
 	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeVehicles) && descriptorClass->IsChildOf<UFGVehicleDescriptor>()) {
 		return true;
 	}
-	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeSpecial) && ( descriptorClass->IsChildOf<UFGWildCardDescriptor>() || descriptorClass->IsChildOf<UFGAnyUndefinedDescriptor>() || descriptorClass->IsChildOf<UFGOverflowDescriptor>() || descriptorClass->IsChildOf<UFGNoneDescriptor>() )) {
-		return true;
+	if (!EnumHasAnyFlags(Flags, EGetObtainableItemDescriptorsFlags::IncludeSpecial)) {
+		if (descriptorClass->IsChildOf<UFGWildCardDescriptor>() || descriptorClass->IsChildOf<UFGAnyUndefinedDescriptor>() || descriptorClass->IsChildOf<UFGOverflowDescriptor>() || descriptorClass->IsChildOf<UFGNoneDescriptor>()) {
+			return true;
+		}
+		const auto descriptorTags = UContentTagRegistry::Get(this)->GetGameplayTagContainerFor(descriptorClass);
+		const auto SmlSpecialTag = FGameplayTag::RequestGameplayTag("SML.Registry.Item.SpecialItemDescriptor", true);
+		return descriptorTags.HasTag(SmlSpecialTag);
 	}
 	return false;
 }
@@ -1013,10 +1017,10 @@ void UModContentRegistry::AutoRegisterAvailabilityDependencyReferences( UFGAvail
 			SchematicRegistryState.AddObjectReference( Schematic, ReferencedBy  );
 		}
 	}
-	if ( const UFGResearchTreeUnlockedDependency* ResearchTreeUnlockDependency = Cast<UFGResearchTreeUnlockedDependency>( Dependency ) )
+	if ( const UFGResearchTreeProgressionDependency* ResearchTreeProgressionDependency = Cast<UFGResearchTreeProgressionDependency>( Dependency ) )
 	{
 		TArray<TSubclassOf<UFGResearchTree>> ResearchTrees;
-		ResearchTreeUnlockDependency->GetResearchTrees( ResearchTrees );
+		ResearchTreeProgressionDependency->mResearchTrees.GetKeys( ResearchTrees );
 
 		for ( const TSubclassOf<UFGResearchTree>& ResearchTree : ResearchTrees )
 		{

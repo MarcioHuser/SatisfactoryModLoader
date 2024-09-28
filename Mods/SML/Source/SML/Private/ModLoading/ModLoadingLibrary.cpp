@@ -3,17 +3,22 @@
 #include "GeneralProjectSettings.h"
 #include "PluginDescriptor.h"
 #include "SatisfactoryModLoader.h"
+#include "Dom/JsonObject.h"
 #include "Interfaces/IPluginManager.h"
+#include "Misc/EngineVersion.h"
+#include "Misc/FileHelper.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
 #include "Util/ImageLoadingUtil.h"
-#include "Json.h"
 
 //We only want to enforce plugin dependency versions outside of the editor
 #define ENFORCE_PLUGIN_DEPENDENCY_VERSIONS !WITH_EDITOR
 
 void FSMLPluginDescriptorMetadata::SetupDefaults(const FPluginDescriptor& PluginDescriptor) {
     this->Version = FVersion(PluginDescriptor.Version, 0, 0);
-    this->bAcceptsAnyRemoteVersion = false;
+    this->bRequiredOnRemote = true;
     this->RemoteVersionRange = FVersionRange::CreateRangeWithMinVersion(Version);
+    this->GameVersion = FVersionRange::CreateAnyVersionRange();
 }
 
 void FSMLPluginDescriptorMetadata::Load(const FString& PluginName, const TSharedPtr<FJsonObject> Source) {
@@ -29,7 +34,7 @@ void FSMLPluginDescriptorMetadata::Load(const FString& PluginName, const TShared
         if (bParseSuccess) {
             this->Version = ResultVersion;
             this->RemoteVersionRange = FVersionRange::CreateRangeWithMinVersion(Version);
-            this->bAcceptsAnyRemoteVersion = false;
+            this->bRequiredOnRemote = true;
             
         } else {
             UE_LOG(LogSatisfactoryModLoader, Error, TEXT("Plugin/Mod %s has invalid Semantic Version value: '%s': %s"), *PluginName, *SemanticVersion, *VersionParseError);
@@ -38,8 +43,8 @@ void FSMLPluginDescriptorMetadata::Load(const FString& PluginName, const TShared
         UE_LOG(LogSatisfactoryModLoader, Warning, TEXT("Plugin/Mod %s does not specify 'SemVersion' field, falling back to UE Version"), *PluginName);
     }
 
-    //Try to parse AcceptsAnyRemoteVersion boolean, indicating policy when remote is missing mod
-    Source->TryGetBoolField(TEXT("AcceptsAnyRemoteVersion"), bAcceptsAnyRemoteVersion);
+    //Try to parse RequiredOnRemote boolean, indicating policy when remote is missing mod
+    Source->TryGetBoolField(TEXT("RequiredOnRemote"), bRequiredOnRemote);
 
     //Try to parse RemoteVersionRange
     FString RemoteVersionRangeString;
@@ -53,9 +58,20 @@ void FSMLPluginDescriptorMetadata::Load(const FString& PluginName, const TShared
         } else {
             UE_LOG(LogSatisfactoryModLoader, Error, TEXT("Plugin %s has invalid Remote Version Range value: %s: %s"), *PluginName, *RemoteVersionRangeString, *VersionRangeError);
         }
-        if (bAcceptsAnyRemoteVersion) {
-            UE_LOG(LogSatisfactoryModLoader, Warning, TEXT("Plugin %s specifies remote version range while also having acceptAnyRemoteVersion set"), *PluginName);
+    }
+
+    FString GameVersionRangeString;
+    if (Source->TryGetStringField(TEXT("GameVersion"), GameVersionRangeString)) {
+        FVersionRange GameVersionRange;
+        FString GameVersionRangeError;
+        
+        if (GameVersionRange.ParseVersionRange(GameVersionRangeString, GameVersionRangeError)) {
+            this->GameVersion = GameVersionRange;
+        } else {
+            UE_LOG(LogSatisfactoryModLoader, Error, TEXT("Plugin %s has invalid Game Version value: %s: %s"), *PluginName, *GameVersionRangeString, *GameVersionRangeError);
         }
+    } else {
+        UE_LOG(LogSatisfactoryModLoader, Warning, TEXT("Plugin %s does not specify 'GameVersion' field, unable to check for game compatibility"), *PluginName);
     }
 
     //Loop plugins specified in the plugin manifest and detect version predicate inside of them
@@ -170,7 +186,10 @@ FModInfo UModLoadingLibrary::CreateGameProjectModInfo() {
     const int64 ChangelistNum = FEngineVersion::Current().GetChangelist();
     ResultModInfo.Version = FVersion(ChangelistNum, 0, 0);
 
-    ResultModInfo.bAcceptsAnyRemoteVersion = true;
+    // The game already does its own version check, we shouldn't enforce it
+    ResultModInfo.RemoteVersionRange = FVersionRange::CreateAnyVersionRange();
+    ResultModInfo.bRequiredOnRemote = false;
+    
     return ResultModInfo;
 }
 
@@ -234,6 +253,14 @@ void UModLoadingLibrary::VerifyPluginDependencies(IPlugin& Plugin, TArray<FStrin
             MismatchedDependencies.Add(Message);
         }
     }
+
+    const uint32 CurrentChangelist = FEngineVersion::Current().GetChangelist();
+    
+    if (!PluginDescriptorMetadata.GameVersion.Matches(FVersion(CurrentChangelist, 0, 0))) {
+        const FString Message = FString::Printf(TEXT("Plugin %s requires game version %s (current: %d)"),
+            *Plugin.GetName(), *PluginDescriptorMetadata.GameVersion.ToString().Replace(TEXT(".0.0"), TEXT("")), CurrentChangelist);
+        MismatchedDependencies.Add(Message);
+    }
 }
 
 void UModLoadingLibrary::PopulatePluginModInfo(IPlugin& Plugin, FModInfo& OutModInfo) {
@@ -254,7 +281,7 @@ void UModLoadingLibrary::PopulatePluginModInfo(IPlugin& Plugin, FModInfo& OutMod
     OutModInfo.DocsURL = PluginDescriptor.DocsURL;
     OutModInfo.SupportURL = PluginDescriptor.SupportURL;
 
-    OutModInfo.bAcceptsAnyRemoteVersion = PluginDescriptorMetadata.bAcceptsAnyRemoteVersion;
+    OutModInfo.bRequiredOnRemote = PluginDescriptorMetadata.bRequiredOnRemote;
     OutModInfo.RemoteVersionRange = PluginDescriptorMetadata.RemoteVersionRange;
 }
 

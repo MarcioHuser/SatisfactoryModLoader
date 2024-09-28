@@ -1,4 +1,6 @@
 #include "ModMetadataObject.h"
+
+#include "Alpakit.h"
 #include "PluginDescriptor.h"
 #include "PluginReferenceDescriptor.h"
 #include "Misc/Paths.h"
@@ -46,8 +48,9 @@ void UModMetadataObject::PopulateFromDescriptor(const FPluginDescriptor& InDescr
 	}
 	InDescriptor.UpdateJson(CachedJson.Get());
 	CachedJson->TryGetStringField( TEXT("SemVersion"), SemVersion );
+	CachedJson->TryGetStringField( TEXT("GameVersion"), GameVersion );
 	CachedJson->TryGetStringField( TEXT("RemoteVersionRange"), RemoteVersionRange );
-	CachedJson->TryGetBoolField( TEXT("AcceptsAnyRemoteVersion"), bAcceptsAnyRemoteVersion );
+	CachedJson->TryGetBoolField( TEXT("RequiredOnRemote"), bRequiredOnRemote );
 }
 
 void UModMetadataObject::CopyIntoDescriptor(FPluginDescriptor& OutDescriptor)
@@ -69,12 +72,21 @@ void UModMetadataObject::CopyIntoDescriptor(FPluginDescriptor& OutDescriptor)
 		FPluginReferenceDescriptor* ExistingMod = OutDescriptor.Plugins.FindByPredicate(DependencyModLambda);
 		if (ExistingMod)
 		{
-			Dependency.CopyIntoDescriptor(*ExistingMod);
+			TSharedPtr<FJsonObject> DependencyCachedJson = nullptr;
+			if (OutDescriptor.CachedJson.IsValid()) {
+				const TSharedPtr<FJsonValue>* CachedPluginJson = OutDescriptor.CachedJson->GetArrayField("Plugins").FindByPredicate([Dependency](TSharedPtr<FJsonValue> PluginDep) {
+					return PluginDep->AsObject()->GetStringField(TEXT("Name")) == Dependency.Name;
+				});
+				if (CachedPluginJson) {
+					DependencyCachedJson = (*CachedPluginJson)->AsObject();
+				}
+			}
+			Dependency.CopyIntoDescriptor(*ExistingMod, DependencyCachedJson);
 		}
 		else
 		{
 			FPluginReferenceDescriptor NewMod;
-			Dependency.CopyIntoDescriptor(NewMod);
+			Dependency.CopyIntoDescriptor(NewMod, nullptr);
 			OutDescriptor.Plugins.Add(NewMod);
 		}
 	}
@@ -84,19 +96,23 @@ void UModMetadataObject::CopyIntoDescriptor(FPluginDescriptor& OutDescriptor)
 		OutDescriptor.Plugins.RemoveAll(RemovedModLambda);
 	}
 
-	// CachedJson is not updated properly by UpdateDescriptor, so we update it manually here too
 	OutDescriptor.AdditionalFieldsToWrite.Add( TEXT("SemVersion"), MakeShared<FJsonValueString>( SemVersion ) );
+	OutDescriptor.AdditionalFieldsToWrite.Add( TEXT("GameVersion"), MakeShared<FJsonValueString>( GameVersion ) );
 	if (RemoteVersionRange.Len() > 0) {
 		OutDescriptor.AdditionalFieldsToWrite.Add( TEXT("RemoteVersionRange"), MakeShared<FJsonValueString>( RemoteVersionRange ) );
 	} else {
-		// Remove field entirely when default value
 		OutDescriptor.AdditionalFieldsToWrite.Remove(TEXT("RemoteVersionRange"));
+		if (OutDescriptor.CachedJson.IsValid()) {
+			OutDescriptor.CachedJson->RemoveField(TEXT("RemoteVersionRange"));
+		}
 	}
-	if (bAcceptsAnyRemoteVersion) {
-		OutDescriptor.AdditionalFieldsToWrite.Add( TEXT("AcceptsAnyRemoteVersion"), MakeShared<FJsonValueBoolean>( bAcceptsAnyRemoteVersion ) );
+	if (!bRequiredOnRemote) {
+		OutDescriptor.AdditionalFieldsToWrite.Add( TEXT("RequiredOnRemote"), MakeShared<FJsonValueBoolean>( bRequiredOnRemote ) );
 	} else {
-		// Remove field entirely when default value
-		OutDescriptor.AdditionalFieldsToWrite.Remove(TEXT("AcceptsAnyRemoteVersion"));
+		OutDescriptor.AdditionalFieldsToWrite.Remove(TEXT("RequiredOnRemote"));
+		if (OutDescriptor.CachedJson.IsValid()) {
+			OutDescriptor.CachedJson->RemoveField(TEXT("RequiredOnRemote"));
+		}
 	}
 }
 
@@ -145,19 +161,34 @@ void FModDependencyDescriptorData::PopulateFromDescriptor(const FPluginReference
 	CachedJson->TryGetBoolField( TEXT("BasePlugin"), bBasePlugin );
 }
 
-void FModDependencyDescriptorData::CopyIntoDescriptor(FPluginReferenceDescriptor& OutDescriptor)
+void FModDependencyDescriptorData::CopyIntoDescriptor(FPluginReferenceDescriptor& OutDescriptor, TSharedPtr<FJsonObject> CachedJson)
 {
 	OutDescriptor.Name = Name;
 	OutDescriptor.bEnabled = bEnabled;
 	OutDescriptor.bOptional = bOptional;
 
-	// CachedJson is not updated properly by UpdateDescriptor, so we update it manually here too
-	OutDescriptor.AdditionalFieldsToWrite.Add( TEXT("SemVersion"), MakeShared<FJsonValueString>( SemVersion ) );
-	if (bBasePlugin) {
-		OutDescriptor.AdditionalFieldsToWrite.Add( TEXT("BasePlugin"), MakeShared<FJsonValueBoolean>( bBasePlugin ) );
+	if (!bBasePlugin) {
+		OutDescriptor.AdditionalFieldsToWrite.Add(TEXT("SemVersion"), MakeShared<FJsonValueString>( SemVersion ));
 	} else {
-		// Remove field entirely when default value
+		OutDescriptor.AdditionalFieldsToWrite.Remove(TEXT("SemVersion"));
+		if (OutDescriptor.CachedJson.IsValid()) {
+			OutDescriptor.CachedJson->RemoveField(TEXT("SemVersion"));
+		}
+		if (CachedJson.IsValid()) {
+			CachedJson->RemoveField(TEXT("SemVersion"));
+		}
+	}
+	
+	if (bBasePlugin) {
+		OutDescriptor.AdditionalFieldsToWrite.Add(TEXT("BasePlugin"), MakeShared<FJsonValueBoolean>( bBasePlugin ));
+	} else {
 		OutDescriptor.AdditionalFieldsToWrite.Remove(TEXT("BasePlugin"));
+		if (OutDescriptor.CachedJson.IsValid()) {
+			OutDescriptor.CachedJson->RemoveField(TEXT("BasePlugin"));
+		}
+		if (CachedJson.IsValid()) {
+			CachedJson->RemoveField(TEXT("BasePlugin"));
+		}
 	}
 }
 

@@ -14,7 +14,12 @@ public class Alpakit : ModuleRules
 			"DesktopPlatform",
 		});
 		
+		PublicDependencyModuleNames.AddRange(new[] {
+			"SML",
+		});
+		
 		PrivateDependencyModuleNames.AddRange(new[] {
+			"ApplicationCore",
 			"Json",
 			"Projects",
 			"InputCore",
@@ -28,7 +33,7 @@ public class Alpakit : ModuleRules
 			"EditorStyle",
 			"PluginBrowser",
 			"LauncherServices",
-			"TargetDeviceServices"
+			"TargetDeviceServices",
 		});
 	}
 }

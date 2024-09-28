@@ -6,6 +6,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 
+DEFINE_LOG_CATEGORY(LogJumpPad);
+
 AFGBuildableJumppad::AFGBuildableJumppad() : Super() {
 	this->mPowerBankCapacity = 0.0;
 	this->mLaunchPowerCost = 0.0;
@@ -35,10 +37,10 @@ void AFGBuildableJumppad::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& 
 	DOREPLIFETIME(AFGBuildableJumppad, mLaunchAngle);
 	DOREPLIFETIME(AFGBuildableJumppad, mHasPowerForLaunch);
 }
-FVector AFGBuildableJumppad::GetLaunchDirection(){ return FVector(); }
+FVector AFGBuildableJumppad::GetLaunchDirection() const{ return FVector(); }
 void AFGBuildableJumppad::SetLaunchAngle(float Angle){ }
 void AFGBuildableJumppad::SetTrajectoryVisibility(bool Visible){ }
-FVector AFGBuildableJumppad::CalculateLaunchVelocity(const FVector& StartLocation, float Gravity) const{ return FVector(); }
+FVector AFGBuildableJumppad::CalculateLaunchVelocity(const FVector& startLocation, const float gravity) const{ return FVector(); }
 const FTrajectoryData& AFGBuildableJumppad::ResimulateTrajectory(){ return *(new FTrajectoryData); }
 FTrajectoryData AFGBuildableJumppad::SimulateTrajectory(UWorld* pWorld, const FVector& StartLocation, const FVector& LaunchVector, float GravityMultiplier, AFGBuildableJumppad* pJumpPad){ return FTrajectoryData(); }
 void AFGBuildableJumppad::Launch(){ }

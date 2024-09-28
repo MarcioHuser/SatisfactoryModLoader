@@ -2,6 +2,8 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/PanelSlot.h"
+#include "Engine/DataAsset.h"
+#include "Subsystems/EngineSubsystem.h"
 #include "WidgetBlueprintHookManager.generated.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogWidgetBlueprintHookManager, All, All);
@@ -42,6 +44,10 @@ class SML_API UWidgetBlueprintHookData : public UDataAsset {
 public:
 	UWidgetBlueprintHookData();
 	
+	/** Use this field to leave future you notes about what this hook is supposed to accomplish */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default", meta = (MultiLine = "true"))
+	FString DeveloperComment;
+
 	/** Widget Blueprint to hook */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default", BlueprintSetter = SetWidgetClass)
 	TSoftClassPtr<UUserWidget> WidgetClass;

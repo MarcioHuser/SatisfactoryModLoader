@@ -1,7 +1,11 @@
 ﻿#include "SessionSettings/SessionSettingsSubsystem.h"
-#include "FGGameMode.h"
+#include "FGGameState.h"
 #include "FGPlayerController.h"
+#include "SatisfactoryModLoader.h"
+#include "GameFramework/GameState.h"
 #include "Subsystem/SubsystemActorManager.h"
+#include "Settings/FGUserSettingApplyType.h"
+#include "Net/UnrealNetwork.h"
 
 ASessionSettingsSubsystem::ASessionSettingsSubsystem() {
 	ReplicationPolicy = ESubsystemReplicationPolicy::SpawnOnServer_Replicate;
@@ -10,6 +14,10 @@ ASessionSettingsSubsystem::ASessionSettingsSubsystem() {
 void ASessionSettingsSubsystem::Init() {
 	USessionSettingsManager* SessionSettingsManager = GetWorld()->GetSubsystem<USessionSettingsManager>();
 	check(SessionSettingsManager);
+
+	if (HasAuthority()) {
+		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &ASessionSettingsSubsystem::GameModePostLogin);
+	}
 
 	OnOptionUpdatedDelegate = FOnOptionUpdated::CreateUObject(this, &ASessionSettingsSubsystem::OnSessionSettingUpdated);
 	SessionSettingsManager->SubscribeToAllOptionUpdates(OnOptionUpdatedDelegate);
@@ -40,7 +48,37 @@ void ASessionSettingsSubsystem::PushSettingToSessionSettings(const FString& StrI
 	SessionSettingsManager->ForceSetOptionValue(StrID, value, this);
 }
 
+void ASessionSettingsSubsystem::GameModePostLogin(AGameModeBase* GameMode, APlayerController* PlayerController) const {
+	if (!PlayerController || PlayerController->GetWorld() != GetWorld())
+		return;
+
+	AFGPlayerController* FGPlayerController = Cast<AFGPlayerController>(PlayerController);
+	if (!FGPlayerController) {
+		UE_LOG(LogSatisfactoryModLoader, Warning, TEXT("Skipping client Mod Session Settings initialization, PlayerController is not an AFGPlayerController"));
+		return;
+	}
+	// AFGGameMode::PostLogin sets the remote call objects on the player controller
+	// before calling Super, so the RCOs are valid here
+	SendAllSessionSettings(FGPlayerController);
+}
+
+void ASessionSettingsSubsystem::SendAllSessionSettings(AFGPlayerController* PlayerController) const {
+	USMLSessionSettingsRemoteCallObject* RCO = PlayerController->GetRemoteCallObjectOfClass<USMLSessionSettingsRemoteCallObject>();
+	
+	USessionSettingsManager* SessionSettingsManager = GetWorld()->GetSubsystem<USessionSettingsManager>();
+	TMap<FString, UFGUserSettingApplyType*> Settings = SessionSettingsManager->GetAllSessionSettings();
+	for (TPair<FString, UFGUserSettingApplyType*> Setting : Settings)
+	{
+		FVariant AppliedValue = Setting.Value->GetAppliedValue();
+		FString ValueString = USessionSettingsManager::VariantToString(AppliedValue);
+		RCO->Client_SendSessionSetting(Setting.Key, ValueString);
+	}
+}
+
 void ASessionSettingsSubsystem::Multicast_SessionSettingUpdated_Implementation(const FString& StrID, const FString& value) {
+	if (HasAuthority()) {
+		return;
+	}
 	PushSettingToSessionSettings(StrID, USessionSettingsManager::StringToVariant(value));
 }
 
@@ -64,4 +102,18 @@ bool USMLSessionSettingsRemoteCallObject::Server_RequestSessionSettingUpdate_Val
 	const USessionSettingsManager* SessionSettingsManager = GetWorld()->GetSubsystem<USessionSettingsManager>();
 
 	return SessionSettingsManager != NULL && SessionSettingsManager->FindSessionSetting(SessionSettingName) != NULL;
+}
+
+void USMLSessionSettingsRemoteCallObject::Client_SendSessionSetting_Implementation(const FString& SessionSettingName, const FString& ValueString)
+{
+	USessionSettingsManager* SessionSettingsManager = GetWorld()->GetSubsystem<USessionSettingsManager>();
+	check(SessionSettingsManager);
+
+	SessionSettingsManager->ForceSetOptionValue(SessionSettingName, USessionSettingsManager::StringToVariant(ValueString), this);
+}
+
+bool USMLSessionSettingsRemoteCallObject::Client_SendSessionSetting_Validate(const FString& SessionSettingName, const FString& ValueString)
+{
+	const USessionSettingsManager* SessionSettingsManager = GetWorld()->GetSubsystem<USessionSettingsManager>();
+	return SessionSettingsManager != NULL && !SessionSettingName.IsEmpty() && !ValueString.IsEmpty();
 }

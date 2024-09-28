@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+defaults:
+  run:
+    working-directory: C:/SML
+
 jobs:
   build:
     runs-on: self-hosted
@@ -16,14 +20,14 @@ jobs:
         with:
           path: SML
 
-      - name: Add msbuild to PATH
-        uses: microsoft/setup-msbuild@v1
+      - name: Copy repo to working directory
+        run: Copy-Item "$Env:GITHUB_WORKSPACE\\SML" -Destination "C:\\SML" -Recurse
 
       - name: Create UE directory
         run: mkdir ue
 
       - name: Download, Extract and Setup UE
-        working-directory: ue
+        working-directory: C:/SML/ue
         run: |
           gh release download --repo satisfactorymodding/UnrealEngine -p "UnrealEngine-CSS-Editor-Win64.7z.*"
           7z x UnrealEngine-CSS-Editor-Win64.7z.001
@@ -33,25 +37,19 @@ jobs:
       - name: Download and Extract Wwise
         run: |
           Invoke-WebRequest -Uri "https://github.com/Backblaze/B2_Command_Line_Tool/releases/latest/download/b2-windows.exe" -OutFile "b2.exe"
-          .\b2.exe authorize-account "${{ secrets.WWISE_B2_KEY_ID }}" "${{ secrets.WWISE_B2_KEY }}"
-          .\b2.exe download-file-by-name "${{ secrets.WWISE_B2_BUCKET }}" "Wwise.7z" "Wwise.7z"
-          7z x Wwise.7z -oSML\\Plugins\\
+          .\b2.exe account authorize "${{ secrets.WWISE_B2_KEY_ID }}" "${{ secrets.WWISE_B2_KEY }}"
+          .\b2.exe file download "b2://${{ secrets.WWISE_B2_BUCKET }}/Wwise.7z" "Wwise.7z"
+          7z x -aoa Wwise.7z -oSML\\Plugins\\
           rm Wwise.7z
 
-      - name: Generate VS project files
-        run: .\\ue\\Engine\\Build\\BatchFiles\\Build.bat -projectfiles -project="$Env:GITHUB_WORKSPACE\\SML\\FactoryGame.uproject" -game -rocket -progres
-
-      - name: Build for Shipping
-        run: MSBuild.exe .\\SML\\FactoryGame.sln /p:Configuration="Shipping" /p:Platform="Win64" /t:"Games\FactoryGame"
-
       - name: Build for Development Editor
-        run: MSBuild.exe .\\SML\\FactoryGame.sln /p:Configuration="Development Editor" /p:Platform="Win64" /t:"Games\FactoryGame"
+        run: .\\ue\\Engine\\Build\\BatchFiles\\Build.bat FactoryEditor Win64 Development -project="C:\\SML\\SML\\FactoryGame.uproject"
 
       - name: Package SML Mod
-        run: .\\ue\\Engine\\Build\\BatchFiles\\RunUAT.bat -ScriptsForProject="$Env:GITHUB_WORKSPACE\\SML\\FactoryGame.uproject" PackagePlugin -Project="$Env:GITHUB_WORKSPACE\\SML\\FactoryGame.uproject" -dlcname=SML -build -server -clientconfig=Shipping -serverconfig=Shipping -platform=Win64 -serverplatform=Win64+Linux -nocompileeditor -installed
+        run: .\\ue\\Engine\\Build\\BatchFiles\\RunUAT.bat -ScriptsForProject="C:\\SML\\SML\\FactoryGame.uproject" PackagePlugin -Project="C:\\SML\\SML\\FactoryGame.uproject" -dlcname=SML -build -server -clientconfig=Shipping -serverconfig=Shipping -platform=Win64 -serverplatform=Win64+Linux -nocompileeditor -installed
 
       - name: Archive SML artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         if: ${{ github.event_name == 'push' }}
         with:
           name: sml

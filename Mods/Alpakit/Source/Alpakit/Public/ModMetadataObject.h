@@ -48,7 +48,7 @@ struct FModDependencyDescriptorData
 	/**
 	 * Copy the metadata fields into a mod descriptor.
 	 */
-	void CopyIntoDescriptor(FPluginReferenceDescriptor& OutDescriptor);
+	void CopyIntoDescriptor(FPluginReferenceDescriptor& OutDescriptor, TSharedPtr<FJsonObject> CachedJson);
 };
 
 /**
@@ -78,6 +78,10 @@ public:
 	/** Version number for the mod. Should always increase with new releases, and should follow the semver format. */
 	UPROPERTY(EditAnywhere, Category = "Version")
 	FString SemVersion;
+
+	/** Version number of the game this mod was built (or was tested) against */
+	UPROPERTY(EditAnywhere, Category = "Version")
+	FString GameVersion;
 
 	/** Friendly name of the mod */
 	UPROPERTY(EditAnywhere, Category = "Details")
@@ -115,9 +119,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Remote")
 	FString RemoteVersionRange;
 
-	/** Whether the remote version check is skipped */
+	/** Whether this mod accepts being missing on the remote, i.e. behaving as a client-/server-side only mod */
 	UPROPERTY(EditAnywhere, Category = "Remote")
-	bool bAcceptsAnyRemoteVersion{};
+	bool bRequiredOnRemote{true};
 
 	/**
 	 * Populate the fields of this object from an existing descriptor.

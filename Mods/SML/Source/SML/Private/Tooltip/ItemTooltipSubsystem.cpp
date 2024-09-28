@@ -1,8 +1,11 @@
 #include "Tooltip/ItemTooltipSubsystem.h"
+#include "Blueprint/UserWidget.h"
 #include "Patching/BlueprintHookHelper.h"
 #include "Patching/BlueprintHookManager.h"
 #include "Components/TextBlock.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "Components/PanelWidget.h"
+#include "Engine/Engine.h"
+#include "Engine/GameInstance.h"
 #include "Tooltip/ItemStackContextWidget.h"
 #include "Tooltip/SMLItemDisplayInterface.h"
 #include "Tooltip/SMLItemTooltipProvider.h"
@@ -56,6 +59,11 @@ FInventoryStack GetStackFromSlot(UObject* SlotWidget) {
 }
 
 void UItemTooltipSubsystem::InitializePatches() {
+    // Widgets are not included on servers
+    if (FPlatformProperties::IsServerOnly()) {
+        return;
+    }
+    
     //Hook into InventorySlot widget to apply tooltip overrides
     UClass* InventorySlot = LoadObject<UClass>(NULL, TEXT("/Game/FactoryGame/Interface/UI/InGame/InventorySlots/Widget_InventorySlot.Widget_InventorySlot_C"));
     check(InventorySlot);

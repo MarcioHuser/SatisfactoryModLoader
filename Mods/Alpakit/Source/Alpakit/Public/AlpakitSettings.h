@@ -8,7 +8,7 @@ UENUM()
 enum class EAlpakitStartGameType : uint8 {
     STEAM UMETA(DisplayName = "Steam"),
     STEAM_SERVER UMETA(DisplayName = "Steam: Dedicated Server"),
-    EPIC_EARLY_ACCESS UMETA(DisplayName = "Epic: Early Access"),
+    EPIC_STABLE UMETA(DisplayName = "Epic: Stable"),
     EPIC_EXPERIMENTAL UMETA(DisplayName = "Epic: Experimental"),
     EPIC_SERVER UMETA(DisplayName = "Epic: Dedicated Server"),
     EPIC_SERVER_EXPERIMENTAL UMETA(DisplayName = "Epic: Dedicated Server Experimental"),
@@ -36,8 +36,11 @@ public:
     UPROPERTY(EditAnywhere, config, Category = Config, meta = ( EditCondition = bLaunchGame, ToolTip = "If enabled, this approach will be used to launch this target after a successful pack"))
     EAlpakitStartGameType LaunchGameType;
 
-    UPROPERTY(EditAnywhere, config, Category = Config, meta = ( EditCondition = "LaunchGameType == EAlpakitStartGameType::CUSTOM", EditConditionHides, ToolTip = "When 'Custom' is selected, the Unreal Automation tool will execute this after a successful pack.\nCheck the 'Testing' page on the modding docs for example scripts to call with this feature.\n\nExample value:\nC:\\Git\\SF_ModProject\\RobWorkingDir\\Auto_Exp_LoadLatest.bat"))
+    UPROPERTY(EditAnywhere, config, Category = Config, meta = ( EditCondition = "LaunchGameType == EAlpakitStartGameType::CUSTOM", EditConditionHides, ToolTip = "When 'Custom' is selected, the Unreal Automation tool will execute this after a successful pack.\nCheck the 'Testing' page on the modding docs for example scripts to call with this feature.\n\nExample value:\npowershell"))
     FString CustomLaunchPath;
+
+    UPROPERTY(EditAnywhere, config, Category = Config, meta = ( EditCondition = "LaunchGameType == EAlpakitStartGameType::CUSTOM", EditConditionHides, ToolTip = "When 'Custom' is selected, these arguments will be used when executing the above after a successful pack.\nCheck the 'Testing' page on the modding docs for example scripts to call with this feature.\n\nExample value:\nC:\\Git\\SatisfactoryModLoader\\Automation\\SFLaunch.ps1 -branch EA -loadLatestSave"))
+    FString CustomLaunchArgs;
 };
 
 ALPAKIT_API const TCHAR* LexToString(EAlpakitStartGameType StartGameType);
@@ -59,13 +62,13 @@ public:
 	FString BuildConfiguration;
 	*/
 
-    UPROPERTY(EditAnywhere, config, Category = "Dev Packaging Settings", DisplayName = "Windows", meta = (ToolTip = "Packaging settings for 'Alpakit Dev' for the Windows target"))
+    UPROPERTY(EditAnywhere, config, Category = "Dev Packaging Settings", DisplayName = "Windows", meta = (ToolTip = "Development-time packaging settings for the Windows target"))
     FAlpakitTargetSettings WindowsGameTargetSettings;
 
-    UPROPERTY(EditAnywhere, config, Category = "Dev Packaging Settings", DisplayName="Windows Server", meta = (ToolTip = "Packaging settings for 'Alpakit Dev' for the Windows Server target"))
+    UPROPERTY(EditAnywhere, config, Category = "Dev Packaging Settings", DisplayName="Windows Server", meta = (ToolTip = "Development-time packaging settings for the Windows Server target"))
     FAlpakitTargetSettings WindowsServerTargetSettings;
 
-    UPROPERTY(EditAnywhere, config, Category = "Dev Packaging Settings", DisplayName="Linux Server", meta = (ToolTip = "Packaging settings for 'Alpakit Dev' for the Linux Server target"))
+    UPROPERTY(EditAnywhere, config, Category = "Dev Packaging Settings", DisplayName="Linux Server", meta = (ToolTip = "Development-time packaging settings for the Linux Server target"))
     FAlpakitTargetSettings LinuxServerTargetSettings;
     
     UPROPERTY(BlueprintReadOnly, config, Category = Config)

@@ -2,7 +2,8 @@
 #include "AlpakitStyle.h"
 #include "AlpakitCommands.h"
 #include "AlpakitSettings.h"
-#include "AlpakitWidget.h"
+#include "AlpakitDevWidget.h"
+#include "AlpakitReleaseWidget.h"
 #include "ContentBrowserModule.h"
 #include "ISettingsContainer.h"
 #include "ISettingsModule.h"
@@ -14,12 +15,13 @@
 #include "ModTargetsConfig.h"
 #include "SAlpakitLogTabContent.h"
 
-static const FName AlpakitTabName("Alpakit");
 
 #define LOCTEXT_NAMESPACE "FAlpakitModule"
 
 DEFINE_LOG_CATEGORY(LogAlpakit)
 
+const FName FAlpakitModule::AlpakitDevTabName("AlpakitDev");
+const FName FAlpakitModule::AlpakitReleaseTabName("AlpakitRelease");
 const FName FAlpakitModule::ModCreatorTabName(TEXT("ModCreator"));
 const FName FAlpakitModule::AlpakitLogTabName(TEXT("AlpakitLog"));
 
@@ -37,13 +39,19 @@ void FAlpakitModule::StartupModule() {
     
     PluginCommands = MakeShareable(new FUICommandList);
     PluginCommands->MapAction(
-        FAlpakitCommands::Get().OpenPluginWindow,
+        FAlpakitCommands::Get().AlpakitDevWindow,
         FExecuteAction::CreateLambda([](){
-            FGlobalTabmanager::Get()->TryInvokeTab(AlpakitTabName);
+            FGlobalTabmanager::Get()->TryInvokeTab(AlpakitDevTabName);
         }),
         FCanExecuteAction());
     PluginCommands->MapAction(
-        FAlpakitCommands::Get().OpenLogWindow,
+        FAlpakitCommands::Get().AlpakitReleaseWindow,
+        FExecuteAction::CreateLambda([](){
+            FGlobalTabmanager::Get()->TryInvokeTab(AlpakitReleaseTabName);
+        }),
+        FCanExecuteAction());
+    PluginCommands->MapAction(
+        FAlpakitCommands::Get().AlpakitLogWindow,
         FExecuteAction::CreateLambda([](){
             FGlobalTabmanager::Get()->TryInvokeTab(AlpakitLogTabName);
         }),
@@ -54,8 +62,9 @@ void FAlpakitModule::StartupModule() {
     TSharedPtr<FExtender> MenuExtender = MakeShareable(new FExtender());
     MenuExtender->AddMenuExtension(TEXT("FileProject"), EExtensionHook::After, PluginCommands,
         FMenuExtensionDelegate::CreateLambda([](FMenuBuilder& Builder){
-            Builder.AddMenuEntry(FAlpakitCommands::Get().OpenPluginWindow);
-            Builder.AddMenuEntry(FAlpakitCommands::Get().OpenLogWindow);
+            Builder.AddMenuEntry(FAlpakitCommands::Get().AlpakitDevWindow);
+            Builder.AddMenuEntry(FAlpakitCommands::Get().AlpakitReleaseWindow);
+            Builder.AddMenuEntry(FAlpakitCommands::Get().AlpakitLogWindow);
         }));
     LevelEditorModule.GetMenuExtensibilityManager()->AddExtender(MenuExtender);
     
@@ -65,8 +74,10 @@ void FAlpakitModule::StartupModule() {
         FToolBarExtensionDelegate::CreateLambda([this](FToolBarBuilder& Builder) {
             {
                 Builder.BeginStyleOverride(FName("Toolbar.BackplateLeft"));
-                
-                Builder.AddToolBarButton(FAlpakitCommands::Get().OpenPluginWindow);
+                Builder.AddToolBarButton(FAlpakitCommands::Get().AlpakitDevWindow);
+
+                Builder.BeginStyleOverride(FName("Toolbar.BackplateCenter"));
+                Builder.AddToolBarButton(FAlpakitCommands::Get().AlpakitReleaseWindow);
 
                 Builder.EndStyleOverride();
             }
@@ -76,7 +87,7 @@ void FAlpakitModule::StartupModule() {
                 Builder.AddComboButton(FUIAction(), FOnGetContent::CreateLambda([this]() {                
                     FMenuBuilder MenuBuilder(true, PluginCommands);
 
-                    MenuBuilder.AddMenuEntry(FAlpakitCommands::Get().OpenLogWindow);
+                    MenuBuilder.AddMenuEntry(FAlpakitCommands::Get().AlpakitLogWindow);
         
                     return MenuBuilder.MakeWidget();
                 }));
@@ -87,16 +98,26 @@ void FAlpakitModule::StartupModule() {
     LevelEditorModule.GetToolBarExtensibilityManager()->AddExtender(ToolbarExtender);
 
     //Register normal alpakit settings tab spawner
-    FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AlpakitTabName,
+    FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AlpakitDevTabName,
         FOnSpawnTab::CreateLambda([](const FSpawnTabArgs&){
-            const TSharedRef<SAlpakitWidget> AlpakitWidget = SNew(SAlpakitWidget);
+            const TSharedRef<SAlpakitDevWidget> AlpakitWidget = SNew(SAlpakitDevWidget);
             return SNew(SDockTab)
                 .TabRole(NomadTab)
-                // TODO: Save settings when tab is closed automatically
-                //.OnTabClosed_Lambda([AlpakitWidget](TSharedRef<SDockTab>) { AlpakitWidget->SaveSettings(); })
                 [ AlpakitWidget ];
         }))
-        .SetDisplayName(LOCTEXT("FAlpakitTabTitle", "Alpakit"))
+        .SetDisplayName(LOCTEXT("FAlpakitDevTabTitle", "Alpakit Dev"))
+        .SetIcon(FSlateIcon(FAlpakitStyle::GetStyleSetName(), "Alpakit.AlpakitDevWindow"))
+        .SetMenuType(ETabSpawnerMenuType::Hidden);
+    
+    FGlobalTabmanager::Get()->RegisterNomadTabSpawner(AlpakitReleaseTabName,
+        FOnSpawnTab::CreateLambda([](const FSpawnTabArgs&){
+            const TSharedRef<SAlpakitReleaseWidget> AlpakitWidget = SNew(SAlpakitReleaseWidget);
+            return SNew(SDockTab)
+                .TabRole(NomadTab)
+                [ AlpakitWidget ];
+        }))
+        .SetDisplayName(LOCTEXT("FAlpakitReleaseTabTitle", "Alpakit Release"))
+        .SetIcon(FSlateIcon(FAlpakitStyle::GetStyleSetName(), "Alpakit.AlpakitReleaseWindow"))
         .SetMenuType(ETabSpawnerMenuType::Hidden);
     
     FGlobalTabmanager::Get()->RegisterNomadTabSpawner(
@@ -109,7 +130,7 @@ void FAlpakitModule::StartupModule() {
 		AlpakitLogTabName,
 		FOnSpawnTab::CreateRaw(this, &FAlpakitModule::HandleSpawnAlpakitLogTab))
 		.SetDisplayName(LOCTEXT("AlpakitLogHeader", "Alpakit Log"))
-		.SetIcon( FSlateIcon( FAlpakitStyle::Get().GetStyleSetName(), TEXT("Alpakit.OpenPluginWindow") ) )
+		.SetIcon( FSlateIcon( FAlpakitStyle::Get().GetStyleSetName(), TEXT("Alpakit.AlpakitLogWindow") ) )
 		.SetMenuType(ETabSpawnerMenuType::Hidden);
 }
 
@@ -121,9 +142,29 @@ void FAlpakitModule::ShutdownModule() {
     FAlpakitStyle::Shutdown();
     FAlpakitCommands::Unregister();
 
-    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AlpakitTabName);
+    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AlpakitDevTabName);
+    FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AlpakitReleaseTabName);
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(ModCreatorTabName);
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(AlpakitLogTabName);
+}
+
+FString FAlpakitModule::GetCurrentSMLVersion()
+{
+    TSharedPtr<IPlugin> SMLPlugin = IPluginManager::Get().FindPlugin(TEXT("SML"));
+    if (SMLPlugin.IsValid())
+    {
+        FPluginDescriptor SMLDescriptor = SMLPlugin->GetDescriptor();
+        return SMLDescriptor.CachedJson->GetStringField(TEXT("SemVersion"));
+    }
+    return TEXT("");
+}
+
+FString FAlpakitModule::GetCurrentGameVersion()
+{
+    FString CurrentVersionFile = FPaths::ProjectDir() / TEXT("Source") / TEXT("FactoryGame") / TEXT("currentVersion.txt");
+    FString GameVersion;
+    FFileHelper::LoadFileToString(GameVersion, *CurrentVersionFile);
+    return GameVersion.TrimStartAndEnd();
 }
 
 TSharedRef<FAlpakitProfile> MakeDevelopmentProfileForMod(TSharedRef<IPlugin> Mod) {
@@ -135,7 +176,7 @@ TSharedRef<FAlpakitProfile> MakeDevelopmentProfileForMod(TSharedRef<IPlugin> Mod
 
     Profile->BuildConfiguration = Settings->GetBuildConfiguration();
 
-    for (auto [CookedPlatform, TargetSetting] : Settings->GetPlatformTargetSettings()) {
+    for (auto& [CookedPlatform, TargetSetting] : Settings->GetPlatformTargetSettings()) {
         if (TargetSetting.bEnabled) {
             Profile->CookedPlatforms.Add(CookedPlatform);
             if (TargetSetting.bCopyModsToGame) {
@@ -164,12 +205,14 @@ void FAlpakitModule::PackageModsDevelopment(TArray<TSharedRef<IPlugin>> Mods) {
 
     TSharedRef<FAlpakitProfile> LastProfile = ProfilesToPackage.Last();
 
-    for (auto [CookedPlatform, TargetSetting] : Settings->GetPlatformTargetSettings()) {
+    for (auto& [CookedPlatform, TargetSetting] : Settings->GetPlatformTargetSettings()) {
         if (TargetSetting.bEnabled) {
             if (TargetSetting.bLaunchGame) {
                 FAlpakitProfileGameInfo& GameInfo = LastProfile->PlatformGameInfo.FindOrAdd(CookedPlatform);
                 GameInfo.bStartGame = true;
                 GameInfo.StartGameType = TargetSetting.LaunchGameType;
+                GameInfo.CustomLaunchPath = TargetSetting.CustomLaunchPath;
+                GameInfo.CustomLaunchArgs = TargetSetting.CustomLaunchArgs;
             }
         }
     }

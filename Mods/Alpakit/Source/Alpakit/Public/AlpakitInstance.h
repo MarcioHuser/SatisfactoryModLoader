@@ -2,9 +2,9 @@
 
 #include "CoreMinimal.h"
 #include "AlpakitProfile.h"
-#include "AlpakitSettings.h"
 #include "Misc/MonitoredProcess.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "Misc/DateTime.h"
 
 enum class EAlpakitInstanceState
 {
@@ -36,6 +36,7 @@ class ALPAKIT_API FAlpakitInstance : public TSharedFromThis<FAlpakitInstance>
 {
 	EAlpakitInstanceState InstanceState{EAlpakitInstanceState::None};
 	EAlpakitInstanceResult Result{EAlpakitInstanceResult::Undetermined};
+	FDateTime EndTime;
 	FString PluginName;
 	TSharedRef<FAlpakitProfile> Profile;
 	TSharedPtr<SNotificationItem> NotificationItem;
@@ -49,6 +50,7 @@ public:
 
 	FORCEINLINE EAlpakitInstanceState GetInstanceState() const { return InstanceState; }
 	FORCEINLINE EAlpakitInstanceResult GetResult() const { return Result; }
+	FORCEINLINE FDateTime GetEndTime() const { return EndTime; }
 	FORCEINLINE FString GetPluginName() const { return PluginName; }
 
 	FORCEINLINE const TArray<FAlpakitInstanceMessageEntry>& GetMessageList() const { return MessageList; }

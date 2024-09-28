@@ -7,7 +7,6 @@ using EpicGames.Core;
 using UnrealBuildTool;
 using AutomationScripts;
 using Microsoft.Extensions.Logging;
-using UnrealBuildBase;
 
 namespace Alpakit.Automation;
 
@@ -16,7 +15,6 @@ public class PackagePlugin : BuildCookRun
 	public override void ExecuteBuild()
 	{
 		var mergeArchive = ParseParam("merge");
-		Logger.LogWarning($"Merge archive: {mergeArchive}");
 		
 		var projectParams = SetupParams();
 		projectParams.PreModifyDeploymentContextCallback = (ProjectParams, SC) =>
@@ -27,40 +25,60 @@ public class PackagePlugin : BuildCookRun
 		{
 			ModifyModules(ProjectParams, SC);
 		};
-
-		DoBuildCookRun(projectParams);
-
-		var deploymentContexts = new List<DeploymentContext>();
-		if (!projectParams.NoClient)
-			deploymentContexts.AddRange(Project.CreateDeploymentContext(projectParams, false, false));
-		if (projectParams.DedicatedServer)
-			deploymentContexts.AddRange(Project.CreateDeploymentContext(projectParams, true, false));
-
-		foreach (var SC in deploymentContexts)
+		
+		try
 		{
-			ArchiveStagedPlugin(projectParams, SC);
-		}
+			DoBuildCookRun(projectParams);
 
-		if (mergeArchive)
-		{
-			ArchiveMergedStagedPlugin(projectParams, deploymentContexts);
-		}
+			var deploymentContexts = new List<DeploymentContext>();
+			if (!projectParams.NoClient)
+				deploymentContexts.AddRange(Project.CreateDeploymentContext(projectParams, false, false));
+			if (projectParams.DedicatedServer)
+				deploymentContexts.AddRange(Project.CreateDeploymentContext(projectParams, true, false));
 
-		foreach (var SC in deploymentContexts)
-		{
-			var copyToGameDirectory = ParseOptionalDirectoryReferenceParam($"CopyToGameDirectory_{SC.FinalCookPlatform}");
-			var launchGameType = ParseOptionalEnumParam<LaunchGame.LaunchType>($"LaunchGame_{SC.FinalCookPlatform}");
-			var customLaunch = ParseOptionalStringParam($"CustomLaunch_{SC.FinalCookPlatform}");
-
-			if (copyToGameDirectory != null)
+			foreach (var SC in deploymentContexts)
 			{
-				if (!IsValidGameDir(copyToGameDirectory))
-					throw new AutomationException("Invalid game directory specified for CopyToGameDirectory: {0}", copyToGameDirectory);
-				DeployStagedPlugin(projectParams, SC, copyToGameDirectory);
+				ArchiveStagedPlugin(projectParams, SC);
 			}
 
-			if (launchGameType != null)
-				LaunchGame.Launch(launchGameType.Value, customLaunch);
+			if (mergeArchive)
+			{
+				ArchiveMergedStagedPlugin(projectParams, deploymentContexts);
+			}
+
+			foreach (var SC in deploymentContexts)
+			{
+				var copyToGameDirectory = ParseOptionalDirectoryReferenceParam($"CopyToGameDirectory_{SC.FinalCookPlatform}");
+				var launchGameType = ParseOptionalEnumParam<LaunchGame.LaunchType>($"LaunchGame_{SC.FinalCookPlatform}");
+				var customLaunchPath = ParseOptionalStringParam($"CustomLaunchPath_{SC.FinalCookPlatform}");
+				var customLaunchArgs = ParseOptionalStringParam($"CustomLaunchArgs_{SC.FinalCookPlatform}");
+
+				if (copyToGameDirectory != null)
+				{
+					if (!IsValidGameDir(copyToGameDirectory))
+						throw new AutomationException("Invalid game directory specified for CopyToGameDirectory: {0}", copyToGameDirectory);
+					DeployStagedPlugin(projectParams, SC, copyToGameDirectory);
+				}
+
+				if (launchGameType != null)
+					LaunchGame.Launch(launchGameType.Value, customLaunchPath, customLaunchArgs, Logger);
+			}
+		}
+		finally
+		{
+			if (!projectParams.NoClient)
+			{
+				var DeployContextList = Project.CreateDeploymentContext(projectParams, false, true);
+				foreach (var SC in DeployContextList)
+					Project.CleanStagingDirectory(projectParams, SC);
+			}
+
+			if (projectParams.DedicatedServer)
+			{
+				var DeployContextList = Project.CreateDeploymentContext(projectParams, true, true);
+				foreach (var SC in DeployContextList)
+					Project.CleanStagingDirectory(projectParams, SC);
+			}
 		}
 	}
 
@@ -81,6 +99,7 @@ public class PackagePlugin : BuildCookRun
 			RawProjectPath: ProjectPath,
 			
 			// Alpakit shared configuration
+			ClientCookedTargets: GetClientTargetsToCook(),
 			Cook: true,
 			AdditionalCookerOptions: "-AllowUncookedAssetReferences",
 			DLCIncludeEngineContent: false,
@@ -96,10 +115,38 @@ public class PackagePlugin : BuildCookRun
 		return Params;
 	}
 
+	private ParamList<string> GetClientTargetsToCook()
+	{
+		if (!ParseParam("merge"))
+		{
+			// Only build minimal targets in development mode
+			// I don't particularly like hardcoding the FinalCookPlatform here, but there's no other way to get it
+			// and there's no native linux client at the moment
+			var gameDir = ParseOptionalDirectoryReferenceParam($"CopyToGameDirectory_Windows");
+			if (gameDir != null)
+			{
+				var FactoryGameEGS = FileReference.Combine(gameDir, "FactoryGameEGS.exe");
+				var FactoryGameSteam = FileReference.Combine(gameDir, "FactoryGameSteam.exe");
+				if (FileReference.Exists(FactoryGameEGS))
+				{
+					return new ParamList<string>("FactoryGameEGS");
+				}
+
+				if (FileReference.Exists(FactoryGameSteam))
+				{
+					return new ParamList<string>("FactoryGameSteam");
+				}
+				
+				Logger.LogWarning("No game executable found in game directory, building all targets");
+			}
+		}
+		return new ParamList<string>("FactoryGameEGS", "FactoryGameSteam");
+	}
+
 	private static void DeployStagedPlugin(ProjectParams ProjectParams, DeploymentContext SC, DirectoryReference GameDir)
 	{
 		// We only want to archive the staged files of the plugin, not the entire stage directory
-		var stagedPluginDirectory = Project.ApplyDirectoryRemap(SC, SC.GetStagedFileLocation(ProjectParams.DLCFile));
+		var stagedPluginDirectory = DeploymentContext.ApplyDirectoryRemap(SC, SC.GetStagedFileLocation(ProjectParams.DLCFile));
 		var fullStagedPluginDirectory = DirectoryReference.Combine(SC.StageDirectory, stagedPluginDirectory.Directory.Name);
 
 		var projectName = ProjectParams.RawProjectPath.GetFileNameWithoutAnyExtensions();
@@ -124,7 +171,7 @@ public class PackagePlugin : BuildCookRun
 		var zipFileName = $"{dlcName}-{SC.FinalCookPlatform}.zip";
 
 		// We only want to archive the staged files of the plugin, not the entire stage directory
-		var stagedPluginDirectory = Project.ApplyDirectoryRemap(SC, SC.GetStagedFileLocation(ProjectParams.DLCFile));
+		var stagedPluginDirectory = DeploymentContext.ApplyDirectoryRemap(SC, SC.GetStagedFileLocation(ProjectParams.DLCFile));
 		var fullStagedPluginDirectory = DirectoryReference.Combine(SC.StageDirectory, stagedPluginDirectory.Directory.Name);
 
 		CreateZipFromDirectory(fullStagedPluginDirectory, FileReference.Combine(archiveDirectory, zipFileName));
@@ -148,7 +195,7 @@ public class PackagePlugin : BuildCookRun
 			foreach (var SC in DeploymentContexts)
 			{
 				var stagedPluginDirectory =
-					Project.ApplyDirectoryRemap(SC, SC.GetStagedFileLocation(ProjectParams.DLCFile));
+					DeploymentContext.ApplyDirectoryRemap(SC, SC.GetStagedFileLocation(ProjectParams.DLCFile));
 				var fullStagedPluginDirectory =
 					DirectoryReference.Combine(SC.StageDirectory, stagedPluginDirectory.Directory.Name);
 				CopyDirectory_NoExceptions(fullStagedPluginDirectory, DirectoryReference.Combine(mergedTempDir, SC.FinalCookPlatform));

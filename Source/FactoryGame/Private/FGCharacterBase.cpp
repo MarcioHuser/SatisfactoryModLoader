@@ -5,6 +5,10 @@
 #include "FGHealthComponent.h"
 #include "Net/UnrealNetwork.h"
 
+void AFGCharacterBase::GetClearanceData_Implementation(TArray< FFGClearanceData >& out_data) const {
+	out_data = mClearanceData;
+}
+
 void FFootstepEffect::Reset(){ }
 AFGCharacterBase::AFGCharacterBase(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer) {
 	this->mDefaultFootstepEffect.Particle = nullptr;
@@ -56,6 +60,7 @@ void AFGCharacterBase::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& O
 void AFGCharacterBase::BeginPlay(){ }
 void AFGCharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason){ }
 void AFGCharacterBase::Tick(float deltaTime){ }
+void AFGCharacterBase::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult){ }
 float AFGCharacterBase::TakeDamage(float DamageAmount,  FDamageEvent const& DamageEvent,  AController* EventInstigator, AActor* DamageCauser){ return float(); }
 void AFGCharacterBase::ApplyDamageMomentum(float DamageTaken, FDamageEvent const& DamageEvent, APawn* PawnInstigator, AActor* DamageCauser){ }
 void AFGCharacterBase::PossessedBy(AController* NewController){ }

@@ -1,7 +1,6 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "AlpakitProfile.h"
-#include "ContentBrowserDelegates.h"
 #include "Interfaces/IPluginManager.h"
 
 DECLARE_LOG_CATEGORY_EXTERN(LogAlpakit, Verbose, All);
@@ -19,9 +18,13 @@ public:
 	void PackageModsDevelopment(TArray<TSharedRef<IPlugin>> Mods);
 	void PackageModsRelease(TArray<TSharedRef<IPlugin>> Mods);
 	void PackageMods(TArray<TSharedRef<FAlpakitProfile>> ProfilesToPackage);
-    bool IsPackaging() const { return bIsPackaging; }
-    
-    /** ID name for the mod creator tab */
+	bool IsPackaging() const { return bIsPackaging; }
+
+	static FString GetCurrentSMLVersion();
+	static FString GetCurrentGameVersion();
+
+	static const FName AlpakitDevTabName;
+	static const FName AlpakitReleaseTabName;
     static const FName ModCreatorTabName;
 	static const FName AlpakitLogTabName;
 private:
