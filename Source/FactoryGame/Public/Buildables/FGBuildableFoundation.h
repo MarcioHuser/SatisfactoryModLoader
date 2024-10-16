@@ -45,6 +45,7 @@ public:
 	UPROPERTY( EditDefaultsOnly, Category = "Foundation" )
 	FFoundationSideSelectionFlags mDisableAttachmentSnapOn;
 
+	// virtual FSimpleBuildingInfo GetRainOcclusionShape() override { return FSimpleBuildingInfo::DefaultSquareFoundation( this ); }
 	virtual FSimpleBuildingInfo GetRainOcclusionShape() override { return FSimpleBuildingInfo::DefaultSquareFoundation( this ); }
 };
 
