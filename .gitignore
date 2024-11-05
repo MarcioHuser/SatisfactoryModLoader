@@ -638,3 +638,4 @@ Crypto.json
 
 *.bak
 Alpakit.ini
+/Config/DefaultEditor.ini
