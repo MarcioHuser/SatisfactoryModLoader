@@ -18,9 +18,9 @@ AFGHUD::AFGHUD() : Super() {
 	this->mGeneralCrosshair = mDefaultCrosshair;
 }
 void AFGHUD::PostInitializeComponents(){ Super::PostInitializeComponents(); }
-void AFGHUD::BeginPlay(){ }
-void AFGHUD::EndPlay(const EEndPlayReason::Type EndPlayReason){ }
-void AFGHUD::Tick(float DeltaSeconds){ }
+void AFGHUD::BeginPlay(){ Super::BeginPlay(); }
+void AFGHUD::EndPlay(const EEndPlayReason::Type endPlayReason){ Super::EndPlay(endPlayReason); }
+void AFGHUD::Tick(float DeltaSeconds){ Super::Tick(DeltaSeconds); }
 void AFGHUD::AddPawnHUD(TSubclassOf<class UUserWidget> widgetClass, APawn* pawn){ }
 void AFGHUD::ShowRespawnUI(){ }
 void AFGHUD::CloseRespawnUI(){ }
@@ -43,6 +43,8 @@ void AFGHUD::OnActorRepresentationAdded(UFGActorRepresentation* actorRepresentat
 void AFGHUD::OnActorRepresentationRemoved(UFGActorRepresentation* actorRepresentation){ }
 void AFGHUD::OnActorRepresentationUpdated(UFGActorRepresentation* actorRepresentation){ }
 void AFGHUD::OnActorRepresentationFiltered(ERepresentationType type, bool visible){ }
+void AFGHUD::OnCultureChanged(){ }
+void AFGHUD::InvalidateCachedTextDimensionsAndGlyphs(){ }
 void AFGHUD::SetCompassEntryVisibility(UFGActorRepresentation* actorRepresentation, bool visible){ }
 void AFGHUD::RegisterCardinalCompassDirections(){ }
 void AFGHUD::OnSetupBinds(){ }

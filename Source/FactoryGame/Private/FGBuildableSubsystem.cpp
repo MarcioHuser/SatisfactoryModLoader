@@ -83,9 +83,9 @@ void AFGBuildableSubsystem::PostLoadGame_Implementation(int32 saveVersion, int32
 void AFGBuildableSubsystem::GatherDependencies_Implementation(TArray< UObject* >& out_dependentObjects){ }
 bool AFGBuildableSubsystem::NeedTransform_Implementation(){ return bool(); }
 bool AFGBuildableSubsystem::ShouldSave_Implementation() const{ return bool(); }
-void AFGBuildableSubsystem::BeginPlay(){ }
-void AFGBuildableSubsystem::EndPlay(const EEndPlayReason::Type EndPlayReason){ }
-void AFGBuildableSubsystem::Tick(float dt){ }
+void AFGBuildableSubsystem::BeginPlay(){ Super::BeginPlay(); }
+void AFGBuildableSubsystem::EndPlay(const EEndPlayReason::Type endPlayReason){ Super::EndPlay(endPlayReason); }
+void AFGBuildableSubsystem::Tick(float dt){ Super::Tick(dt); }
 void AFGBuildableSubsystem::TickFactory(float dt, ELevelTick TickType){ }
 AFGBuildableSubsystem* AFGBuildableSubsystem::Get(UWorld* world){ return nullptr; }
 AFGBuildableSubsystem* AFGBuildableSubsystem::Get(UObject* worldContext){ return nullptr; }
@@ -106,6 +106,7 @@ bool AFGBuildableSubsystem::RemoveConveyorFromBucket(AFGBuildableConveyorBase* c
 void AFGBuildableSubsystem::RearrangeConveyorBuckets(int32 emptiedBucketID){ }
 void AFGBuildableSubsystem::RemoveAndSplitConveyorBucket(AFGBuildableConveyorBase* conveyorToRemove){ }
 bool AFGBuildableSubsystem::IsServerSubSystem() const{ return bool(); }
+int32 AFGBuildableSubsystem::GetBuildableCount(TSubclassOf<AFGBuildable> buildableClass) const{ return int32(); }
 void AFGBuildableSubsystem::GetTypedBuildable(TSubclassOf<  AFGBuildable > inClass, TArray<  AFGBuildable* >& out_buildables) const{ }
 void AFGBuildableSubsystem::GetOcclusionAffectingBuildebles(TArray<AFGBuildable*>& Out, const FVector& RequestLocation, float Range, bool bParallel) const{ }
 void AFGBuildableSubsystem::GetNearestBuildables(TArray<AFGBuildable*>& Out, const FVector& RequestLocation, float Range) const{ }

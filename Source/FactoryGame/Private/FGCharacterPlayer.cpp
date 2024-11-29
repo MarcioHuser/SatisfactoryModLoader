@@ -197,11 +197,11 @@ void AFGCharacterPlayer::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >&
 }
 void AFGCharacterPlayer::PostActorCreated(){ Super::PostActorCreated(); }
 void AFGCharacterPlayer::PostInitializeComponents(){ Super::PostInitializeComponents(); }
-void AFGCharacterPlayer::BeginPlay(){ }
-void AFGCharacterPlayer::EndPlay(const EEndPlayReason::Type endPlayReason){ }
-void AFGCharacterPlayer::Tick(float deltaTime){ }
+void AFGCharacterPlayer::BeginPlay(){ Super::BeginPlay(); }
+void AFGCharacterPlayer::EndPlay(const EEndPlayReason::Type endPlayReason){ Super::EndPlay(endPlayReason); }
+void AFGCharacterPlayer::Tick(float deltaTime){ Super::Tick(deltaTime); }
 bool AFGCharacterPlayer::CanBeBaseForCharacter(APawn* Pawn) const{ return bool(); }
-void AFGCharacterPlayer::Destroyed(){ }
+void AFGCharacterPlayer::Destroyed(){ Super::Destroyed(); }
 bool AFGCharacterPlayer::IsLocallyControlled() const{ return bool(); }
 void AFGCharacterPlayer::PossessedBy(AController* newController){ }
 void AFGCharacterPlayer::UnPossessed(){ }
@@ -544,6 +544,8 @@ void AFGCharacterPlayer::FadeDamageIndicator(float deltaTime){ }
 void AFGCharacterPlayer::TickFlashlight(){ }
 void AFGCharacterPlayer::RadiationIntensityUpdated(){ }
 bool AFGCharacterPlayer::IsPlayerInOrAboveWater(const FVector& hitPosition) const{ return bool(); }
+void AFGCharacterPlayer::ActivateCameraComponents(){ }
+void AFGCharacterPlayer::DeactivateCameraComponents(){ }
 void AFGCharacterPlayer::OnActiveEquipmentChangedInSlot(EEquipmentSlot slot){ }
 FOnPersistentEquipmentActivated AFGCharacterPlayer::OnPersistentEquipmentActivated = FOnPersistentEquipmentActivated();
 FOnEquipmentEquipped AFGCharacterPlayer::OnEquipmentEquipped = FOnEquipmentEquipped();

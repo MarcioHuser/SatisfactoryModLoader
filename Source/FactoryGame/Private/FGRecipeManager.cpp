@@ -19,7 +19,7 @@ void AFGRecipeManager::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out
 	DOREPLIFETIME(AFGRecipeManager, mNumAllRecipes);
 	DOREPLIFETIME(AFGRecipeManager, mAvailableCustomizationRecipes);
 }
-void AFGRecipeManager::BeginPlay(){ }
+void AFGRecipeManager::BeginPlay(){ Super::BeginPlay(); }
 void AFGRecipeManager::PreSaveGame_Implementation(int32 saveVersion, int32 gameVersion){ }
 void AFGRecipeManager::PostSaveGame_Implementation(int32 saveVersion, int32 gameVersion){ }
 void AFGRecipeManager::PreLoadGame_Implementation(int32 saveVersion, int32 gameVersion){ }
@@ -30,6 +30,7 @@ bool AFGRecipeManager::ShouldSave_Implementation() const{ return bool(); }
 void AFGRecipeManager::AddAvailableRecipe(TSubclassOf< UFGRecipe > recipe){ }
 void AFGRecipeManager::GetAllAvailableRecipes(TArray< TSubclassOf< UFGRecipe > >& out_recipes){ }
 void AFGRecipeManager::GetAllAvailableCustomizationRecipes(TArray< TSubclassOf< UFGCustomizationRecipe > >& out_recipes){ }
+TSubclassOf<class UFGCustomizationRecipe> AFGRecipeManager::GetCustomizationRecipeFromDesc(TSubclassOf<class UFGFactoryCustomizationDescriptor> desc){ return TSubclassOf<UFGCustomizationRecipe>(); }
 void AFGRecipeManager::GetAvailableRecipesForProducer(TSubclassOf< UObject > forProducer, TArray< TSubclassOf< UFGRecipe > >& out_recipes){ }
 void AFGRecipeManager::GetAffordableRecipesForProducer( AFGCharacterPlayer* player, TSubclassOf< UObject > forProducer, TArray< TSubclassOf< UFGRecipe > >& out_recipes){ }
 bool AFGRecipeManager::IsRecipeAvailable(TSubclassOf< UFGRecipe > recipeClass) const{ return bool(); }

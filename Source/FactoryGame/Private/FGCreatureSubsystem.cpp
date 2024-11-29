@@ -15,8 +15,8 @@ AFGCreatureSubsystem::AFGCreatureSubsystem() : Super() {
 	this->PrimaryActorTick.bAllowTickOnDedicatedServer = true;
 	this->PrimaryActorTick.TickInterval = 0.0;
 }
-void AFGCreatureSubsystem::BeginPlay(){ }
-void AFGCreatureSubsystem::Tick(float dt){ }
+void AFGCreatureSubsystem::BeginPlay(){ Super::BeginPlay(); }
+void AFGCreatureSubsystem::Tick(float dt){ Super::Tick(dt); }
 void AFGCreatureSubsystem::RegisterSpawner( AFGCreatureSpawner* spawner){ }
 void AFGCreatureSubsystem::UnregisterSpawner( AFGCreatureSpawner* spawner){ }
 void AFGCreatureSubsystem::RegisterCreature( AFGCreature* creature){ }
@@ -33,7 +33,7 @@ TSubclassOf< class UFGNoise > AFGCreatureSubsystem::GetNoiseClassFromFName(const
 TSubclassOf< class UFGNoise > AFGCreatureSubsystem::GetNoiseClassFromStimulus(const  FAIStimulus& stimulus) const{ return TSubclassOf<class UFGNoise>(); }
 void AFGCreatureSubsystem::AddCreatureClassOverride(TSubclassOf< AFGCreature > classToReplace, TSubclassOf< AFGCreature > overrideClass, ECreatureReplaceAction replaceAction){ }
 void AFGCreatureSubsystem::AddCreatureClassOverride(const FCreatureClassOverride& creatureOverride, ECreatureReplaceAction replaceAction){ }
-void AFGCreatureSubsystem::RemoveCreatureClassOverride(TSubclassOf< AFGCreature > creatureClass, bool updateScannableState){ }
+void AFGCreatureSubsystem::RemoveCreatureClassOverride(TSubclassOf< AFGCreature > creatureClass){ }
 AFGCreature* AFGCreatureSubsystem::BeginSpawningCreature(TSubclassOf< AFGCreature > creatureClass, const FTransform& spawnTransform){ return nullptr; }
 void AFGCreatureSubsystem::SetArachnidCreaturesDisabled(bool disabled, ECreatureReplaceAction replaceAction){ }
 TSubclassOf< AFGCreature > AFGCreatureSubsystem::GetOverriddenCreatureClass(TSubclassOf< AFGCreature > creatureClass) const{ return TSubclassOf<AFGCreature>(); }

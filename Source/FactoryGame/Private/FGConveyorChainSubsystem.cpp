@@ -34,8 +34,8 @@ void AFGConveyorChainSubsystem::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 	DOREPLIFETIME(AFGConveyorChainSubsystem, mServerFactoryTickTime);
 	DOREPLIFETIME(AFGConveyorChainSubsystem, mAllItemDescriptors);
 }
-void AFGConveyorChainSubsystem::BeginPlay(){ }
-void AFGConveyorChainSubsystem::Tick(float DeltaSeconds){ }
+void AFGConveyorChainSubsystem::BeginPlay(){ Super::BeginPlay(); }
+void AFGConveyorChainSubsystem::Tick(float DeltaSeconds){ Super::Tick(DeltaSeconds); }
 void AFGConveyorChainSubsystem::OnConveyorItemMovementQualityUpdated(FString cvar){ }
 void AFGConveyorChainSubsystem::AddConveyorChain(AFGConveyorChainActor* chainActor){ }
 void AFGConveyorChainSubsystem::RemoveConveyorChain(AFGConveyorChainActor* chainActor){ }
@@ -49,3 +49,5 @@ void AFGConveyorChainSubsystem::OnRep_ServerFactoryTickTime(float oldValue){ }
 float AFGConveyorChainSubsystem::GetAndConsumeClientTimeDebt(float updateDelta){ return float(); }
 float AFGConveyorChainSubsystem::GetAverageServerTickDeltaTime(){ return float(); }
 bool AFGConveyorChainSubsystem::IsUnusuallyLargeTickDelta(){ return bool(); }
+
+FGetAdditionalConveyorItemDescriptors AFGConveyorChainSubsystem::GetAdditionalItemDescriptors;
