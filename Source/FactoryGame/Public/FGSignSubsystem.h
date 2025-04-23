@@ -206,7 +206,7 @@ public:
 	/* Add a new preset to the managed pool.*/
 	void RegisterNewPreset(AFGBuildableWidgetSign* Sign, uint32 GUID, UWidgetComponent* Widget, UMaterialInstanceDynamic* InMaterial);
 
-	void SetNewRenderTarget(uint32 GUID, UTextureRenderTarget2D* InRenderTarget, TFunction<void(void)>&& UpdateFunction);
+	void UpdatePresetMaterialInstance(uint32 GUID, const TFunctionRef<void(class UWidgetComponent* InWidgetComponent, UMaterialInstanceDynamic* InMaterialInstance)>& UpdateFunction);
 
 	void ResolveRemoved(AFGBuildableWidgetSign* Sign, uint32 GUID);
 
@@ -214,6 +214,8 @@ public:
 private:
 	/** Tracks whether the subsystem is waiting for a sign data request is pending from the server. If so, no new requests will be issued */
 	bool mHasPendingClientRequest;
+	double mLastClientRequestTime;
+	double mPendingClientRequestTimeout = 5.0;
 
 	/** Array of every buildable. These are added from the signs begin play */
 	UPROPERTY()
