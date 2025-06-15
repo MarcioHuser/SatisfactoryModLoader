@@ -3,7 +3,7 @@
 	"Version": 3,
 	"VersionName": "3.11.1",
 	"SemVersion": "3.11.1",
-	"GameVersion": ">=415558",
+	"GameVersion": ">=416835",
 	"FriendlyName": "Satisfactory Mod Loader",
 	"Description": "Mod loading and compatibility API for Satisfactory",
 	"Category": "Modding",
